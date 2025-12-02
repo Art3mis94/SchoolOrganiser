@@ -6,125 +6,69 @@
     <title>User Authentication Status</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 1rem;
-        }
+        body { font-family: 'Inter', sans-serif; background:#f7f9fb; display:flex; justify-content:center; min-height:100vh; padding:1rem; }
     </style>
 </head>
 <body>
 
-<div id="app-container" class="w-full max-w-md bg-white p-6 md:p-8 rounded-xl shadow-2xl space-y-6 mt-10 transition-all duration-300">
-    
-    <!-- Auth / Loading Panel -->
-    <div id="auth-status-panel" class="space-y-4">
-        <h1 class="text-3xl font-extrabold text-center text-gray-900">Secure App Check</h1>
-        <p class="text-center text-gray-500">Verifying user session...</p>
-
-        <div id="auth-status-box" class="min-h-32 p-4 bg-indigo-50 border-2 border-indigo-200 rounded-lg flex items-center justify-center">
-            <p id="status-message" class="text-center text-lg font-semibold text-indigo-700">Initializing...</p>
+<div id="app-container" class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl mt-10">
+    <div id="auth-status-panel">
+        <h1 class="text-3xl font-bold text-center">Secure App Check</h1>
+        <p class="text-center text-gray-500">Verifying...</p>
+        <div class="my-6 p-6 bg-indigo-50 border-2 border-indigo-200 rounded-lg text-center">
+            <p id="status-message" class="text-lg font-semibold text-indigo-700">Initializing...</p>
         </div>
-
-        <div id="user-info" class="space-y-3 p-4 bg-white border border-gray-200 rounded-lg">
-            <div class="flex justify-between items-center">
-                <span class="text-sm font-medium text-gray-600">App ID:</span>
-                <code id="app-id-display" class="text-xs text-gray-900 bg-gray-100 px-2 py-1 rounded">Loading...</code>
-            </div>
-            <div class="flex justify-between items-center flex-wrap">
-                <span class="text-sm font-medium text-gray-600">User ID:</span>
-                <code id="user-id-display" class="text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded max-w-[70%] overflow-hidden text-ellipsis">Loading...</code>
-            </div>
+        <div class="space-y-2 text-sm">
+            <div class="flex justify-between"><span>App ID:</span> <code id="app-id-display">...</code></div>
+            <div class="flex justify-between"><span>User ID:</span> <code id="user-id-display">...</code></div>
         </div>
     </div>
 
-    <!-- Main App Content (Homepage) -->
-    <div id="main-content" class="hidden" class="hidden space-y-6 pt-4 border-t border-gray-100">
-        <h2 class="text-2xl font-bold text-green-700 text-center">Welcome to the Homepage!</h2>
-        <p class="text-center text-gray-600">You are securely logged in.</p>
-
-        <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
-            <p class="font-medium text-green-800">Your app content goes here.</p>
-        </div>
-
-        <button id="logout-button" class="w-full py-3 bg-red-600 text-white font-bold rounded-lg shadow-lg hover:bg-red-700 transition">
-            Sign Out
-        </button>
+    <div id="main-content" class="hidden text-center space-y-6">
+        <h2 class="text-2xl font-bold text-green-700">Welcome!</h2>
+        <p>You are logged in.</p>
+        <button id="logout-button" class="w-full py-3 bg-red-600 text-white rounded-lg">Sign Out</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signOut, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, setPersistence, browserSessionPersistence, signInAnonymously, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    // ←←← REPLACE THIS WHOLE OBJECT WITH YOUR NEW PROJECT'S CONFIG ←←←←
+    // ← PUT YOUR NEW CONFIG HERE →
     const firebaseConfig = {
         apiKey: "YOUR_NEW_API_KEY",
-        authDomain: "your-new-project.firebaseapp.com",
-        projectId: "your-new-project",
-        storageBucket: "your-new-project.appspot.com",
-        messagingSenderId: "123456789012",
-        appId: "1:123456789012:web:abc123def456789"
-        // delete measurementId if you didn't enable Analytics
+        authDomain: "your-project.firebaseapp.com",
+        projectId: "your-project",
+        storageBucket: "your-project.appspot.com",
+        messagingSenderId: "1234567890",
+        appId: "1:1234567890:web:abc123def456"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // DOM
-    const authPanel   = document.getElementById('auth-status-panel');
-    const mainContent = document.getElementById('main-content');
-    const statusMsg   = document.getElementById('status-message');
-    const appIdEl     = document.getElementById('app-id-display');
-    const userIdEl    = document.getElementById('user-id-display');
-    const logoutBtn   = document.getElementById('logout-button');
+    const authPanel = document.getElementById('auth-status-panel');
+    const main = document.getElementById('main-content');
+    const status = document.getElementById('status-message');
+    const appIdEl = document.getElementById('app-id-display');
+    const userIdEl = document.getElementById('user-id-display');
 
-    // Update UI based on user state
-    function updateUI(user) {
-        appIdEl.textContent = firebaseConfig.appId;
+    appIdEl.textContent = firebaseConfig.appId;
 
+    onAuthStateChanged(auth, user => {
         if (user) {
             userIdEl.textContent = user.uid;
             authPanel.classList.add('hidden');
-            mainContent.classList.remove('hidden');
+            main.classList.remove('hidden');
         } else {
-            userIdEl.textContent = 'N/A';
-            statusMsg.textContent = 'Signed out';
-            authPanel.classList.remove('hidden');
-            mainContent.classList.add('hidden');
-        }
-    }
-
-    // Listen to auth changes
-    onAuthStateChanged(auth, user => {
-        if (user) {
-            updateUI(user);
-        } else {
-            // No user → sign in anonymously (runs once)
-            statusMsg.textContent = 'Signing in anonymously...';
-            signInAnonymously(auth)
-                .then(() => console.log('Anonymous login success'))
-                .catch(err => {
-                    statusMsg.textContent = 'Error: ' + err.message;
-                    console.error(err);
-                });
+            status.textContent = "Signing in anonymously...";
+            signInAnonymously(auth).catch(e => status.textContent = "Error: " + e.message);
         }
     });
 
-    // Optional: keep session only for this tab
     setPersistence(auth, browserSessionPersistence);
-
-    // Logout
-    logoutBtn.addEventListener('click', () => {
-        signOut(auth).then(() => updateUI(null));
-    });
-
-    // Show app ID immediately
-    appIdEl.textContent = firebaseConfig.appId;
+    document.getElementById('logout-button').onclick = () => signOut(auth);
 </script>
 </body>
 </html>
