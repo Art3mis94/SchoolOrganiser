@@ -78,16 +78,16 @@
         import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- HARDCODED FIREBASE CONFIGURATION ---
-        // Used as a fallback because the environment variable loading was inconsistent.
-        const hardcodedConfig = {
-            apiKey: "AIzaSyCx7YaR5uupJ42gA1drdPvO1kI9UCNFE8w",
-            authDomain: "schoolorganiser-65462.firebaseapp.com",
-            projectId: "schoolorganiser-65462",
-            storageBucket: "schoolorganiser-65462.firebasestorage.app",
-            messagingSenderId: "710434066137",
-            appId: "1:710434066137:web:de2db0a2a704a1a166f8c8",
-            measurementId: "G-S0TY4WSGJ2"
-        };
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
+  authDomain: "school-organiser-5f512.firebaseapp.com",
+  projectId: "school-organiser-5f512",
+  storageBucket: "school-organiser-5f512.firebasestorage.app",
+  messagingSenderId: "567803400438",
+  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7",
+  measurementId: "G-9ZGHJPJW6M"
+};
 
         // --- GLOBAL ENVIRONMENT VARIABLES (Used for auth token and app ID) ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : hardcodedConfig.appId;
