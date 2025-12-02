@@ -1,0 +1,52 @@
+/* tailwind.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.toggle-btn {
+    @apply text-gray-600 hover:text-indigo-600 transition-transform duration-200;
+}
+
+.toggle-btn span:last-child {
+    @apply transition-transform duration-200;
+}
+
+.toggle-btn.collapsed span:last-child {
+    @apply rotate-0;
+}
+
+.toggle-btn:not(.collapsed) span:last-child {
+    @apply rotate-90;
+}
+
+.topic {
+    @apply flex flex-col gap-2;
+}
+
+.subtopics {
+    @apply ml-6 mt-2 space-y-2;
+}
+
+.lesson {
+    @apply p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition;
+}
+
+.lesson-group {
+    @apply mb-4;
+}
+
+.lesson h3 {
+    @apply text-lg font-semibold text-gray-800;
+}
+
+.lesson p {
+    @apply text-gray-600;
+}
+
+.completed {
+    @apply line-through text-gray-500;
+}
+
+button {
+    @apply transition duration-200;
+}

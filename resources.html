@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Educator Hub - Tools</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Consolidated Application Styles -->
+    <style>
+        /* ====================================== */
+        /* APPLICATION-WIDE COMPONENT STYLES      */
+        /* ====================================== */
+        .nav-active {
+            @apply bg-white text-indigo-700 shadow-inner;
+        }
+        .tab-active {
+            @apply bg-white border-b-2 border-indigo-600 font-bold text-indigo-700;
+        }
+        .collapsible-header {
+            @apply flex justify-between items-center cursor-pointer p-4 rounded-t-xl;
+        }
+        .drag-zone {
+            border: 2px dashed #9ca3af;
+            background-color: #f9fafb;
+            text-align: center;
+            padding: 20px;
+            margin-top: 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .drag-over {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+        }
+        /* Custom utility tag for curriculum status */
+        .topic-status-tag {
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px; 
+            font-size: 0.75rem; 
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); 
+        }
+        /* Toggle button for curriculum expansion */
+        .toggle-btn {
+            @apply text-gray-600 hover:text-indigo-600 transition-transform duration-200;
+        }
+        .toggle-btn span:last-child {
+            @apply transition-transform duration-200;
+        }
+        .toggle-btn.collapsed span:last-child {
+            @apply rotate-0;
+        }
+        .toggle-btn:not(.collapsed) span:last-child {
+            @apply rotate-90;
+        }
+        /* Curriculum Structure Styles (Topic/Lesson containers) */
+        .topic {
+            @apply flex flex-col gap-2;
+        }
+        .subtopics {
+            @apply ml-6 mt-2 space-y-2;
+        }
+        .lesson-group {
+            @apply mb-4;
+        }
+        .lesson {
+            @apply p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition;
+        }
+        .lesson h3 {
+            @apply text-lg font-semibold text-gray-800;
+        }
+        .lesson p {
+            @apply text-gray-600;
+        }
+        /* Completed item styles */
+        .completed {
+            @apply line-through text-gray-500;
+        }
+        /* Button defaults for the app */
+        button {
+            @apply transition duration-200;
+        }
+        .topic button {
+            @apply transition duration-200 shadow-sm hover:shadow-md; 
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-indigo-700 p-4 shadow-2xl">
+        <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
+            <a href="index.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
+            <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
+            <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
+            <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
+            <a href="resources.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Tools 🛠️</a>
+        </div>
+    </nav>
+    <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
+        <h1 class="text-3xl font-bold text-center text-gray-800">Resources & Management Tools 🛠️</h1>
+        
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="text-center text-gray-500 p-8">
+            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing App & Loading Curriculum Data...
+        </div>
+        <div id="errorDisplay" class="hidden text-center text-red-600 p-4 bg-red-100 border border-red-300 rounded-lg font-medium"></div>
+        <p id="userIdDisplay" class="text-xs text-gray-400 mt-4 text-center">User ID: N/A</p>
+
+        <div class="flex border-b border-gray-300">
+            <button id="tabTools" onclick="showTab('tools')" class="tab-active py-2 px-4 text-gray-600 hover:text-indigo-700 transition">Management Tools</button>
+            <button id="tabFiles" onclick="showTab('files')" class="py-2 px-4 text-gray-600 hover:text-indigo-700 transition">View Resources & Files</button>
+        </div>
+
+        <div id="contentTools" class="space-y-6">
+            
+            <!-- Lesson Import Section -->
+            <div id="sectionLessonImport" class="bg-green-50 border-l-4 border-green-500 rounded-xl shadow-lg">
+                <div class="collapsible-header bg-green-100" onclick="toggleCollapse('contentLessonImport', 'iconLessonImport')">
+                    <h2 class="text-xl font-bold text-green-700 flex items-center gap-3">
+                        <i class="fa-solid fa-file-import"></i> Bulk Import: Lesson Resources
+                    </h2>
+                    <i id="iconLessonImport" class="fa-solid fa-caret-down text-green-700"></i>
+                </div>
+                <div id="contentLessonImport" class="p-6 pt-0 space-y-4">
+                    <p class="text-green-600 mb-4">Paste multiple links/text resources **OR** drag and drop a file to be added to a specific lesson. (Requires curriculum data.)</p>
+                    
+                    <form id="lessonResourceImportForm" class="space-y-4">
+                        <select id="importTopicSelect" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" disabled>
+                            <option value="">-- Select Parent Topic --</option>
+                        </select>
+                        
+                        <select id="importLessonSelect" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" disabled>
+                            <option value="">-- Select Target Lesson --</option>
+                        </select>
+
+                        <textarea id="importResourcesText" placeholder="Paste text resources or links here (one per line)" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-y min-h-[100px]"></textarea>
+                        
+                        <div id="fileLessonDropZone" class="drag-zone">
+                            <p class="text-gray-500"><i class="fa-solid fa-file-circle-plus mr-2"></i> Drag and Drop File Attachment Here (Max 5MB)</p>
+                            <input type="file" id="lessonFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" class="hidden">
+                        </div>
+                        
+                        <button type="submit" id="submitLessonImportBtn" class="w-full p-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition shadow-md" disabled>
+                            <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Import Resource(s)
+                        </button>
+                    </form>
+                    <p id="importLessonMessage" class="mt-4 text-center font-semibold hidden"></p>
+                </div>
+            </div>
+
+            <!-- General Import Section -->
+            <div id="sectionGeneralImport" class="bg-indigo-50 border-l-4 border-indigo-500 rounded-xl shadow-lg">
+                <div class="collapsible-header bg-indigo-100" onclick="toggleCollapse('contentGeneralImport', 'iconGeneralImport')">
+                    <h2 class="text-xl font-bold text-indigo-700 flex items-center gap-3">
+                        <i class="fa-solid fa-bookmark"></i> Quick Save: General Resources
+                    </h2>
+                    <i id="iconGeneralImport" class="fa-solid fa-caret-right text-indigo-700"></i>
+                </div>
+                <div id="contentGeneralImport" class="p-6 pt-0 space-y-4 hidden">
+                    <p class="text-indigo-600 mb-4">Save a quick link, text resource, or drag and drop a file that isn't yet tied to a specific lesson. This data is cloud-synced.</p>
+                    
+                    <form id="generalResourceImportForm" class="space-y-4">
+                        <textarea id="generalResourcesText" placeholder="Paste a general resource or link here" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y min-h-[80px]"></textarea>
+
+                        <div id="fileDropZone" class="drag-zone">
+                            <p class="text-gray-500"><i class="fa-solid fa-cloud-arrow-up mr-2"></i> Drag and Drop File Here (Max 5MB)</p>
+                            <input type="file" id="generalFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" class="hidden">
+                        </div>
+
+                        <button type="submit" id="submitGeneralImportBtn" class="w-full p-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md" disabled>
+                            <i class="fa-solid fa-floppy-disk mr-2"></i> Save Resource
+                        </button>
+                    </form>
+                    <p id="importGeneralMessage" class="mt-4 text-center font-semibold hidden"></p>
+                </div>
+            </div>
+            
+            <!-- Data Management Section (Simplified for Firestore) -->
+            <div id="sectionBackup" class="bg-yellow-50 border-l-4 border-yellow-500 rounded-xl shadow-lg">
+                <div class="collapsible-header bg-yellow-100" onclick="toggleCollapse('contentBackup', 'iconBackup')">
+                    <h2 class="text-xl font-bold text-yellow-700 flex items-center gap-3">
+                        <i class="fa-solid fa-database"></i> Cloud Data Management
+                    </h2>
+                    <i id="iconBackup" class="fa-solid fa-caret-right text-yellow-700"></i>
+                </div>
+                <div id="contentBackup" class="p-6 pt-0 space-y-4 hidden">
+                    <p class="text-yellow-600 mb-4">Your data is automatically saved to the cloud. Use this to manually download your General Resources data as a backup.</p>
+                    
+                    <div class="flex gap-4">
+                        <button id="backupGeneralDataBtn" class="flex-1 p-3 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition shadow-md" disabled>
+                            <i class="fa-solid fa-download mr-2"></i> Download General Resources Backup (.json)
+                        </button>
+                        <input type="file" id="restoreFile" accept=".json" class="hidden">
+                        <button id="restoreGeneralDataBtn" class="flex-1 p-3 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition shadow-md" disabled>
+                            <i class="fa-solid fa-upload mr-2"></i> Restore General Resources
+                        </button>
+                    </div>
+                    <p id="restoreMessage" class="mt-4 text-center font-semibold hidden"></p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Resources View Tab -->
+        <div id="contentFiles" class="hidden space-y-8">
+            
+            <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl shadow-inner">
+                <h2 class="text-xl font-bold text-indigo-700 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open"></i> General Resources (Text & Files)
+                </h2>
+                <div id="generalResourcesList" class="space-y-3">
+                    <p class="text-gray-500 italic p-2 text-center">Loading general resources...</p>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-gray-50 border rounded-xl shadow-inner">
+                <h2 class="text-xl font-bold text-gray-700 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-file-pdf"></i> Lesson Attachments (Curriculum Linked Files)
+                </h2>
+                <div id="uploadedFilesList" class="space-y-3">
+                    <p class="text-gray-500 italic p-2 text-center">Lesson attachments will appear here once curriculum data is loaded.</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    
+    <!-- Firebase Modular SDK Imports & App Logic -->
+    <script type="module">
+        // =========================================================================
+        // FIREBASE INITIALIZATION AND AUTHENTICATION
+        // =========================================================================
+        
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Set Firebase logging level
+        setLogLevel('error');
+
+        // Retrieve mandatory global variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db = null;
+        let auth = null;
+        let userId = null;
+        
+        // Firestore Document References (Private User Data Paths)
+        let RESOURCES_DOC_REF = null; // Stores generalResources
+        let CURRICULUM_DOC_REF = null; // Assumed to store topics and lessons used for the importer
+
+        // Data containers (synced with Firestore)
+        let topics = [];
+        let lessons = [];
+        let generalResources = [];
+
+        // Tracks file drops before form submission
+        let droppedGeneralFile = null; 
+        let droppedLessonFile = null;
+
+        // UI Elements
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorDisplay = document.getElementById('errorDisplay');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        const submitLessonImportBtn = document.getElementById('submitLessonImportBtn');
+        const submitGeneralImportBtn = document.getElementById('submitGeneralImportBtn');
+        const backupGeneralDataBtn = document.getElementById('backupGeneralDataBtn');
+        const restoreGeneralDataBtn = document.getElementById('restoreGeneralDataBtn');
+        
+        const lessonResourceImportForm = document.getElementById('lessonResourceImportForm');
+        const importTopicSelect = document.getElementById('importTopicSelect');
+        const importLessonSelect = document.getElementById('importLessonSelect');
+        const importResourcesText = document.getElementById('importResourcesText');
+        const fileLessonDropZone = document.getElementById('fileLessonDropZone');
+        const lessonFile = document.getElementById('lessonFile');
+        const importLessonMessage = document.getElementById('importLessonMessage');
+
+        const generalResourceImportForm = document.getElementById('generalResourceImportForm');
+        const generalResourcesText = document.getElementById('generalResourcesText');
+        const fileDropZone = document.getElementById('fileDropZone');
+        const generalFile = document.getElementById('generalFile');
+        const importGeneralMessage = document.getElementById('importGeneralMessage');
+        
+        const restoreFile = document.getElementById('restoreFile');
+        const restoreMessage = document.getElementById('restoreMessage');
+        
+        const uploadedFilesList = document.getElementById('uploadedFilesList');
+        const generalResourcesList = document.getElementById('generalResourcesList');
+        const tabTools = document.getElementById('tabTools');
+        const tabFiles = document.getElementById('tabFiles');
+        const contentTools = document.getElementById('contentTools');
+        const contentFiles = document.getElementById('contentFiles');
+
+
+        function showMessage(element, message, isError = false) {
+            console.warn(message);
+            element.textContent = message;
+            element.className = `mt-4 text-center font-semibold p-2 rounded ${isError ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`;
+            element.classList.remove('hidden');
+            setTimeout(() => element.classList.add('hidden'), 5000);
+        }
+
+        /**
+         * Initializes Firebase and handles the initial authentication.
+         */
+        async function initializeFirebaseAndAuth() {
+            loadingIndicator.textContent = 'Initializing Firebase...';
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Wait for auth state to be resolved
+                onAuthStateChanged(auth, user => {
+                    if (user) {
+                        userId = user.uid;
+                        userIdDisplay.textContent = `User ID: ${userId}`;
+                        
+                        // Define Firestore document paths
+                        RESOURCES_DOC_REF = doc(db, 'artifacts', appId, 'users', userId, 'resources_planner', 'general_resources');
+                        CURRICULUM_DOC_REF = doc(db, 'artifacts', appId, 'users', userId, 'curriculum_planner', 'curriculum_data');
+                        
+                        // Start listening for real-time updates
+                        setupCurriculumSnapshotListener();
+                        setupResourcesSnapshotListener();
+                        enableUI(true);
+
+                    } else {
+                        showMessage(errorDisplay, "Authentication failed. Cannot access user data.", true);
+                        enableUI(false);
+                    }
+                });
+
+            } catch (error) {
+                showMessage(errorDisplay, `Firebase Initialization Error: ${error.message}`, true);
+                enableUI(false);
+            }
+        }
+
+        /**
+         * Enables/Disables interactive UI elements based on authentication status.
+         */
+        function enableUI(isEnabled) {
+            submitLessonImportBtn.disabled = !isEnabled;
+            submitGeneralImportBtn.disabled = !isEnabled;
+            backupGeneralDataBtn.disabled = !isEnabled;
+            restoreGeneralDataBtn.disabled = !isEnabled;
+        }
+
+        /**
+         * Sets up the real-time listener for Curriculum Data (Topics/Lessons).
+         */
+        function setupCurriculumSnapshotListener() {
+            onSnapshot(CURRICULUM_DOC_REF, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    topics = data.topics || [];
+                    lessons = data.lessons || [];
+                } else {
+                    // Start with empty arrays if doc doesn't exist
+                    topics = [];
+                    lessons = [];
+                }
+                loadingIndicator.textContent = 'Curriculum data loaded. Waiting for General Resources...';
+                populateTopicSelect();
+                renderUploadedFiles();
+            }, (error) => {
+                console.error("Error listening to Curriculum Firestore:", error);
+                showMessage(errorDisplay, "Failed to sync curriculum data. Lesson import disabled.", true);
+            });
+        }
+        
+        /**
+         * Sets up the real-time listener for General Resources.
+         */
+        function setupResourcesSnapshotListener() {
+            onSnapshot(RESOURCES_DOC_REF, (docSnap) => {
+                if (docSnap.exists()) {
+                    generalResources = docSnap.data().data || [];
+                } else {
+                    generalResources = [];
+                }
+                loadingIndicator.classList.add('hidden');
+                renderGeneralResources();
+            }, (error) => {
+                console.error("Error listening to General Resources Firestore:", error);
+                showMessage(errorDisplay, "Failed to sync general resources.", true);
+            });
+        }
+
+        // --- Core Utility Functions ---
+        
+        /**
+         * Recursive function to find a topic by ID in the tree structure.
+         */
+        function findTopic(tops, id) {
+            for (let t of tops) {
+                if (t.id === id) return t;
+                const found = findTopic(t.subtopics || [], id);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        /**
+         * Saves the current generalResources array to Firebase.
+         */
+        async function saveGeneralResources() {
+            if (!db || !RESOURCES_DOC_REF) return;
+
+            try {
+                // Store array inside a 'data' field
+                await setDoc(RESOURCES_DOC_REF, { data: generalResources });
+            } catch (error) {
+                console.error("Error saving general resources to Firebase:", error);
+                showMessage(errorDisplay, "Failed to save general resources.", true);
+            }
+        }
+        
+        /**
+         * Saves the current entire lessons array to Firebase (updates attachments/resources).
+         */
+        async function saveLessons() {
+            if (!db || !CURRICULUM_DOC_REF) return;
+
+            try {
+                // This updates the lessons array within the curriculum_data document
+                await setDoc(CURRICULUM_DOC_REF, { lessons: lessons, topics: topics }, { merge: true });
+            } catch (error) {
+                console.error("Error saving lessons to Firebase:", error);
+                showMessage(errorDisplay, "Failed to update lesson resources.", true);
+            }
+        }
+
+        /**
+         * Reads a file and returns its content as a Data URL.
+         */
+        function getFileAttachment(file) {
+            return new Promise((resolve, reject) => {
+                const MAX_SIZE_MB = 5;
+                if (file.size > MAX_SIZE_MB * 1024 * 1024) { 
+                    return reject(new Error(`File is too large (> ${MAX_SIZE_MB}MB). Please use a smaller file or a link.`));
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    resolve({ 
+                        id: Date.now().toString() + Math.random().toString(36).substring(2, 6),
+                        content: event.target.result, // Data URL (Base64)
+                        name: file.name,
+                        is_file: true,
+                        timestamp: new Date().toISOString()
+                    });
+                };
+                reader.onerror = (error) => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+
+        // --- UI Management ---
+        
+        window.toggleCollapse = (contentId, iconId) => {
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(iconId);
+
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.remove('fa-caret-right');
+                icon.classList.add('fa-caret-down');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('fa-caret-down');
+                icon.classList.add('fa-caret-right');
+            }
+        };
+
+        window.showTab = (tabName) => {
+            [tabTools, tabFiles].forEach(t => t.classList.remove('tab-active'));
+            [contentTools, contentFiles].forEach(c => c.classList.add('hidden'));
+
+            if (tabName === 'tools') {
+                tabTools.classList.add('tab-active');
+                contentTools.classList.remove('hidden');
+            } else if (tabName === 'files') {
+                tabFiles.classList.add('tab-active');
+                contentFiles.classList.remove('hidden');
+                // Data is real-time, just ensure the list is rendered when shown
+                renderGeneralResources(); 
+                renderUploadedFiles();
+            }
+        };
+
+
+        // --- Resource View Renderers ---
+
+        function renderGeneralResources() {
+            generalResourcesList.innerHTML = '';
+            if (generalResources.length === 0) {
+                generalResourcesList.innerHTML = '<p class="text-gray-500 italic p-4 text-center">No general resources have been saved yet.</p>';
+                return;
+            }
+
+            generalResources.forEach(res => {
+                const item = document.createElement('div');
+                item.className = 'p-3 bg-white border border-indigo-200 rounded-lg flex justify-between items-center shadow-sm';
+                
+                const isUrl = res.content && (res.content.startsWith('http://') || res.content.startsWith('https://'));
+                const isFile = res.is_file;
+
+                let displayContent;
+                
+                if (isFile) {
+                    // Use Data URL for download/view
+                    displayContent = `
+                        <a href="${res.content}" target="_blank" download="${res.name}" class="text-indigo-600 font-semibold hover:text-indigo-800 transition">
+                            <i class="fa-solid fa-file-arrow-down mr-2"></i> ${res.name}
+                        </a>
+                    `;
+                } else if (isUrl) {
+                    displayContent = `
+                        <a href="${res.content}" target="_blank" class="text-indigo-600 hover:text-indigo-800 underline transition truncate pr-4">${res.content}</a>
+                    `;
+                } else {
+                    displayContent = `<span class="text-gray-800 truncate pr-4">${res.content}</span>`;
+                }
+
+                item.innerHTML = `
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm text-gray-500 mb-1">Type: ${isFile ? 'File Attachment' : 'Link/Text'}</p>
+                        ${displayContent}
+                    </div>
+                    <button onclick="deleteGeneralResource('${res.id}')" class="p-2 text-red-500 hover:text-red-700 transition" title="Delete Resource">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                generalResourcesList.appendChild(item);
+            });
+        }
+        
+        window.deleteGeneralResource = (id) => {
+            if (!window.confirm('Are you sure you want to delete this general resource?')) return;
+            generalResources = generalResources.filter(res => res.id !== id);
+            saveGeneralResources(); // Trigger save to Firebase
+        };
+
+        function renderUploadedFiles() {
+            uploadedFilesList.innerHTML = '';
+            let hasFiles = false;
+
+            if (lessons.length === 0) {
+                 uploadedFilesList.innerHTML = '<p class="text-gray-500 italic p-4 text-center">No lessons or files found in curriculum data.</p>';
+                 return;
+            }
+
+            lessons.forEach(lesson => {
+                // Ensure lesson.attachments and lesson.resources are arrays/strings respectively
+                if (lesson.attachments && lesson.attachments.length > 0) {
+                    hasFiles = true;
+                    // Find topic name - simplified lookup
+                    const topic = findTopic(topics, lesson.topicId);
+                    const topicName = topic ? topic.name : 'Unknown Topic'; 
+
+                    lesson.attachments.forEach(file => {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'p-3 bg-white border border-gray-200 rounded-lg flex justify-between items-center shadow-sm hover:shadow-md transition';
+                        
+                        fileItem.innerHTML = `
+                            <div class="flex flex-col">
+                                <!-- File.data is the Data URL string (Base64) -->
+                                <a href="${file.data}" target="_blank" download="${file.name}" class="text-indigo-600 font-semibold hover:text-indigo-800 transition">
+                                    <i class="fa-solid fa-file-arrow-down mr-2"></i> ${file.name}
+                                </a>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Attached to: <strong>${topicName}</strong> / Lesson: <strong>${lesson.title}</strong>
+                                </p>
+                            </div>
+                            <button onclick="deleteAttachmentGlobal('${lesson.id}', '${file.id}')" class="p-2 text-red-500 hover:text-red-700 transition" title="Delete File Permanently">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        `;
+                        uploadedFilesList.appendChild(fileItem);
+                    });
+                }
+            });
+
+            if (!hasFiles) {
+                uploadedFilesList.innerHTML = '<p class="text-gray-500 italic p-4 text-center">No files have been uploaded to any lessons yet.</p>';
+            }
+        }
+        
+        window.deleteAttachmentGlobal = (lessonId, attachmentId) => {
+            if (!window.confirm('Are you sure you want to permanently delete this file? This will remove it from the lesson and curriculum data.')) return;
+
+            const lesson = lessons.find(l => l.id === lessonId);
+            if (lesson && lesson.attachments) {
+                lesson.attachments = lesson.attachments.filter(a => a.id !== attachmentId);
+                saveLessons(); // Trigger save to Firebase
+            }
+        };
+
+
+        // --- Lesson Resource Import Logic ---
+        
+        function populateTopicSelect() {
+            const mainTopics = topics.filter(t => !findTopic(topics.filter(top => top.id !== t.id), t.id));
+            
+            importTopicSelect.innerHTML = '<option value="">-- Select Parent Topic --</option>';
+            mainTopics.forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic.id;
+                option.textContent = topic.name;
+                importTopicSelect.appendChild(option);
+            });
+            importTopicSelect.disabled = topics.length === 0;
+            populateLessonSelect(null);
+        }
+        
+        function populateLessonSelect(topicId) {
+            importLessonSelect.innerHTML = '<option value="">-- Select Target Lesson --</option>';
+            importLessonSelect.disabled = true;
+            
+            if (!topicId) return;
+
+            const targetTopic = findTopic(topics, topicId);
+            if (!targetTopic) return;
+
+            let lessonsInHierarchy = [];
+            
+            function extractLessonsFromTree(currentTopic, currentPath = '') {
+                const fullPath = currentPath ? `${currentPath} / ${currentTopic.name}` : currentTopic.name;
+                
+                // Find lessons linked to this topic ID
+                const linkedLessons = lessons.filter(l => l.topicId === currentTopic.id);
+                linkedLessons.forEach(lesson => {
+                    lessonsInHierarchy.push({
+                        ...lesson,
+                        topicPath: fullPath 
+                    });
+                });
+
+                if (currentTopic.subtopics && currentTopic.subtopics.length > 0) {
+                    currentTopic.subtopics.forEach(sub => extractLessonsFromTree(sub, fullPath));
+                }
+            }
+            
+            extractLessonsFromTree(targetTopic);
+            
+            lessonsInHierarchy.forEach(lesson => {
+                const option = document.createElement('option');
+                option.value = lesson.id;
+                option.textContent = `[${lesson.topicPath}] - ${lesson.title}`;
+                importLessonSelect.appendChild(option);
+            });
+            
+            if (lessonsInHierarchy.length > 0) {
+                importLessonSelect.disabled = false;
+            } else {
+                importLessonSelect.disabled = true;
+                importLessonSelect.innerHTML = '<option value="">-- No Lessons Found in this Topic Hierarchy --</option>';
+            }
+        }
+
+        importTopicSelect.addEventListener('change', (e) => {
+            populateLessonSelect(e.target.value);
+        });
+
+        lessonResourceImportForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const lessonId = importLessonSelect.value;
+            const resourcesText = importResourcesText.value.trim();
+
+            if (!lessonId) {
+                showMessage(importLessonMessage, 'Please select a lesson.', true);
+                return;
+            }
+            
+            if (!resourcesText && !droppedLessonFile) {
+                showMessage(importLessonMessage, 'Please paste resources or drop a file.', true);
+                return;
+            }
+
+            const lessonIndex = lessons.findIndex(l => l.id === lessonId);
+            if (lessonIndex === -1) {
+                showMessage(importLessonMessage, 'Error: Lesson not found in curriculum data.', true);
+                return;
+            }
+            
+            let newResourcesCount = 0;
+
+            // 1. Handle Text/Link Resources
+            if (resourcesText) {
+                const newTextResources = resourcesText.split('\n')
+                                                .map(line => line.trim())
+                                                .filter(line => line.length > 0);
+                
+                // Lessons.resources is a string that holds all resources separated by newlines
+                let existingResourcesArray = lessons[lessonIndex].resources ? lessons[lessonIndex].resources.split('\n').map(r => r.trim()).filter(r => r.length > 0) : [];
+                
+                const combinedResources = Array.from(new Set([...existingResourcesArray, ...newTextResources]));
+                lessons[lessonIndex].resources = combinedResources.join('\n');
+                newResourcesCount += newTextResources.length;
+            }
+
+            // 2. Handle File Attachment
+            if (droppedLessonFile) {
+                try {
+                    const fileData = await getFileAttachment(droppedLessonFile);
+                    if (!lessons[lessonIndex].attachments) {
+                        lessons[lessonIndex].attachments = [];
+                    }
+                    // Store file data in the attachments array
+                    lessons[lessonIndex].attachments.push({
+                        id: fileData.id,
+                        name: fileData.name,
+                        data: fileData.content, // Data URL
+                        timestamp: fileData.timestamp
+                    });
+                    newResourcesCount += 1;
+                } catch (error) {
+                    showMessage(importLessonMessage, `Error saving file: ${error.message}`, true);
+                    // Do not save curriculum if file failed to read/save
+                    return; 
+                }
+            }
+
+            await saveLessons(); // Save updated lessons array back to Firebase
+            
+            showMessage(importLessonMessage, `Successfully imported ${newResourcesCount} new resource(s) into the lesson!`);
+            
+            // Reset the forms and state after successful import
+            lessonResourceImportForm.reset();
+            droppedLessonFile = null;
+            lessonFile.value = '';
+            fileLessonDropZone.querySelector('p').innerHTML = '<i class="fa-solid fa-file-circle-plus mr-2"></i> Drag and Drop File Attachment Here (Max 5MB)';
+            // Re-populate select based on latest data
+            populateTopicSelect(); 
+        });
+
+
+        // --- General Resource Import Logic ---
+
+        generalResourceImportForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const textContent = generalResourcesText.value.trim();
+            let newResources = [];
+
+            if (droppedGeneralFile) {
+                try {
+                    const fileData = await getFileAttachment(droppedGeneralFile);
+                    newResources.push(fileData);
+                } catch (error) {
+                    showMessage(importGeneralMessage, `Error saving file: ${error.message}`, true);
+                    return;
+                }
+            } else if (textContent) {
+                textContent.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0)
+                    .forEach(content => newResources.push({
+                        id: Date.now().toString() + Math.random().toString(36).substring(2, 6),
+                        content: content,
+                        timestamp: new Date().toISOString(),
+                        is_file: false,
+                        name: content.substring(0, 50) + (content.length > 50 ? '...' : '')
+                    }));
+            } else {
+                showMessage(importGeneralMessage, 'Please paste a resource or drag a file.', true);
+                return;
+            }
+
+            if (newResources.length > 0) {
+                generalResources.push(...newResources);
+                await saveGeneralResources(); // Save to Firebase
+
+                showMessage(importGeneralMessage, `Successfully saved ${newResources.length} general resource(s)!`);
+                generalResourceImportForm.reset();
+                droppedGeneralFile = null;
+                generalFile.value = '';
+                fileDropZone.querySelector('p').innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Drag and Drop File Here (Max 5MB)';
+            }
+        });
+
+        // --- Drag and Drop Logic ---
+
+        function handleFileDrop(file, isLessonContext) {
+            const dropZone = isLessonContext ? fileLessonDropZone : fileDropZone;
+            const fileInput = isLessonContext ? lessonFile : generalFile;
+            const messageElement = isLessonContext ? importLessonMessage : importGeneralMessage;
+
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                     showMessage(messageElement, 'Error: File size exceeds 5MB limit. Please use a smaller file or a link.', true);
+                     dropZone.classList.remove('drag-over');
+                     fileInput.value = '';
+                     return;
+                }
+                
+                if (isLessonContext) {
+                    droppedLessonFile = file;
+                    dropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-file-alt mr-2"></i> Ready to attach: <strong>${file.name}</strong>`;
+                    showMessage(messageElement, 'File ready to attach. Select a lesson and click "Import Resource(s)".', false);
+                } else {
+                    droppedGeneralFile = file;
+                    dropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-file-alt mr-2"></i> Ready to save: <strong>${file.name}</strong>`;
+                    showMessage(messageElement, 'File ready to save. Click "Save Resource" or add a text note.', false);
+                }
+            }
+            dropZone.classList.remove('drag-over');
+        }
+
+        // Setup Drag and Drop/Click Listeners for both zones
+        [
+            { zone: fileLessonDropZone, input: lessonFile, isLesson: true },
+            { zone: fileDropZone, input: generalFile, isLesson: false }
+        ].forEach(({ zone, input, isLesson }) => {
+            ['dragover', 'dragleave', 'drop'].forEach(event => {
+                zone.addEventListener(event, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (event === 'dragover') {
+                        zone.classList.add('drag-over');
+                    } else if (event === 'dragleave') {
+                        zone.classList.remove('drag-over');
+                    } else if (event === 'drop' && e.dataTransfer.files.length > 0) {
+                        handleFileDrop(e.dataTransfer.files[0], isLesson);
+                    }
+                });
+            });
+            zone.addEventListener('click', () => {
+                input.click();
+            });
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileDrop(e.target.files[0], isLesson);
+                }
+            });
+        });
+
+
+        // --- Data Backup & Restore Logic (Firebase Version) ---
+        
+        backupGeneralDataBtn.addEventListener('click', () => {
+            const data = {
+                generalResources: generalResources,
+                timestamp: new Date().toISOString(),
+                note: "This backup only contains your General Resources data."
+            };
+            
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            a.href = url;
+            a.download = `general_resources_backup_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage(restoreMessage, 'General Resources backup downloaded successfully.');
+        });
+
+        restoreGeneralDataBtn.addEventListener('click', () => {
+            restoreFile.click();
+        });
+
+        restoreFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    if (data.generalResources && Array.isArray(data.generalResources)) {
+                        generalResources = data.generalResources;
+                        await saveGeneralResources();
+                        showMessage(restoreMessage, 'General Resources restored successfully! Data is now syncing.', false);
+                    } else {
+                         showMessage(restoreMessage, 'Error: Backup file does not contain valid General Resources data.', true);
+                    }
+
+                } catch (error) {
+                    showMessage(restoreMessage, 'Error: Invalid backup file format. Must be a valid JSON file.', true);
+                } finally {
+                    restoreFile.value = '';
+                }
+            };
+            reader.onerror = () => {
+                showMessage(restoreMessage, 'Error reading file.', true);
+            };
+            reader.readAsText(file);
+        });
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', initializeFirebaseAndAuth);
+    </script>
+</body>
+</html>
+
