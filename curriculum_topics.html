@@ -1,459 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educator Hub - Curriculum Topics</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <!-- Consolidated Application Styles -->
-    <style>
-        /* ====================================== */
-        /* APPLICATION-WIDE COMPONENT STYLES      */
-        /* ====================================== */
-        .nav-active {
-            @apply bg-white text-indigo-700 shadow-inner;
-        }
-        .tab-active {
-            @apply bg-white border-b-2 border-indigo-600 font-bold text-indigo-700;
-        }
-        .collapsible-header {
-            @apply flex justify-between items-center cursor-pointer p-4 rounded-t-xl;
-        }
-        .drag-zone {
-            border: 2px dashed #9ca3af;
-            background-color: #f9fafb;
-            text-align: center;
-            padding: 20px;
-            margin-top: 10px;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-        .drag-over {
-            border-color: #4f46e5;
-            background-color: #eef2ff;
-        }
-        /* Custom utility tag for curriculum status */
-        .topic-status-tag {
-            padding: 0.25rem 0.6rem;
-            border-radius: 9999px; 
-            font-size: 0.75rem; 
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); 
-        }
-        /* Toggle button for curriculum expansion */
-        .toggle-btn {
-            @apply text-gray-600 hover:text-indigo-600 transition-transform duration-200;
-        }
-        .toggle-btn span:last-child {
-            @apply transition-transform duration-200;
-        }
-        .toggle-btn.collapsed span:last-child {
-            @apply rotate-0;
-        }
-        .toggle-btn:not(.collapsed) span:last-child {
-            @apply rotate-90;
-        }
-        /* Curriculum Structure Styles (Topic/Lesson containers) */
-        .topic {
-            @apply flex flex-col gap-2;
-        }
-        .subtopics {
-            @apply ml-6 mt-2 space-y-2;
-        }
-        .lesson-group {
-            @apply mb-4;
-        }
-        .lesson {
-            @apply p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition;
-        }
-        .lesson h3 {
-            @apply text-lg font-semibold text-gray-800;
-        }
-        .lesson p {
-            @apply text-gray-600;
-        }
-        /* Completed item styles */
-        .completed {
-            @apply line-through text-gray-500;
-        }
-        /* Button defaults for the app */
-        button {
-            @apply transition duration-200;
-        }
-        .topic button {
-            @apply transition duration-200 shadow-sm hover:shadow-md; 
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Educator Hub - Curriculum Topics</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+.nav-active { @apply bg-white text-indigo-700 shadow-inner; }
+.topic-status-tag { @apply px-2 py-0.5 rounded-full text-xs font-semibold; }
+.completed { @apply line-through text-gray-500; }
+.lesson, .topic { @apply p-4 bg-white rounded-xl shadow hover:shadow-md transition; }
+.subtopics { @apply ml-6 mt-2 space-y-2; }
+button { @apply transition duration-200; }
+</style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-indigo-700 p-4 shadow-2xl">
-        <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
-            <a href="dashboard.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-            <a href="curriculum_topics.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Topics 🧠</a>
-            <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
-            <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
-            <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-        </div>
-    </nav>
-    <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-8">
-        <h1 class="text-3xl font-bold text-center text-gray-800">Curriculum Planner: Topics & Lessons 🧠</h1>
-        
-        <!-- Loading & Status -->
-        <p id="loadingStatus" class="text-center text-gray-500 p-4">
-            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing Firebase and loading curriculum data...
-        </p>
-        <p id="userIdDisplay" class="text-xs text-gray-400 mt-4 text-center">User ID: N/A</p>
+<body>
 
-        <!-- Topic Creation Form -->
-        <div class="bg-indigo-50 p-6 rounded-xl shadow-inner">
-            <h2 class="text-xl font-bold text-indigo-700 mb-4">Add New Topic/Lesson</h2>
-            <form id="addForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="text" id="topicName" placeholder="Topic Name (e.g., 'Ecology')" required class="p-3 border border-gray-300 rounded-lg">
-                <input type="text" id="lessonTitle" placeholder="Lesson Title (Optional)" class="p-3 border border-gray-300 rounded-lg">
-                <select id="parentTopic" class="p-3 border border-gray-300 rounded-lg col-span-1" disabled>
-                    <option value="">-- No Parent (Creates Main Topic) --</option>
-                </select>
-                <button type="submit" id="addBtn" class="p-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md col-span-1" disabled>
-                    <i class="fa-solid fa-plus mr-2"></i> Add Item
-                </button>
-            </form>
-            <p id="formMessage" class="mt-3 text-center font-medium hidden"></p>
-        </div>
+<!-- Navbar -->
+<nav class="bg-indigo-700 p-4 shadow-2xl">
+<div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
+    <a href="dashboard.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
+    <a href="curriculum_topics.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Topics 🧠</a>
+    <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
+    <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
+    <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
+</div>
+</nav>
 
-        <!-- Curriculum Display -->
-        <div class="pt-4">
-            <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center gap-2"><i class="fa-solid fa-list-tree"></i> My Curriculum Map</h2>
-            <div id="curriculumTree" class="space-y-4">
-                <!-- Curriculum content rendered here -->
+<div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-8">
+<h1 class="text-3xl font-bold text-center text-gray-800">Curriculum Planner 🧠</h1>
+<p id="userIdDisplay" class="text-center text-gray-500 mb-4">User ID: Loading...</p>
+
+<!-- Add Topic/Lesson Form -->
+<div class="bg-indigo-50 p-6 rounded-xl shadow-inner">
+<form id="addForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <input type="text" id="topicName" placeholder="Topic Name" class="p-3 border border-gray-300 rounded-lg">
+    <input type="text" id="lessonTitle" placeholder="Lesson Title (Optional)" class="p-3 border border-gray-300 rounded-lg">
+    <select id="parentTopic" class="p-3 border border-gray-300 rounded-lg col-span-1">
+        <option value="">-- No Parent --</option>
+    </select>
+    <button type="submit" id="addBtn" class="p-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md col-span-1">
+        <i class="fa-solid fa-plus mr-2"></i> Add Item
+    </button>
+</form>
+<p id="formMessage" class="mt-3 text-center font-medium hidden"></p>
+</div>
+
+<!-- Curriculum Display -->
+<div id="curriculumTree" class="space-y-4 pt-4"></div>
+</div>
+
+<!-- Firebase Logic -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
+  authDomain: "school-organiser-5f512.firebaseapp.com",
+  projectId: "school-organiser-5f512",
+  storageBucket: "school-organiser-5f512.appspot.com",
+  messagingSenderId: "567803400438",
+  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let userId = null;
+let curriculumData = { topics: [], lessons: [] };
+
+const userIdDisplay = document.getElementById('userIdDisplay');
+const addForm = document.getElementById('addForm');
+const topicNameInput = document.getElementById('topicName');
+const lessonTitleInput = document.getElementById('lessonTitle');
+const parentTopicSelect = document.getElementById('parentTopic');
+const formMessage = document.getElementById('formMessage');
+const curriculumTree = document.getElementById('curriculumTree');
+
+const CURRICULUM_DOC_REF = (uid) => doc(db, 'artifacts', 'school-organiser-5f512', 'users', uid, 'curriculum_planner', 'curriculum_data');
+
+function showMessage(element, message, isError = false){
+    element.textContent = message;
+    element.className = `mt-3 text-center font-medium p-2 rounded ${isError?'bg-red-200 text-red-800':'bg-green-200 text-green-800'}`;
+    element.classList.remove('hidden');
+    setTimeout(()=>element.classList.add('hidden'),5000);
+}
+
+function renderCurriculum() {
+    curriculumTree.innerHTML = '';
+    if(curriculumData.topics.length===0){
+        curriculumTree.innerHTML='<p class="text-gray-500 italic text-center p-6">No topics added yet!</p>';
+        return;
+    }
+
+    function buildTopicHTML(topic){
+        const linkedLessons = curriculumData.lessons.filter(l => l.topicId === topic.id);
+        return `
+        <div class="topic">
+            <div class="flex justify-between items-center pr-2">
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleCompletion('${topic.id}','topic')" class="text-xl ${topic.completed?'text-green-500':'text-gray-300 hover:text-green-400'}">
+                        <i class="fa-solid ${topic.completed?'fa-square-check':'fa-square'}"></i>
+                    </button>
+                    <span class="${topic.completed?'completed':'text-gray-800'} font-semibold">${topic.name}</span>
+                    <span class="topic-status-tag ${topic.completed?'bg-green-100 text-green-700':'bg-indigo-100 text-indigo-700'}">${topic.completed?'Completed':'Active'}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="deleteItem('${topic.id}','topic')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="subtopics">
+                ${linkedLessons.map(l=>`
+                <div class="lesson flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <button onclick="toggleCompletion('${l.id}','lesson')" class="text-lg ${l.completed?'text-green-500':'text-gray-300 hover:text-green-400'}">
+                            <i class="fa-solid ${l.completed?'fa-check-circle':'fa-circle'}"></i>
+                        </button>
+                        <span class="${l.completed?'completed':'text-gray-700'}">${l.title}</span>
+                    </div>
+                    <button onclick="deleteItem('${l.id}','lesson')" class="text-red-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button>
+                </div>`).join('')}
             </div>
         </div>
+        `;
+    }
 
-    </div>
+    curriculumData.topics.forEach(t=>curriculumTree.innerHTML+=buildTopicHTML(t));
+}
 
-    <!-- Firebase Logic -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+async function saveCurriculum(){
+    if(!userId) return;
+    await setDoc(CURRICULUM_DOC_REF(userId), curriculumData);
+}
 
-        setLogLevel('error');
+addForm.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const topicName = topicNameInput.value.trim();
+    const lessonTitle = lessonTitleInput.value.trim();
+    const parentId = parentTopicSelect.value || null;
+    const newId = Date.now().toString();
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let db = null;
-        let auth = null;
-        let userId = null;
-        let curriculumData = { topics: [], lessons: [] };
-
-        const loadingStatus = document.getElementById('loadingStatus');
-        const userIdDisplay = document.getElementById('userIdDisplay');
-        const curriculumTree = document.getElementById('curriculumTree');
-        const addForm = document.getElementById('addForm');
-        const addBtn = document.getElementById('addBtn');
-        const topicNameInput = document.getElementById('topicName');
-        const lessonTitleInput = document.getElementById('lessonTitle');
-        const parentTopicSelect = document.getElementById('parentTopic');
-        const formMessage = document.getElementById('formMessage');
-
-        const CURRICULUM_DOC_REF = (uid) => doc(db, 'artifacts', appId, 'users', uid, 'curriculum_planner', 'curriculum_data');
-
-        function showMessage(element, message, isError = false) {
-            element.textContent = message;
-            element.className = `mt-3 text-center font-medium p-2 rounded ${isError ? 'bg-red-200 text-red-800' : 'bg-green-200 text-green-800'}`;
-            element.classList.remove('hidden');
-            setTimeout(() => element.classList.add('hidden'), 5000);
+    if(topicName){
+        const newTopic = {id:newId,name:topicName,completed:false};
+        curriculumData.topics.push(newTopic);
+        if(lessonTitle){
+            curriculumData.lessons.push({id:newId+'-L',topicId:newId,title:lessonTitle,completed:false});
         }
+        showMessage(formMessage,'Topic added!');
+    } else if(lessonTitle && parentId){
+        curriculumData.lessons.push({id:newId+'-L',topicId:parentId,title:lessonTitle,completed:false});
+        showMessage(formMessage,'Lesson added!');
+    } else {
+        showMessage(formMessage,'Provide Topic or Lesson with parent.','true');
+        return;
+    }
 
-        async function initializeFirebaseAndAuth() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+    await saveCurriculum();
+    addForm.reset();
+    renderCurriculum();
+});
 
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
+window.deleteItem = async (id,type)=>{
+    if(!confirm('Are you sure?')) return;
+    if(type==='topic'){
+        curriculumData.topics=curriculumData.topics.filter(t=>t.id!==id);
+        curriculumData.lessons=curriculumData.lessons.filter(l=>l.topicId!==id);
+    } else curriculumData.lessons=curriculumData.lessons.filter(l=>l.id!==id);
+    await saveCurriculum();
+    renderCurriculum();
+};
 
-                onAuthStateChanged(auth, user => {
-                    if (user) {
-                        userId = user.uid;
-                        userIdDisplay.textContent = `User ID: ${userId}`;
-                        setupCurriculumListener();
-                        addBtn.disabled = false;
-                        loadingStatus.classList.add('hidden');
-                    } else {
-                        loadingStatus.textContent = 'Error: Failed to authenticate user.';
-                    }
-                });
+window.toggleCompletion = async (id,type)=>{
+    if(type==='topic'){
+        const t = curriculumData.topics.find(t=>t.id===id);
+        if(t) t.completed=!t.completed;
+    } else {
+        const l = curriculumData.lessons.find(l=>l.id===id);
+        if(l) l.completed=!l.completed;
+    }
+    await saveCurriculum();
+    renderCurriculum();
+};
 
-            } catch (error) {
-                console.error("Firebase Initialization Error:", error);
-                loadingStatus.textContent = `Error initializing app: ${error.message}`;
-            }
-        }
-
-        function setupCurriculumListener() {
-            onSnapshot(CURRICULUM_DOC_REF(userId), (docSnap) => {
-                if (docSnap.exists()) {
-                    curriculumData = docSnap.data();
-                    curriculumData.topics = curriculumData.topics || [];
-                    curriculumData.lessons = curriculumData.lessons || [];
-                } else {
-                    // Initialize document if it doesn't exist
-                    curriculumData = { topics: [], lessons: [] };
-                }
-                renderCurriculum();
-                populateParentSelect();
-            }, (error) => {
-                console.error("Error listening to Curriculum Firestore:", error);
-                showMessage(formMessage, "Failed to sync curriculum data.", true);
-            });
-        }
-
-        function populateParentSelect() {
-            parentTopicSelect.innerHTML = '<option value="">-- No Parent (Creates Main Topic) --</option>';
-            parentTopicSelect.disabled = curriculumData.topics.length === 0;
-
-            const topicsMap = new Map();
-            curriculumData.topics.forEach(t => topicsMap.set(t.id, t));
-
-            function buildOptions(topics, prefix = "") {
-                topics.sort((a, b) => a.name.localeCompare(b.name));
-                topics.forEach(topic => {
-                    const path = prefix + topic.name;
-                    const option = document.createElement('option');
-                    option.value = topic.id;
-                    option.textContent = path;
-                    parentTopicSelect.appendChild(option);
-
-                    const subtopics = topic.subtopics || [];
-                    if (subtopics.length > 0) {
-                        buildOptions(subtopics, path + " / ");
-                    }
-                });
-            }
-            
-            // Find top-level topics
-            const allTopicIds = new Set(curriculumData.topics.map(t => t.id));
-            const childTopicIds = new Set();
-            curriculumData.topics.forEach(t => {
-                (t.subtopics || []).forEach(sub => childTopicIds.add(sub.id));
-            });
-            const mainTopics = curriculumData.topics.filter(t => !childTopicIds.has(t.id));
-
-            buildOptions(mainTopics);
-        }
-
-        // --- Data Manipulation Functions ---
-
-        async function saveCurriculum() {
-            if (!userId) return;
-            try {
-                await setDoc(CURRICULUM_DOC_REF(userId), curriculumData);
-            } catch (error) {
-                console.error("Error saving curriculum:", error);
-                showMessage(formMessage, `Error saving data: ${error.message}`, true);
-            }
-        }
-        
-        function findTopicContainer(topics, parentId) {
-            if (!parentId) return curriculumData.topics; // Top level
-
-            function search(currentTopics) {
-                for (const topic of currentTopics) {
-                    if (topic.id === parentId) {
-                        if (!topic.subtopics) topic.subtopics = [];
-                        return topic.subtopics;
-                    }
-                    if (topic.subtopics) {
-                        const found = search(topic.subtopics);
-                        if (found) return found;
-                    }
-                }
-                return null;
-            }
-
-            return search(curriculumData.topics);
-        }
-        
-        // --- Event Handlers ---
-
-        addForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const topicName = topicNameInput.value.trim();
-            const lessonTitle = lessonTitleInput.value.trim();
-            const parentId = parentTopicSelect.value;
-            const newId = Date.now().toString() + Math.random().toString(36).substring(2, 6);
-
-            if (!topicName && !lessonTitle) {
-                showMessage(formMessage, 'Please enter a Topic Name or a Lesson Title.', true);
-                return;
-            }
-
-            if (topicName) {
-                // Add a new Topic
-                const newTopic = { id: newId, name: topicName, completed: false, subtopics: [] };
-                const targetContainer = findTopicContainer(curriculumData.topics, parentId);
-                
-                if (targetContainer) {
-                    targetContainer.push(newTopic);
-                    showMessage(formMessage, `Topic '${topicName}' added!`);
-                } else {
-                    showMessage(formMessage, 'Error: Parent topic not found.', true);
-                    return;
-                }
-
-                // If a lesson title was also provided, add a lesson linked to this new topic
-                if (lessonTitle) {
-                    const newLesson = { id: newId + '-L', topicId: newId, title: lessonTitle, completed: false, resources: '', attachments: [] };
-                    curriculumData.lessons.push(newLesson);
-                    showMessage(formMessage, `Topic and Lesson '${lessonTitle}' added!`);
-                }
-
-            } else if (lessonTitle) {
-                // Add a standalone Lesson (requires a parent topic)
-                if (!parentId) {
-                    showMessage(formMessage, 'Lessons must be linked to an existing topic. Please select a parent topic.', true);
-                    return;
-                }
-                const newLesson = { id: newId + '-L', topicId: parentId, title: lessonTitle, completed: false, resources: '', attachments: [] };
-                curriculumData.lessons.push(newLesson);
-                showMessage(formMessage, `Lesson '${lessonTitle}' added!`);
-            }
-
-            await saveCurriculum();
-            addForm.reset();
-            topicNameInput.focus();
+onAuthStateChanged(auth,user=>{
+    if(user){
+        userId=user.uid;
+        userIdDisplay.textContent=`User ID: ${userId}`;
+        onSnapshot(CURRICULUM_DOC_REF(userId),docSnap=>{
+            if(docSnap.exists()) curriculumData=docSnap.data();
+            else curriculumData={topics:[],lessons:[]};
+            renderCurriculum();
         });
-        
-        window.deleteItem = async (itemId, type) => {
-            if (!window.confirm(`Are you sure you want to delete this ${type}? This is permanent.`)) return;
+    } else userIdDisplay.textContent='User not authenticated';
+});
 
-            if (type === 'topic') {
-                // Recursive function to remove topic by ID
-                const removeTopic = (topicsArray, idToRemove) => {
-                    for (let i = 0; i < topicsArray.length; i++) {
-                        const topic = topicsArray[i];
-                        if (topic.id === idToRemove) {
-                            // Remove linked lessons first (simplified, real removal would be complex)
-                            curriculumData.lessons = curriculumData.lessons.filter(l => l.topicId !== idToRemove);
-                            topicsArray.splice(i, 1);
-                            return true;
-                        }
-                        if (topic.subtopics && removeTopic(topic.subtopics, idToRemove)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                };
-                removeTopic(curriculumData.topics, itemId);
-            } else if (type === 'lesson') {
-                curriculumData.lessons = curriculumData.lessons.filter(l => l.id !== itemId);
-            }
-
-            await saveCurriculum();
-        };
-
-        window.toggleCompletion = async (itemId, type) => {
-            if (type === 'topic') {
-                const toggleTopic = (topicsArray, id) => {
-                    for (const topic of topicsArray) {
-                        if (topic.id === id) {
-                            topic.completed = !topic.completed;
-                            return true;
-                        }
-                        if (topic.subtopics && toggleTopic(topic.subtopics, id)) return true;
-                    }
-                    return false;
-                };
-                toggleTopic(curriculumData.topics, itemId);
-            } else if (type === 'lesson') {
-                const lesson = curriculumData.lessons.find(l => l.id === itemId);
-                if (lesson) lesson.completed = !lesson.completed;
-            }
-            await saveCurriculum();
-        };
-
-
-        // --- Render Logic ---
-
-        function renderCurriculum() {
-            curriculumTree.innerHTML = '';
-            if (curriculumData.topics.length === 0) {
-                curriculumTree.innerHTML = '<p class="text-gray-500 italic text-center p-6">Start by adding your first Topic above!</p>';
-                return;
-            }
-
-            function buildTopicHTML(topic, isRoot = true) {
-                const linkedLessons = curriculumData.lessons.filter(l => l.topicId === topic.id);
-                const isCollapsed = true; // Start collapsed for complex topics
-
-                return `
-                    <div class="topic ${isRoot ? 'p-4 bg-white rounded-xl shadow-lg' : 'pt-2'}">
-                        <div class="flex justify-between items-center pr-2">
-                            <div class="flex items-center gap-2">
-                                <button onclick="window.toggleCompletion('${topic.id}', 'topic')" class="text-xl ${topic.completed ? 'text-green-500' : 'text-gray-300 hover:text-green-400'}" title="${topic.completed ? 'Mark as Incomplete' : 'Mark as Complete'}">
-                                    <i class="fa-solid ${topic.completed ? 'fa-square-check' : 'fa-square'}"></i>
-                                </button>
-                                <span class="text-xl font-semibold ${topic.completed ? 'completed' : 'text-gray-800'}">${topic.name}</span>
-                                <span class="topic-status-tag ${topic.completed ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'}">
-                                    ${topic.completed ? 'Completed' : 'Active'}
-                                </span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                ${ (topic.subtopics.length > 0 || linkedLessons.length > 0) ? `
-                                <button onclick="document.getElementById('content-${topic.id}').classList.toggle('hidden'); this.classList.toggle('collapsed')" class="toggle-btn collapsed">
-                                    <span class="text-xs text-gray-500 mr-1">${topic.subtopics.length + linkedLessons.length} items</span>
-                                    <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
-                                </button>` : ''}
-                                <button onclick="window.deleteItem('${topic.id}', 'topic')" class="text-red-400 hover:text-red-600" title="Delete Topic">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="content-${topic.id}" class="subtopics hidden">
-                            ${linkedLessons.map(lesson => `
-                                <div class="lesson flex justify-between items-center">
-                                    <div class="flex items-center gap-3">
-                                        <button onclick="window.toggleCompletion('${lesson.id}', 'lesson')" class="text-lg ${lesson.completed ? 'text-green-500' : 'text-gray-300 hover:text-green-400'}">
-                                            <i class="fa-solid ${lesson.completed ? 'fa-check-circle' : 'fa-circle'}"></i>
-                                        </button>
-                                        <div class="${lesson.completed ? 'completed' : 'text-gray-700'}">
-                                            <h3 class="text-lg font-medium">${lesson.title}</h3>
-                                            <p class="text-xs text-gray-500">Resources: ${lesson.resources.split('\n').filter(r => r.length > 0).length + lesson.attachments.length} items</p>
-                                        </div>
-                                    </div>
-                                    <button onclick="window.deleteItem('${lesson.id}', 'lesson')" class="text-red-400 hover:text-red-600" title="Delete Lesson">
-                                        <i class="fa-solid fa-trash-can text-sm"></i>
-                                    </button>
-                                </div>
-                            `).join('')}
-
-                            ${(topic.subtopics || []).map(subtopic => buildTopicHTML(subtopic, false)).join('')}
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Start rendering from the main, top-level topics
-            const mainTopicsContainer = document.createElement('div');
-            mainTopicsContainer.innerHTML = curriculumData.topics
-                .filter(t => !findTopicContainer(curriculumData.topics, t.id).some(sub => sub.id === t.id)) // Simple filter for top-level topics
-                .map(t => buildTopicHTML(t, true)).join('');
-            
-            curriculumTree.appendChild(mainTopicsContainer);
-        }
-
-        document.addEventListener('DOMContentLoaded', initializeFirebaseAndAuth);
-    </script>
+signInAnonymously(auth);
+</script>
 </body>
 </html>
-
