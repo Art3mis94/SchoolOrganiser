@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Educator Hub - Notes</title>
+  <title>Educator Hub - Notes</title Yang
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
     #noteEditor { min-height: 400px; }
-    body { font-family: 'Inter', sans-serif; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
+  <!-- EXACT SAME NAV YOU HAD -->
   <nav class="bg-indigo-700 p-4 shadow-2xl">
     <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
       <a href="dashboard.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home</a>
@@ -26,27 +26,28 @@
 
   <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
     <h1 class="text-3xl font-bold text-center text-gray-800">Quick Notes</h1>
-
+    
     <p id="loadingStatus" class="text-center text-gray-500 p-4">
       Initializing Firebase...
     </p>
-    <p id="userIdDisplay" class="text-xs text-gray-400 text-center">User ID: Loading...</p>
+    <p id="userIdDisplay" class="text-xs text-gray-400 mt-4 text-center">User ID: Loading...</p>
 
-    <div id="notesInterface" class="hidden space-y-6">
-      <div class="flex flex-col sm:flex-row justify-between items-center p-4 bg-indigo-50 rounded-xl">
-        <label class="text-lg font-semibold text-indigo-700">Select Date:</label>
-        <input type="date" id="noteDate" class="p-2 border border-indigo-300 rounded-lg">
+    <div id="notesInterface" class="hidden">
+      <div class="flex flex-col sm:flex-row justify-between items-center p-4 bg-indigo-50 rounded-xl shadow-inner mb-4">
+        <label for="noteDate" class="text-lg font-semibold text-indigo-700">Select Date:</label>
+        <input type="date" id="noteDate" class="p-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" disabled>
         <p id="saveStatus" class="text-sm italic text-gray-600"></p>
       </div>
-
+      
       <textarea id="noteEditor" 
-        placeholder="Start typing... Notes auto-save every few seconds."
-        class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-base"></textarea>
+        placeholder="Start typing your notes for this date here. Notes auto-save every few seconds."
+        class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base"
+        disabled></textarea>
 
-      <div>
-        <h2 class="text-2xl font-bold text-gray-700 mb-4">Other Notes This Month</h2>
+      <div class="mt-8">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center gap-2">Other Notes</h2>
         <div id="recentNotesList" class="space-y-3">
-          <p class="text-gray-500 italic text-center">Loading notes...</p>
+          <p class="text-gray-500 italic">Loading...</p>
         </div>
       </div>
     </div>
@@ -66,7 +67,7 @@
       appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
     };
 
-    // THIS WAS MISSING — the real appId from your config!
+    // THIS WAS THE ONLY REAL PROBLEM — appId was undefined!
     const APP_ID = "1:567803400438:web:56ea2010e2d2a54fcc5cd7";
 
     const app = initializeApp(firebaseConfig);
@@ -84,23 +85,14 @@
     const saveStatus = document.getElementById('saveStatus');
     const recentNotesList = document.getElementById('recentNotesList');
 
-    // Correct Firestore paths
-    const notesCollection = (uid) => collection(db, 'artifacts', APP_ID, 'users', uid, 'daily_notes');
-    const noteDoc = (uid, date) => doc(db, 'artifacts', APP_ID, 'users', uid, 'daily_notes', date);
+    const notesCollection = uid => collection(db, 'artifacts', APP_ID, 'users', uid, 'daily_notes');
+    const noteDocRef = (uid, date) => doc(db, 'artifacts', APP_ID, 'users', uid, 'daily_notes', date);
 
-    function today() {
-      return new Date().toISOString().slice(0, 10);
-    }
+    function today() { return new Date().toISOString().slice(0,10); }
+    function formatDate(d) { return new Date(d).toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'}); }
 
-    function formatDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
-      }
+    onAuthStateChanged(auth, user => {
+      if (!user) { window.location.href = "index.html"; return; }
 
       userId = user.uid;
       userIdDisplay.textContent = `User ID: ${userId}`;
@@ -108,6 +100,9 @@
       notesInterface.classList.remove('hidden');
 
       noteDateInput.value = today();
+      noteDateInput.disabled = false;
+      noteEditor.disabled = false;
+
       loadNote(today());
       loadMonthNotes(today());
 
@@ -115,14 +110,14 @@
       noteEditor.addEventListener('input', () => {
         saveStatus.textContent = "Typing...";
         clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(saveNote, 2000);
+        saveTimeout = setTimeout(saveNote, 3000);
       });
     });
 
-    async function loadNote(date) {
-      const unsub = onSnapshot(noteDoc(userId, date), (doc) => {
-        noteEditor.value = doc.exists() ? doc.data().content || "" : "";
-        saveStatus.textContent = `Loaded: ${formatDate(date)}`;
+    function loadNote(date) {
+      onSnapshot(noteDocRef(userId, date), snap => {
+        noteEditor.value = snap.exists() ? snap.data().content || "" : "";
+        saveStatus.textContent = `Loaded ${formatDate(date)}`;
       });
     }
 
@@ -130,51 +125,47 @@
       const date = noteDateInput.value;
       const content = noteEditor.value.trim();
 
-      try {
-        await setDoc(noteDoc(userId, date), {
-          content,
-          date,
-          timestamp: new Date().toISOString()
-        }, { merge: true });
+      await setDoc(noteDocRef(userId, date), {
+        content,
+        date,
+        timestamp: new Date().toISOString()
+      }, { merge: true });
 
-        saveStatus.textContent = `Saved at ${new Date().toLocaleTimeString()}!`;
-        loadMonthNotes(date);
-      } catch (e) {
-        saveStatus.textContent = "Save failed";
-        console.error(e);
-      }
+      saveStatus.textContent = `Saved at ${new Date().toLocaleTimeString()}!`;
+      loadMonthNotes(date);
     }
 
-    async function loadMonthNotes(currentDate) {
-      const yearMonth = currentDate.substring(0, 7);
-      const start = `${yearMonth}-01`;
-      const end = new Date(yearMonth + "-01");
-      end.setMonth(end.getMonth() + 1);
-      const endStr = end.toISOString().slice(0, 10);
+    async function loadMonthNotes(current) {
+      const month = current.slice(0,7);
+      const start = `${month}-01`;
+      const end = new Date(Date.UTC(parseInt(month.slice(0,4)), parseInt(month.slice(5,7)), 0) + 1).toISOString().slice(0,10);
 
-      const q = query(notesCollection(userId), where("date", ">=", start), where("date", "<", endStr));
+      const q = query(notesCollection(userId), where("date", ">=", start), where("date", "<", end));
       const snap = await getDocs(q);
 
       recentNotesList.innerHTML = "";
       if (snap.empty) {
-        recentNotesList.innerHTML = "<p class='text-gray-500 italic text-center'>No notes this month yet.</p>";
+        recentNotesList.innerHTML = "<p class='text-gray-500 italic text-center'>No other notes this month.</p>";
         return;
       }
 
       const notes = snap.docs
-        .map(d => ({ date: d.id, content: d.data().content || "" }))
-        .filter(n => n.date !== currentDate)
-        .sort((a, b) => b.date.localeCompare(a.date));
+        .filter(d => d.id !== current)
+        .map(d => ({date: d.id, content: d.data().content || ""}))
+        .sort((a,b) => b.date.localeCompare(a.date));
 
       notes.forEach(n => {
         const div = document.createElement('div');
-        div.className = "p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition";
-        div.onclick = () => {
-          noteDateInput.value = n.date;
-          loadNote(n.date);
-        };
-        const preview = n.content.substring(0, 80) + (n.content.length > 80 ? "..." : "");
-        div.innerHTML = `<strong>${formatDate(n.date)}</strong><p class="text-sm text-gray-600 mt-1">${preview || "(empty)"}</p>`;
+        div.className = 'p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer';
+        div.onclick = () => { noteDateInput.value = n.date; loadNote(n.date); };
+        const preview = n.content.substring(0,100) + (n.content.length > 100 ? "..." : "");
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-indigo-700">${formatDate(n.date)}</h3>
+            <i class="fa-solid fa-arrow-right text-indigo-400"></i>
+          </div>
+          <p class="text-sm text-gray-600 mt-1">${preview || "*(Empty Note)*"}</p>
+        `;
         recentNotesList.appendChild(div);
       });
     }
