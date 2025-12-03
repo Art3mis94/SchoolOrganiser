@@ -112,7 +112,8 @@
         // Enable error logging for Firebase
         setLogLevel('error');
 
-        // --- Global Config Variables (Mandatory for Canvas Environment) ---
+        // --- Global Config Variables (MANDATORY for Canvas Environment) ---
+        // These are accessed directly from the global scope where the platform injects them.
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
@@ -175,9 +176,9 @@
 
         // --- Firestore Reference (CORRECTED PATH) ---
         function topicsRef() {
-            if (!userId) {
-                // Return null or throw for safety, the caller should handle this
-                throw new Error("User not authenticated for data access.");
+            // Ensure DB and Auth are ready before creating the reference
+            if (!db || !auth || !userId) {
+                throw new Error("Firebase services are not fully initialized or user is not authenticated.");
             }
             return collection(db, 'artifacts', appId, 'users', userId, 'curriculum_topics');
         }
@@ -250,7 +251,7 @@
                                     await deleteDoc(doc(topicsRef(), topic.id));
                                 } catch (e) {
                                     console.error("Error deleting topic:", e);
-                                    alert('Failed to delete topic. Please check if you are signed in.');
+                                    alert('Failed to delete topic. Please check console for details.');
                                 }
                             }
                         };
@@ -313,7 +314,7 @@
                                             await deleteDoc(doc(lessonsRef, lesson.id));
                                         } catch (e) {
                                             console.error("Error deleting lesson:", e);
-                                            alert('Failed to delete lesson. Please check if you are signed in.');
+                                            alert('Failed to delete lesson. Please check console for details.');
                                         }
                                     }
                                 };
@@ -325,7 +326,8 @@
                     alert("Failed to load topics. Check your console and authentication status.");
                 });
             } catch (e) {
-                console.error("Load Topics initialization failed (likely missing userId):", e);
+                // This catches the error from topicsRef() if userId is still null on initial load
+                console.error("Load Topics function failed (waiting for authentication):", e);
             }
         }
 
@@ -342,9 +344,10 @@
         // Topic form submit
         topicForm.onsubmit = async e => {
             e.preventDefault();
-            // Crucial check before attempting database write
-            if (!userId) {
-                alert('Authentication is not complete. Please wait a moment and try again.');
+            // CRITICAL CHECK: Ensure all Firebase services are ready
+            if (!db || !auth || !userId) {
+                console.error("Database or authentication not ready.");
+                alert('The app is still loading. Please wait until the "Initializing" message disappears.');
                 return;
             }
 
@@ -359,16 +362,17 @@
                 topicModal.classList.add('hidden');
             } catch (error) {
                 console.error("Error saving topic:", error);
-                alert(`Failed to save topic: ${error.message}. Ensure you are authenticated.`);
+                alert(`Failed to save topic: ${error.message}. Check console for details.`);
             }
         };
 
         // Lesson form submit
         lessonForm.onsubmit = async e => {
             e.preventDefault();
-            // Crucial check before attempting database write
-            if (!userId) {
-                alert('Authentication is not complete. Please wait a moment and try again.');
+            // CRITICAL CHECK: Ensure all Firebase services are ready
+            if (!db || !auth || !userId) {
+                console.error("Database or authentication not ready.");
+                alert('The app is still loading. Please wait until the "Initializing" message disappears.');
                 return;
             }
             
@@ -396,7 +400,7 @@
                 lessonModal.classList.add('hidden');
             } catch (error) {
                 console.error("Error saving lesson:", error);
-                alert(`Failed to save lesson: ${error.message}. Ensure you are authenticated.`);
+                alert(`Failed to save lesson: ${error.message}. Check console for details.`);
             }
         };
 
