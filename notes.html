@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Educator Hub - Notes</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
-    #noteEditor { min-height: 400px; }
-    body { font-family: 'Inter', sans-serif; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Educator Hub - Notes</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
+  body { font-family: 'Inter', sans-serif; }
+</style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
@@ -25,163 +24,154 @@
   </div>
 </nav>
 
-  <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
-    <h1 class="text-3xl font-bold text-center text-gray-800">Quick Notes</h1>
-
-    <p id="loadingStatus" class="text-center text-gray-500 p-4">
-      Connecting to your notes...
-    </p>
-    <p id="userIdDisplay" class="text-xs text-gray-400 text-center">User ID: Loading...</p>
-
-    <div id="notesInterface" class="hidden">
-      <div class="flex flex-col sm:flex-row justify-between items-center p-4 bg-indigo-50 rounded-xl shadow-inner mb-4">
-        <label for="noteDate" class="text-lg font-semibold text-indigo-700">Select Date:</label>
-        <input type="date" id="noteDate" class="p-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" disabled>
-        <p id="saveStatus" class="text-sm italic text-gray-600 mt-2 sm:mt-0"></p>
-      </div>
-
-      <textarea id="noteEditor" 
-        placeholder="Start typing your notes for this date here. Notes auto-save every few seconds."
-        class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base"
-        disabled></textarea>
-
-      <div class="mt-8">
-        <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center gap-2">Other Notes</h2>
-        <div id="recentNotesList" class="space-y-3">
-          <p class="text-gray-500 italic text-center">Loading your notes...</p>
-        </div>
-      </div>
-    </div>
+<div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-3xl font-bold text-indigo-700">Teaching Notes</h1>
+    <button id="newNoteBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+      <i class="fa-solid fa-plus mr-1"></i> New Note
+    </button>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  <div id="notesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</div>
 
-    // YOUR REAL CONFIG — this is what was missing!
-    const firebaseConfig = {
-      apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
-      authDomain: "school-organiser-5f512.firebaseapp.com",
-      projectId: "school-organiser-5f512",
-      storageBucket: "school-organiser-5f512.appspot.com",
-      messagingSenderId: "567803400438",
-      appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
-    };
+<!-- Note Modal -->
+<div id="noteModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-2xl font-bold text-indigo-700">Add/Edit Note</h3>
+      <button id="closeNoteModal" class="text-gray-400 hover:text-gray-600 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <form id="noteForm" class="space-y-4">
+      <input type="text" id="noteTitle" placeholder="Title" class="w-full p-2 border rounded-md" required>
+      <textarea id="noteContent" rows="5" placeholder="Type your note here..." class="w-full p-2 border rounded-md"></textarea>
+      <button type="submit" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Save Note</button>
+    </form>
+  </div>
+</div>
 
-    // THIS IS THE KEY — your actual web app ID
-    const APP_ID = "1:567803400438:web:56ea2010e2d2a54fcc5cd7";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signOut 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { 
+  getFirestore,
+  collection, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
+  authDomain: "school-organiser-5f512.firebaseapp.com",
+  projectId: "school-organiser-5f512",
+  storageBucket: "school-organiser-5f512.appspot.com",
+  messagingSenderId: "567803400438",
+  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
+};
 
-    let userId = null;
-    let saveTimeout = null;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    const loadingStatus = document.getElementById('loadingStatus');
-    const userIdDisplay = document.getElementById('userIdDisplay');
-    const notesInterface = document.getElementById('notesInterface');
-    const noteDateInput = document.getElementById('noteDate');
-    const noteEditor = document.getElementById('noteEditor');
-    const saveStatus = document.getElementById('saveStatus');
-    const recentNotesList = document.getElementById('recentNotesList');
+// UI Elements
+const newNoteBtn = document.getElementById("newNoteBtn");
+const noteModal = document.getElementById("noteModal");
+const closeNoteModal = document.getElementById("closeNoteModal");
+const noteForm = document.getElementById("noteForm");
+const noteTitle = document.getElementById("noteTitle");
+const noteContent = document.getElementById("noteContent");
+const notesContainer = document.getElementById("notesContainer");
 
-    // Correct paths using the real appId
-    const notesCol = (uid) => collection(db, 'artifacts', APP_ID, 'users', uid, 'daily_notes');
-    const noteDoc = (uid, date) => doc(db, 'artifacts', APP_ID, 'users', uid, 'daily_notes', date);
+let currentUser = null;
+let editingNoteId = null;
 
-    function today() { return new Date().toISOString().slice(0,10); }
-    function formatDate(d) { return new Date(d).toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'}); }
+// Auth Guard
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.href = "index.html";
+  } else {
+    currentUser = user;
+    loadNotes();
+  }
+});
 
-    onAuthStateChanged(auth, user => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
-      }
+// Notes Collection Reference
+const notesRef = () => collection(db, "users", currentUser.uid, "notes");
 
-      userId = user.uid;
-      userIdDisplay.textContent = `User ID: ${userId}`;
-      loadingStatus.classList.add('hidden');
-      notesInterface.classList.remove('hidden');
+// Load Notes
+function loadNotes() {
+  const q = query(notesRef(), orderBy("createdAt", "desc"));
+  onSnapshot(q, snapshot => {
+    notesContainer.innerHTML = "";
+    snapshot.forEach(docSnap => {
+      const note = { id: docSnap.id, ...docSnap.data() };
+      const card = document.createElement("div");
+      card.className = "bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col justify-between";
+      card.innerHTML = `
+        <div>
+          <h3 class="font-bold text-indigo-700 text-lg mb-1">${note.title}</h3>
+          <p class="text-gray-700 text-sm mb-2">${note.content || ""}</p>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button class="editNoteBtn text-blue-600"><i class="fa-solid fa-pen"></i></button>
+          <button class="deleteNoteBtn text-red-600"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      `;
+      notesContainer.appendChild(card);
 
-      noteDateInput.value = today();
-      noteDateInput.disabled = false;
-      noteEditor.disabled = false;
+      card.querySelector(".editNoteBtn").onclick = () => {
+        editingNoteId = note.id;
+        noteTitle.value = note.title;
+        noteContent.value = note.content || "";
+        noteModal.classList.remove("hidden");
+      };
 
-      loadNote(today());
-      loadMonthNotes(today());
-
-      noteDateInput.addEventListener('change', () => loadNote(noteDateInput.value));
-      noteEditor.addEventListener('input', () => {
-        saveStatus.textContent = "Typing...";
-        clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(saveNote, 3000);
-      });
+      card.querySelector(".deleteNoteBtn").onclick = async () => {
+        if (confirm("Delete this note?")) {
+          await deleteDoc(doc(notesRef(), note.id));
+        }
+      };
     });
+  });
+}
 
-    function loadNote(date) {
-      onSnapshot(noteDoc(userId, date), snap => {
-        noteEditor.value = snap.exists() ? snap.data().content || "" : "";
-        saveStatus.textContent = `Loaded ${formatDate(date)}`;
-      }, err => console.error(err));
-    }
+// Modal Open/Close
+newNoteBtn.onclick = () => {
+  editingNoteId = null;
+  noteForm.reset();
+  noteModal.classList.remove("hidden");
+};
+closeNoteModal.onclick = () => noteModal.classList.add("hidden");
 
-    async function saveNote() {
-      const date = noteDateInput.value;
-      const content = noteEditor.value.trim();
-
-      try {
-        await setDoc(noteDoc(userId, date), {
-          content,
-          date,
-          timestamp: new Date().toISOString()
-        }, { merge: true });
-
-        saveStatus.textContent = `Saved at ${new Date().toLocaleTimeString()}!`;
-        loadMonthNotes(date);
-      } catch (e) {
-        saveStatus.textContent = "Save failed";
-        console.error(e);
-      }
-    }
-
-    async function loadMonthNotes(currentDate) {
-      const month = currentDate.slice(0,7);
-      const start = `${month}-01`;
-      const next = new Date(month + "-01");
-      next.setMonth(next.getMonth() + 1);
-      const end = next.toISOString().slice(0,10);
-
-      const q = query(notesCol(userId), where("date", ">=", start), where("date", "<", end));
-      const snap = await getDocs(q);
-
-      recentNotesList.innerHTML = "";
-      if (snap.empty) {
-        recentNotesList.innerHTML = "<p class='text-gray-500 italic text-center'>No other notes this month.</p>";
-        return;
-      }
-
-      const notes = snap.docs
-        .filter(d => d.id !== currentDate)
-        .map(d => ({ date: d.id, content: d.data().content || "" }))
-        .sort((a,b) => b.date.localeCompare(a.date));
-
-      notes.forEach(n => {
-        const div = document.createElement('div');
-        div.className = 'p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer';
-        div.onclick = () => { noteDateInput.value = n.date; loadNote(n.date); };
-        const preview = n.content.substring(0,100) + (n.content.length > 100 ? "..." : "");
-        div.innerHTML = `
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-indigo-700">${formatDate(n.date)}</h3>
-            <i class="fa-solid fa-arrow-right text-indigo-400"></i>
-          </div>
-          <p class="text-sm text-gray-600 mt-1">${preview || "*(Empty Note)*"}</p>
-        `;
-        recentNotesList.appendChild(div);
-      });
-    }
-  </script>
+// Save Note
+noteForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const data = {
+    title: noteTitle.value,
+    content: noteContent.value,
+    createdAt: serverTimestamp()
+  };
+  if (editingNoteId) {
+    await updateDoc(doc(notesRef(), editingNoteId), data);
+  } else {
+    await addDoc(notesRef(), data);
+  }
+  noteForm.reset();
+  noteModal.classList.add("hidden");
+};
+</script>
 </body>
 </html>
