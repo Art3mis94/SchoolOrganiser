@@ -1,154 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Curriculum Topics | Educator Hub</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-.dropzone { border: 2px dashed #4f46e5; border-radius:0.5rem; padding:1rem; text-align:center; cursor:pointer; transition:0.2s; }
-.dropzone.dragover { background-color:#e0e7ff; }
-</style>
-</head>
-<body class="bg-gray-100 min-h-screen">
-
-<!-- Navbar -->
-<nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-5xl mx-auto flex flex-wrap justify-center gap-4">
-    <a href="index.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-    <a href="topics.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Topics 🧠</a>
-    <a href="notes.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
-    <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
-    <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-    <button id="logoutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
-  </div>
-</nav>
-
-<div class="container max-w-5xl mx-auto p-6 mt-6">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-3xl font-bold text-indigo-700">Curriculum Topics</h1>
-    <button id="newTopicBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
-      <i class="fa-solid fa-plus mr-1"></i> New Topic
-    </button>
-  </div>
-  <div id="topicTree" class="space-y-3"></div>
-</div>
-
-<!-- Topic Modal -->
-<div id="topicModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-    <div class="flex justify-between items-center pb-3 border-b">
-      <h3 class="text-2xl font-bold text-indigo-700">Add/Edit Topic</h3>
-      <button id="closeTopicModal" class="text-gray-400 hover:text-gray-600 text-xl">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-    <form id="topicForm" class="space-y-4" data-id="">
-      <input type="text" id="topicName" placeholder="Topic Name" class="w-full p-2 border rounded-md" required>
-      <button type="submit" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Save Topic</button>
-    </form>
-  </div>
-</div>
-
-<!-- Lesson Modal -->
-<div id="lessonModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
-    <div class="flex justify-between items-center pb-3 border-b">
-      <h3 class="text-2xl font-bold text-green-700">Add/Edit Lesson</h3>
-      <button id="closeLessonModal" class="text-gray-400 hover:text-gray-600 text-xl">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-    <form id="lessonForm" class="space-y-4" data-id="">
-      <input type="text" id="lessonTitle" placeholder="Lesson Title" class="w-full p-2 border rounded-md" required>
-      <textarea id="lessonContent" rows="3" placeholder="Lesson content / learning outcome..." class="w-full p-2 border rounded-md"></textarea>
-
-      <div id="lessonFilesContainer" class="space-y-2"></div>
-      <button type="button" id="addFileBtn" class="w-full py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">Add File</button>
-
-      <div id="lessonLinksContainer" class="space-y-2"></div>
-      <button type="button" id="addLinkBtn" class="w-full py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Add Link</button>
-
-      <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Save Lesson</button>
-    </form>
-  </div>
-</div>
-
 <script type="module">
 import { auth, db } from './firebase-config.js';
 import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-let currentUser=null;
-onAuthStateChanged(auth, user=>{
-    if(!user) window.location.href='login.html';
-    currentUser=user;
+let currentUser = null;
+
+// UI refs
+const topicModal = document.getElementById('topicModal');
+const lessonModal = document.getElementById('lessonModal');
+const topicForm = document.getElementById('topicForm');
+const topicName = document.getElementById('topicName');
+const lessonForm = document.getElementById('lessonForm');
+const lessonTitle = document.getElementById('lessonTitle');
+const lessonContent = document.getElementById('lessonContent');
+const lessonFilesContainer = document.getElementById('lessonFilesContainer');
+const lessonLinksContainer = document.getElementById('lessonLinksContainer');
+const newTopicBtn = document.getElementById('newTopicBtn');
+const closeTopicModal = document.getElementById('closeTopicModal');
+const closeLessonModal = document.getElementById('closeLessonModal');
+const addFileBtn = document.getElementById('addFileBtn');
+const addLinkBtn = document.getElementById('addLinkBtn');
+
+let editingTopicId = null;
+let editingLessonId = null;
+let currentTopicId = null;
+
+// Firestore reference
+function topicsRef() {
+    return collection(db, 'users', currentUser.uid, 'topics');
+}
+
+// Auth guard
+onAuthStateChanged(auth, user => {
+    if (!user) window.location.href = 'login.html';
+    currentUser = user;
     loadTopics();
 });
 
-document.getElementById('logoutBtn').onclick=async()=>{ await signOut(auth); window.location.href='login.html'; };
+// Logout
+document.getElementById('logoutBtn').onclick = async () => { 
+    await signOut(auth); 
+    window.location.href = 'login.html'; 
+};
 
-// Topic modal refs
-const topicModal=document.getElementById('topicModal');
-const newTopicBtn=document.getElementById('newTopicBtn');
-const closeTopicModal=document.getElementById('closeTopicModal');
-const topicForm=document.getElementById('topicForm');
-const topicName=document.getElementById('topicName');
+// Modal controls
+newTopicBtn.onclick = () => { editingTopicId = null; topicForm.reset(); topicModal.classList.remove('hidden'); };
+closeTopicModal.onclick = () => topicModal.classList.add('hidden');
+closeLessonModal.onclick = () => lessonModal.classList.add('hidden');
 
-// Lesson modal refs
-const lessonModal=document.getElementById('lessonModal');
-const closeLessonModal=document.getElementById('closeLessonModal');
-const lessonForm=document.getElementById('lessonForm');
-const lessonTitle=document.getElementById('lessonTitle');
-const lessonContent=document.getElementById('lessonContent');
-const lessonFilesContainer=document.getElementById('lessonFilesContainer');
-const lessonLinksContainer=document.getElementById('lessonLinksContainer');
-const addFileBtn=document.getElementById('addFileBtn');
-const addLinkBtn=document.getElementById('addLinkBtn');
-
-let editingTopicId=null, editingLessonId=null, currentTopicId=null;
-
-// Topic modal open/close
-newTopicBtn.onclick=()=>{ editingTopicId=null; topicForm.reset(); topicModal.classList.remove('hidden'); };
-closeTopicModal.onclick=()=>topicModal.classList.add('hidden');
-
-// Lesson modal open/close
-closeLessonModal.onclick=()=>lessonModal.classList.add('hidden');
-
-// Add file input dynamically
-addFileBtn.onclick=()=>{
-    const div=document.createElement('div');
-    div.className='flex gap-2';
-    div.innerHTML=`<input type="text" placeholder="File URL" class="flex-1 p-2 border rounded-md" required>
-                   <button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
+// Add dynamic file/link inputs
+addFileBtn.onclick = () => {
+    const div = document.createElement('div');
+    div.className = 'flex gap-2';
+    div.innerHTML = `<input type="text" placeholder="File URL" class="flex-1 p-2 border rounded-md" required>
+                     <button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
     lessonFilesContainer.appendChild(div);
-    div.querySelector('.removeBtn').onclick=()=>div.remove();
+    div.querySelector('.removeBtn').onclick = () => div.remove();
 };
 
-// Add link input dynamically
-addLinkBtn.onclick=()=>{
-    const div=document.createElement('div');
-    div.className='flex gap-2';
-    div.innerHTML=`<input type="url" placeholder="Link URL" class="flex-1 p-2 border rounded-md" required>
-                   <button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
+addLinkBtn.onclick = () => {
+    const div = document.createElement('div');
+    div.className = 'flex gap-2';
+    div.innerHTML = `<input type="url" placeholder="Link URL" class="flex-1 p-2 border rounded-md" required>
+                     <button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
     lessonLinksContainer.appendChild(div);
-    div.querySelector('.removeBtn').onclick=()=>div.remove();
+    div.querySelector('.removeBtn').onclick = () => div.remove();
 };
-
-// Firestore refs
-const topicsRef=()=>collection(db,'users',currentUser.uid,'topics');
 
 // Load topics and lessons
-function loadTopics(){
-    const q=query(topicsRef(),orderBy('createdAt','asc'));
-    onSnapshot(q,snapshot=>{
-        const topicTree=document.getElementById('topicTree'); topicTree.innerHTML='';
-        snapshot.docs.forEach(docSnap=>{
-            const topic={...docSnap.data(),id:docSnap.id};
-            const div=document.createElement('div'); 
-            div.className='bg-white rounded-xl shadow hover:shadow-lg transition';
-            div.innerHTML=`
+function loadTopics() {
+    const q = query(topicsRef(), orderBy('createdAt', 'asc'));
+    onSnapshot(q, snapshot => {
+        const topicTree = document.getElementById('topicTree');
+        topicTree.innerHTML = '';
+        snapshot.docs.forEach(docSnap => {
+            const topic = { ...docSnap.data(), id: docSnap.id };
+            const div = document.createElement('div');
+            div.className = 'bg-white rounded-xl shadow hover:shadow-lg transition';
+            div.innerHTML = `
                 <div class="flex justify-between items-center p-4 cursor-pointer">
                   <h3 class="font-bold text-indigo-700">${topic.name}</h3>
                   <div class="flex gap-2">
@@ -162,28 +91,38 @@ function loadTopics(){
             `;
             topicTree.appendChild(div);
 
-            const collapseBtn=div.querySelector('.collapseBtn');
-            const lessonContainer=div.querySelector('.lessonContainer');
-            collapseBtn.onclick=()=>{ lessonContainer.classList.toggle('hidden'); collapseBtn.querySelector('i').classList.toggle('fa-chevron-down'); collapseBtn.querySelector('i').classList.toggle('fa-chevron-up'); };
+            const collapseBtn = div.querySelector('.collapseBtn');
+            const lessonContainer = div.querySelector('.lessonContainer');
+            collapseBtn.onclick = () => {
+                lessonContainer.classList.toggle('hidden');
+                collapseBtn.querySelector('i').classList.toggle('fa-chevron-down');
+                collapseBtn.querySelector('i').classList.toggle('fa-chevron-up');
+            };
 
             // Topic buttons
-            div.querySelector('.editTopicBtn').onclick=()=>{ editingTopicId=topic.id; topicName.value=topic.name; topicModal.classList.remove('hidden'); };
-            div.querySelector('.deleteTopicBtn').onclick=async()=>{ if(confirm('Delete this topic?')) await deleteDoc(doc(topicsRef(),topic.id)); };
-            div.querySelector('.addLessonBtn').onclick=()=>{ editingLessonId=null; currentTopicId=topic.id; lessonForm.reset(); lessonFilesContainer.innerHTML=''; lessonLinksContainer.innerHTML=''; lessonModal.classList.remove('hidden'); };
+            div.querySelector('.editTopicBtn').onclick = () => {
+                editingTopicId = topic.id; topicName.value = topic.name; topicModal.classList.remove('hidden');
+            };
+            div.querySelector('.deleteTopicBtn').onclick = async () => {
+                if (confirm('Delete this topic?')) await deleteDoc(doc(topicsRef(), topic.id));
+            };
+            div.querySelector('.addLessonBtn').onclick = () => {
+                editingLessonId = null; currentTopicId = topic.id; lessonForm.reset();
+                lessonFilesContainer.innerHTML = ''; lessonLinksContainer.innerHTML = '';
+                lessonModal.classList.remove('hidden');
+            };
 
             // Load lessons
-            const lessonsRef=collection(topicsRef(),topic.id,'lessons');
-            onSnapshot(query(lessonsRef,orderBy('createdAt','asc')),snap=>{
-                lessonContainer.innerHTML='';
-                snap.docs.forEach(lDoc=>{
-                    const lesson={...lDoc.data(),id:lDoc.id};
-                    const lDiv=document.createElement('div');
-                    lDiv.className='p-2 border rounded-lg flex flex-col gap-1 bg-indigo-50';
-                    let filesHtml='';
-                    if(lesson.files && lesson.files.length) filesHtml=lesson.files.map(f=>`<p class="text-purple-600"><a href="${f}" target="_blank">Open File</a></p>`).join('');
-                    let linksHtml='';
-                    if(lesson.links && lesson.links.length) linksHtml=lesson.links.map(l=>`<p class="text-blue-600"><a href="${l}" target="_blank">${l}</a></p>`).join('');
-                    lDiv.innerHTML=`
+            const lessonsRef = collection(topicsRef(), topic.id, 'lessons');
+            onSnapshot(query(lessonsRef, orderBy('createdAt', 'asc')), snap => {
+                lessonContainer.innerHTML = '';
+                snap.docs.forEach(lDoc => {
+                    const lesson = { ...lDoc.data(), id: lDoc.id };
+                    const lDiv = document.createElement('div');
+                    lDiv.className = 'p-2 border rounded-lg flex flex-col gap-1 bg-indigo-50';
+                    const filesHtml = (lesson.files || []).map(f => `<p class="text-purple-600"><a href="${f}" target="_blank">Open File</a></p>`).join('');
+                    const linksHtml = (lesson.links || []).map(l => `<p class="text-blue-600"><a href="${l}" target="_blank">${l}</a></p>`).join('');
+                    lDiv.innerHTML = `
                         <div class="flex justify-between items-start">
                           <div>
                             <h4 class="font-semibold">${lesson.title}</h4>
@@ -198,30 +137,16 @@ function loadTopics(){
                     `;
                     lessonContainer.appendChild(lDiv);
 
-                    lDiv.querySelector('.editLessonBtn').onclick=()=>{
-                        editingLessonId=lesson.id; currentTopicId=topic.id;
-                        lessonTitle.value=lesson.title;
-                        lessonContent.value=lesson.content||'';
-                        lessonFilesContainer.innerHTML='';
-                        lessonLinksContainer.innerHTML='';
-                        if(lesson.files) lesson.files.forEach(f=>{
-                            const div=document.createElement('div');
-                            div.className='flex gap-2';
-                            div.innerHTML=`<input type="text" value="${f}" class="flex-1 p-2 border rounded-md"><button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
-                            lessonFilesContainer.appendChild(div);
-                            div.querySelector('.removeBtn').onclick=()=>div.remove();
-                        });
-                        if(lesson.links) lesson.links.forEach(l=>{
-                            const div=document.createElement('div');
-                            div.className='flex gap-2';
-                            div.innerHTML=`<input type="url" value="${l}" class="flex-1 p-2 border rounded-md"><button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
-                            lessonLinksContainer.appendChild(div);
-                            div.querySelector('.removeBtn').onclick=()=>div.remove();
-                        });
+                    lDiv.querySelector('.editLessonBtn').onclick = () => {
+                        editingLessonId = lesson.id; currentTopicId = topic.id;
+                        lessonTitle.value = lesson.title; lessonContent.value = lesson.content || '';
+                        lessonFilesContainer.innerHTML = ''; lessonLinksContainer.innerHTML = '';
+                        (lesson.files || []).forEach(f => { addDynamicInput(lessonFilesContainer, f); });
+                        (lesson.links || []).forEach(l => { addDynamicInput(lessonLinksContainer, l); });
                         lessonModal.classList.remove('hidden');
                     };
-                    lDiv.querySelector('.deleteLessonBtn').onclick=async()=>{
-                        if(confirm('Delete this lesson?')) await deleteDoc(doc(lessonsRef,lesson.id));
+                    lDiv.querySelector('.deleteLessonBtn').onclick = async () => {
+                        if (confirm('Delete this lesson?')) await deleteDoc(doc(lessonsRef, lesson.id));
                     };
                 });
             });
@@ -229,26 +154,34 @@ function loadTopics(){
     });
 }
 
+// Helper for dynamically creating inputs
+function addDynamicInput(container, value='') {
+    const div = document.createElement('div');
+    div.className = 'flex gap-2';
+    div.innerHTML = `<input type="text" value="${value}" class="flex-1 p-2 border rounded-md" required>
+                     <button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
+    container.appendChild(div);
+    div.querySelector('.removeBtn').onclick = () => div.remove();
+}
+
 // Topic form submit
-topicForm.onsubmit=async e=>{
+topicForm.onsubmit = async e => {
     e.preventDefault();
-    const data={ name: topicName.value, createdAt: new Date() };
-    if(editingTopicId) await updateDoc(doc(topicsRef(),editingTopicId),data);
-    else await addDoc(topicsRef(),data);
+    const data = { name: topicName.value, createdAt: new Date() };
+    if (editingTopicId) await updateDoc(doc(topicsRef(), editingTopicId), data);
+    else await addDoc(topicsRef(), data);
     topicForm.reset(); topicModal.classList.add('hidden');
 };
 
 // Lesson form submit
-lessonForm.onsubmit=async e=>{
+lessonForm.onsubmit = async e => {
     e.preventDefault();
-    const files=[...lessonFilesContainer.querySelectorAll('input')].map(i=>i.value).filter(v=>v);
-    const links=[...lessonLinksContainer.querySelectorAll('input')].map(i=>i.value).filter(v=>v);
-    const data={ title: lessonTitle.value, content: lessonContent.value||'', files, links, createdAt: new Date() };
-    const lessonsRef=collection(topicsRef(),currentTopicId,'lessons');
-    if(editingLessonId) await updateDoc(doc(lessonsRef,editingLessonId),data);
-    else await addDoc(lessonsRef,data);
-    lessonForm.reset(); lessonFilesContainer.innerHTML=''; lessonLinksContainer.innerHTML=''; lessonModal.classList.add('hidden');
+    const files = [...lessonFilesContainer.querySelectorAll('input')].map(i => i.value).filter(v => v);
+    const links = [...lessonLinksContainer.querySelectorAll('input')].map(i => i.value).filter(v => v);
+    const data = { title: lessonTitle.value, content: lessonContent.value||'', files, links, createdAt: new Date() };
+    const lessonsRef = collection(topicsRef(), currentTopicId, 'lessons');
+    if (editingLessonId) await updateDoc(doc(lessonsRef, editingLessonId), data);
+    else await addDoc(lessonsRef, data);
+    lessonForm.reset(); lessonFilesContainer.innerHTML = ''; lessonLinksContainer.innerHTML = ''; lessonModal.classList.add('hidden');
 };
 </script>
-</body>
-</html>
