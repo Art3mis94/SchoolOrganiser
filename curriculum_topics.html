@@ -113,7 +113,7 @@
         setLogLevel('error');
 
         // --- Global Config Variables (MANDATORY for Canvas Environment) ---
-        // These are accessed directly from the global scope where the platform injects them.
+        // These variables are injected by the platform and contain the correct, authenticated configuration.
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
@@ -147,10 +147,12 @@
         // --- Core Firebase Initialization and Authentication ---
         async function initializeFirebaseAndAuth() {
             try {
+                // Initialize Firebase using the platform-provided config
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
+                // Authenticate using the custom token or anonymously
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
@@ -164,7 +166,7 @@
                         mainInterface.classList.remove('hidden');
                         loadTopics(); // Start loading data now that we have a userId
                     } else {
-                        // Redirect to the entry point if unauthenticated
+                        // Fallback/redirect if auth fails
                         window.location.href = 'index.html'; 
                     }
                 });
@@ -176,7 +178,7 @@
 
         // --- Firestore Reference (CORRECTED PATH) ---
         function topicsRef() {
-            // Ensure DB and Auth are ready before creating the reference
+            // CRITICAL CHECK: Ensure DB and Auth are ready before creating the reference
             if (!db || !auth || !userId) {
                 throw new Error("Firebase services are not fully initialized or user is not authenticated.");
             }
