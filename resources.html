@@ -7,19 +7,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
-    <!-- Consolidated Application Styles -->
     <style>
         /* ====================================== */
         /* APPLICATION-WIDE COMPONENT STYLES      */
         /* ====================================== */
         .nav-active {
-            @apply bg-white text-indigo-700 shadow-inner;
+            background-color: #fff; /* Tailwind bg-white */
+            color: #4338ca; /* Tailwind text-indigo-700 */
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06); /* Tailwind shadow-inner */
         }
         .tab-active {
-            @apply bg-white border-b-2 border-indigo-600 font-bold text-indigo-700;
+            background-color: #fff; /* Tailwind bg-white */
+            border-bottom: 2px solid #4f46e5; /* Tailwind border-b-2 border-indigo-600 */
+            font-weight: 700; /* Tailwind font-bold */
+            color: #4338ca; /* Tailwind text-indigo-700 */
         }
         .collapsible-header {
-            @apply flex justify-between items-center cursor-pointer p-4 rounded-t-xl;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 1rem;
+            border-top-left-radius: 0.75rem; /* Tailwind rounded-t-xl */
+            border-top-right-radius: 0.75rem;
         }
         .drag-zone {
             border: 2px dashed #9ca3af;
@@ -43,48 +53,30 @@
             cursor: pointer;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); 
         }
-        /* Toggle button for curriculum expansion */
+        /* Toggle button for curriculum expansion (kept for consistency) */
         .toggle-btn {
-            @apply text-gray-600 hover:text-indigo-600 transition-transform duration-200;
+            color: #4b5563; /* Tailwind text-gray-600 */
+            transition: transform 0.2s;
+        }
+        .toggle-btn:hover {
+            color: #4f46e5; /* Tailwind hover:text-indigo-600 */
         }
         .toggle-btn span:last-child {
-            @apply transition-transform duration-200;
+            transition: transform 0.2s;
         }
         .toggle-btn.collapsed span:last-child {
-            @apply rotate-0;
+            transform: rotate(0);
         }
         .toggle-btn:not(.collapsed) span:last-child {
-            @apply rotate-90;
-        }
-        /* Curriculum Structure Styles (Topic/Lesson containers) */
-        .topic {
-            @apply flex flex-col gap-2;
-        }
-        .subtopics {
-            @apply ml-6 mt-2 space-y-2;
-        }
-        .lesson-group {
-            @apply mb-4;
-        }
-        .lesson {
-            @apply p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition;
-        }
-        .lesson h3 {
-            @apply text-lg font-semibold text-gray-800;
-        }
-        .lesson p {
-            @apply text-gray-600;
-        }
-        /* Completed item styles */
-        .completed {
-            @apply line-through text-gray-500;
+            transform: rotate(90deg);
         }
         /* Button defaults for the app */
         button {
-            @apply transition duration-200;
+            transition: all 0.2s;
         }
         .topic button {
-            @apply transition duration-200 shadow-sm hover:shadow-md; 
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
     </style>
 </head>
@@ -101,7 +93,6 @@
     <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
         <h1 class="text-3xl font-bold text-center text-gray-800">Resources & Management Tools 🛠️</h1>
         
-        <!-- Loading Indicator -->
         <div id="loadingIndicator" class="text-center text-gray-500 p-8">
             <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing App & Loading Curriculum Data...
         </div>
@@ -115,7 +106,6 @@
 
         <div id="contentTools" class="space-y-6">
             
-            <!-- Lesson Import Section -->
             <div id="sectionLessonImport" class="bg-green-50 border-l-4 border-green-500 rounded-xl shadow-lg">
                 <div class="collapsible-header bg-green-100" onclick="toggleCollapse('contentLessonImport', 'iconLessonImport')">
                     <h2 class="text-xl font-bold text-green-700 flex items-center gap-3">
@@ -150,7 +140,6 @@
                 </div>
             </div>
 
-            <!-- General Import Section -->
             <div id="sectionGeneralImport" class="bg-indigo-50 border-l-4 border-indigo-500 rounded-xl shadow-lg">
                 <div class="collapsible-header bg-indigo-100" onclick="toggleCollapse('contentGeneralImport', 'iconGeneralImport')">
                     <h2 class="text-xl font-bold text-indigo-700 flex items-center gap-3">
@@ -177,7 +166,6 @@
                 </div>
             </div>
             
-            <!-- Data Management Section -->
             <div id="sectionBackup" class="bg-yellow-50 border-l-4 border-yellow-500 rounded-xl shadow-lg">
                 <div class="collapsible-header bg-yellow-100" onclick="toggleCollapse('contentBackup', 'iconBackup')">
                     <h2 class="text-xl font-bold text-yellow-700 flex items-center gap-3">
@@ -203,7 +191,6 @@
 
         </div>
 
-        <!-- Resources View Tab -->
         <div id="contentFiles" class="hidden space-y-8">
             
             <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl shadow-inner">
@@ -228,10 +215,473 @@
 
     </div>
     
-    <!-- Firebase Modular SDK Imports & App Logic -->
     <script type="module">
-        // Full script as in your original code (Firebase init, real-time listeners, drag-drop, import, backup/restore, UI rendering)
-        // For brevity, you can directly reuse the script you provided above here.
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        
+        // Firebase config (Ensure this is your correct configuration)
+        const firebaseConfig = {
+          apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
+          authDomain: "school-organiser-5f512.firebaseapp.com",
+          projectId: "school-organiser-5f512",
+          storageBucket: "school-organiser-5f512.appspot.com",
+          messagingSenderId: "567803400438",
+          appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // --- UI Elements ---
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorDisplay = document.getElementById('errorDisplay');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+
+        const importTopicSelect = document.getElementById('importTopicSelect');
+        const importLessonSelect = document.getElementById('importLessonSelect');
+        const submitLessonImportBtn = document.getElementById('submitLessonImportBtn');
+        const submitGeneralImportBtn = document.getElementById('submitGeneralImportBtn');
+        const backupGeneralDataBtn = document.getElementById('backupGeneralDataBtn');
+        const restoreGeneralDataBtn = document.getElementById('restoreGeneralDataBtn');
+        
+        const generalResourcesList = document.getElementById('generalResourcesList');
+        const uploadedFilesList = document.getElementById('uploadedFilesList');
+        const fileLessonDropZone = document.getElementById('fileLessonDropZone');
+        const fileDropZone = document.getElementById('fileDropZone');
+
+        // --- State Variables ---
+        let currentUser = null;
+        let curriculumTopics = []; // To hold topic data
+        let curriculumLessons = {}; // To hold lessons mapped by topicId
+
+        // --- Utility Functions ---
+        
+        function showTab(tabId) {
+            document.getElementById('contentTools').classList.add('hidden');
+            document.getElementById('contentFiles').classList.add('hidden');
+            document.getElementById('tabTools').classList.remove('tab-active');
+            document.getElementById('tabFiles').classList.remove('tab-active');
+
+            document.getElementById(`content${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.remove('hidden');
+            document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('tab-active');
+        }
+        window.showTab = showTab; // Expose to global scope for HTML onclick
+
+        function toggleCollapse(contentId, iconId) {
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(iconId);
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.replace('fa-caret-right', 'fa-caret-down');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.replace('fa-caret-down', 'fa-caret-right');
+            }
+        }
+        window.toggleCollapse = toggleCollapse; // Expose to global scope for HTML onclick
+
+        // Function to show/hide loading state and enable buttons
+        function setAppState(isLoading, message = '') {
+            loadingIndicator.classList.toggle('hidden', !isLoading);
+            if (!isLoading) {
+                submitLessonImportBtn.disabled = false;
+                submitGeneralImportBtn.disabled = false;
+                backupGeneralDataBtn.disabled = false;
+                restoreGeneralDataBtn.disabled = false;
+            }
+            if (message) {
+                 errorDisplay.textContent = message;
+                 errorDisplay.classList.remove('hidden');
+            } else {
+                 errorDisplay.classList.add('hidden');
+            }
+        }
+
+        // --- Firestore References ---
+        const topicsRef = (uid) => collection(db, 'users', uid, 'topics');
+        const generalResourcesRef = (uid) => collection(db, 'users', uid, 'generalResources');
+
+        // --- Data Loading Functions ---
+
+        /** Loads all topics and lessons for the import dropdowns. */
+        async function loadCurriculumSelects() {
+            if (!currentUser) return;
+            
+            try {
+                const topicsSnapshot = await getDocs(query(topicsRef(currentUser.uid), orderBy('createdAt', 'asc')));
+                curriculumTopics = [];
+                curriculumLessons = {};
+                
+                importTopicSelect.innerHTML = '<option value="">-- Select Parent Topic --</option>';
+                importLessonSelect.innerHTML = '<option value="">-- Select Target Lesson --</option>';
+                
+                // Use Promise.all to fetch lessons in parallel
+                const lessonPromises = [];
+                
+                topicsSnapshot.forEach(topicDoc => {
+                    const topic = { id: topicDoc.id, ...topicDoc.data() };
+                    curriculumTopics.push(topic);
+                    
+                    const option = document.createElement('option');
+                    option.value = topic.id;
+                    option.textContent = topic.name;
+                    importTopicSelect.appendChild(option);
+
+                    // Prepare lesson fetching promise
+                    const lessonsRef = collection(topicDoc.ref, 'lessons');
+                    const lessonPromise = getDocs(query(lessonsRef, orderBy('createdAt', 'asc'))).then(lessonsSnapshot => {
+                        curriculumLessons[topic.id] = lessonsSnapshot.docs.map(lessonDoc => ({
+                            id: lessonDoc.id,
+                            ...lessonDoc.data()
+                        }));
+                    });
+                    lessonPromises.push(lessonPromise);
+                });
+
+                await Promise.all(lessonPromises); // Wait for all lessons to be fetched
+
+                importTopicSelect.disabled = false;
+                importLessonSelect.disabled = true;
+                loadAllLessonAttachments(); // Load files for the "Resources View" tab
+            } catch (err) {
+                console.error("Error loading curriculum selects:", err);
+                // setAppState(false, "Failed to load curriculum data. Check console for details."); // Keep loading indicator hidden after error
+            }
+        }
+
+        /** Populates the lesson dropdown when a topic is selected. */
+        importTopicSelect.onchange = () => {
+            const topicId = importTopicSelect.value;
+            importLessonSelect.innerHTML = '<option value="">-- Select Target Lesson --</option>';
+            importLessonSelect.disabled = true;
+
+            if (topicId && curriculumLessons[topicId]) {
+                curriculumLessons[topicId].forEach(lesson => {
+                    const option = document.createElement('option');
+                    option.value = lesson.id;
+                    option.textContent = lesson.title;
+                    importLessonSelect.appendChild(option);
+                });
+                importLessonSelect.disabled = false;
+            }
+        };
+        
+        /** Sets up real-time listener for General Resources */
+        function loadGeneralResources() {
+            if (!currentUser) return;
+
+            const q = query(generalResourcesRef(currentUser.uid), orderBy('createdAt', 'desc'));
+
+            onSnapshot(q, (snapshot) => {
+                generalResourcesList.innerHTML = '';
+                if (snapshot.empty) {
+                    generalResourcesList.innerHTML = '<p class="text-gray-500 italic p-2 text-center">No general resources saved yet.</p>';
+                }
+
+                snapshot.docs.forEach(docSnap => {
+                    const resource = { id: docSnap.id, ...docSnap.data() };
+                    const resourceDiv = document.createElement('div');
+                    resourceDiv.className = 'flex justify-between items-center p-3 bg-white rounded-lg border shadow-sm';
+                    
+                    let iconClass = 'fa-file-alt text-gray-600';
+                    let textContent = resource.text || 'Untitled File';
+                    let linkTarget = '#';
+
+                    if (resource.url) { // Assumed file or external link
+                        iconClass = resource.type === 'file' ? 'fa-file-upload text-purple-600' : 'fa-link text-blue-600';
+                        linkTarget = resource.url;
+                        textContent = resource.text || resource.url;
+                    } else if (resource.text && resource.text.startsWith('http')) {
+                        iconClass = 'fa-link text-blue-600';
+                        linkTarget = resource.text;
+                    }
+                    
+                    resourceDiv.innerHTML = `
+                        <div class="truncate flex items-center gap-2">
+                            <i class="fa-solid ${iconClass}"></i>
+                            <a href="${linkTarget}" target="_blank" class="text-gray-700 hover:text-indigo-600 truncate">
+                                ${textContent}
+                            </a>
+                        </div>
+                        <button class="deleteResourceBtn text-red-500 hover:text-red-700 ml-4 flex-shrink-0" data-id="${resource.id}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    `;
+                    generalResourcesList.appendChild(resourceDiv);
+                });
+
+                // Attach delete listeners
+                generalResourcesList.querySelectorAll('.deleteResourceBtn').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        const resourceId = e.currentTarget.dataset.id;
+                        if (confirm('Delete this general resource?')) {
+                            try {
+                                await deleteDoc(doc(generalResourcesRef(currentUser.uid), resourceId));
+                            } catch (e) {
+                                console.error("Error deleting document: ", e);
+                            }
+                        }
+                    };
+                });
+            }, (error) => {
+                console.error("Error setting up General Resources listener:", error);
+                // setAppState(false, "Error loading resources.");
+            });
+        }
+
+        /** Loads all files attached to lessons across all topics for the "Resources View" tab. */
+        async function loadAllLessonAttachments() {
+            uploadedFilesList.innerHTML = '';
+            let fileCount = 0;
+            
+            for (const topic of curriculumTopics) {
+                const lessons = curriculumLessons[topic.id] || [];
+                
+                for (const lesson of lessons) {
+                    // Files/links are stored as arrays in the lesson document
+                    const files = lesson.files || [];
+                    const links = lesson.links || [];
+                    
+                    // Display linked files
+                    files.forEach(file => {
+                        fileCount++;
+                        const fileDiv = document.createElement('div');
+                        fileDiv.className = 'p-3 bg-white rounded-lg border shadow-sm flex justify-between items-center';
+                        fileDiv.innerHTML = `
+                            <div class="truncate flex items-center gap-2">
+                                <i class="fa-solid fa-file-pdf text-orange-600"></i>
+                                <a href="${file.url}" target="_blank" class="text-gray-700 hover:text-indigo-600 truncate">
+                                    ${file.name}
+                                </a>
+                            </div>
+                            <span class="text-xs text-gray-500 ml-4 flex-shrink-0">
+                                Linked to: ${topic.name} / ${lesson.title}
+                            </span>
+                        `;
+                        uploadedFilesList.appendChild(fileDiv);
+                    });
+
+                    // Display linked links
+                    links.forEach(link => {
+                        fileCount++;
+                        const linkDiv = document.createElement('div');
+                        linkDiv.className = 'p-3 bg-white rounded-lg border shadow-sm flex justify-between items-center';
+                        linkDiv.innerHTML = `
+                            <div class="truncate flex items-center gap-2">
+                                <i class="fa-solid fa-link text-blue-600"></i>
+                                <a href="${link}" target="_blank" class="text-gray-700 hover:text-indigo-600 truncate">
+                                    ${link}
+                                </a>
+                            </div>
+                            <span class="text-xs text-gray-500 ml-4 flex-shrink-0">
+                                Linked to: ${topic.name} / ${lesson.title}
+                            </span>
+                        `;
+                        uploadedFilesList.appendChild(linkDiv);
+                    });
+                }
+            }
+
+            if (fileCount === 0) {
+                uploadedFilesList.innerHTML = '<p class="text-gray-500 italic p-2 text-center">No files or links are currently attached to lessons.</p>';
+            }
+        }
+
+
+        // --- Drag & Drop Handlers (Simplified - No Storage Upload Implemented) ---
+
+        function setupDragAndDrop(dropZone, fileInput, isLessonImport) {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            });
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('drag-over');
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    const message = isLessonImport ? `File selected: **${files[0].name}** (Ready for Import)` : `File selected: **${files[0].name}** (Ready for Save)`;
+                    dropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-check mr-2"></i> ${message}`;
+                }
+            });
+            fileInput.onchange = () => {
+                 if (fileInput.files.length > 0) {
+                    const message = isLessonImport ? `File selected: **${fileInput.files[0].name}** (Ready for Import)` : `File selected: **${fileInput.files[0].name}** (Ready for Save)`;
+                    dropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-check mr-2"></i> ${message}`;
+                }
+            };
+            dropZone.onclick = () => fileInput.click();
+        }
+        
+        setupDragAndDrop(fileLessonDropZone, document.getElementById('lessonFile'), true);
+        setupDragAndDrop(fileDropZone, document.getElementById('generalFile'), false);
+
+
+        // --- Form Submit Handlers (Simplified) ---
+
+        // General Resource Import (Quick Save)
+        document.getElementById('generalResourceImportForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const resourcesText = document.getElementById('generalResourcesText').value.trim();
+            const generalFile = document.getElementById('generalFile').files[0];
+            const messageDisplay = document.getElementById('importGeneralMessage');
+            messageDisplay.classList.add('hidden');
+            
+            if (!resourcesText && !generalFile) {
+                messageDisplay.textContent = 'Please provide text/link or select a file.';
+                messageDisplay.classList.remove('hidden', 'text-green-600');
+                messageDisplay.classList.add('text-red-600');
+                return;
+            }
+
+            try {
+                if (resourcesText) {
+                    const lines = resourcesText.split('\n').filter(line => line.trim() !== '');
+                    for (const text of lines) {
+                        await addDoc(generalResourcesRef(currentUser.uid), {
+                            text: text,
+                            type: text.startsWith('http') ? 'link' : 'text',
+                            createdAt: new Date()
+                        });
+                    }
+                }
+
+                if (generalFile) {
+                    // SIMULATION ONLY: In a real app, this is where you'd upload to Firebase Storage
+                    await addDoc(generalResourcesRef(currentUser.uid), {
+                        text: generalFile.name,
+                        url: `simulated-storage-link/${generalFile.name}`, 
+                        type: 'file',
+                        createdAt: new Date()
+                    });
+                    document.getElementById('generalFile').value = ''; // Clear file input
+                    fileDropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Drag and Drop File Here (Max 5MB)`;
+                }
+
+                document.getElementById('generalResourcesText').value = '';
+                messageDisplay.textContent = 'Resources saved successfully!';
+                messageDisplay.classList.remove('hidden', 'text-red-600');
+                messageDisplay.classList.add('text-green-600');
+                
+            } catch (e) {
+                console.error("Error saving general resources: ", e);
+                messageDisplay.textContent = 'Save failed! Check console.';
+                messageDisplay.classList.remove('hidden', 'text-green-600');
+                messageDisplay.classList.add('text-red-600');
+            }
+        };
+
+        // Lesson Resource Import (Bulk Import)
+        document.getElementById('lessonResourceImportForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const topicId = importTopicSelect.value;
+            const lessonId = importLessonSelect.value;
+            const resourcesText = document.getElementById('importResourcesText').value.trim();
+            const lessonFile = document.getElementById('lessonFile').files[0];
+            const messageDisplay = document.getElementById('importLessonMessage');
+            messageDisplay.classList.add('hidden');
+
+            if (!topicId || !lessonId) {
+                messageDisplay.textContent = 'Please select a Topic and a Lesson.';
+                messageDisplay.classList.remove('hidden', 'text-green-600');
+                messageDisplay.classList.add('text-red-600');
+                return;
+            }
+            if (!resourcesText && !lessonFile) {
+                messageDisplay.textContent = 'Please provide text/link or select a file.';
+                messageDisplay.classList.remove('hidden', 'text-green-600');
+                messageDisplay.classList.add('text-red-600');
+                return;
+            }
+
+            try {
+                const lessonRef = doc(topicsRef(currentUser.uid), topicId, 'lessons', lessonId);
+                const newLinks = [];
+                const newFiles = [];
+
+                if (resourcesText) {
+                    const lines = resourcesText.split('\n').filter(line => line.trim() !== '');
+                    lines.forEach(text => {
+                        if (text.startsWith('http')) newLinks.push(text);
+                    });
+                }
+
+                if (lessonFile) {
+                    // SIMULATION ONLY
+                    newFiles.push({
+                        name: lessonFile.name,
+                        url: `simulated-storage-link/${lessonFile.name}` 
+                    });
+                    document.getElementById('lessonFile').value = ''; // Clear file input
+                    fileLessonDropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-file-circle-plus mr-2"></i> Drag and Drop File Attachment Here (Max 5MB)`;
+                }
+                
+                // Get current lesson data to append new links/files
+                const lessonData = curriculumLessons[topicId].find(l => l.id === lessonId);
+                const existingLinks = lessonData.links || [];
+                const existingFiles = lessonData.files || [];
+
+                await updateDoc(lessonRef, {
+                    links: [...existingLinks, ...newLinks],
+                    files: [...existingFiles, ...newFiles]
+                });
+                
+                // Manually update the in-memory data after a successful save
+                lessonData.links = [...existingLinks, ...newLinks];
+                lessonData.files = [...existingFiles, ...newFiles];
+
+                document.getElementById('importResourcesText').value = '';
+                messageDisplay.textContent = 'Resources added to lesson successfully!';
+                messageDisplay.classList.remove('hidden', 'text-red-600');
+                messageDisplay.classList.add('text-green-600');
+
+            } catch (e) {
+                console.error("Error importing lesson resources: ", e);
+                messageDisplay.textContent = 'Import failed! Check console.';
+                messageDisplay.classList.remove('hidden', 'text-green-600');
+                messageDisplay.classList.add('text-red-600');
+            }
+        };
+        
+        // --- Backup/Restore Functions (Placeholders) ---
+        // These buttons are now enabled but require implementation for actual JSON export/import.
+        document.getElementById('backupGeneralDataBtn').onclick = () => {
+             alert("Backup functionality requires full implementation of data serialization.");
+        };
+        document.getElementById('restoreGeneralDataBtn').onclick = () => {
+             alert("Restore functionality requires full implementation of file reading and data validation.");
+        };
+
+
+        // --- Authentication & Initialization ---
+
+        onAuthStateChanged(auth, async user => {
+            if (user) {
+                currentUser = user;
+                userIdDisplay.textContent = `User ID: ${user.uid}`;
+                
+                // 1. Load data for dropdowns and file list
+                await loadCurriculumSelects(); // Important to await this for the file list
+                
+                // 2. Set up real-time listener for General Resources
+                loadGeneralResources();
+
+                // 3. Hide loading indicator and enable buttons
+                setAppState(false);
+
+            } else {
+                // User is signed out, redirect to login/home
+                window.location.href = 'index.html'; 
+            }
+        });
+
     </script>
 </body>
 </html>
