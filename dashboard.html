@@ -26,7 +26,6 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-<!-- Navigation -->
 <nav class="bg-indigo-700 p-4 shadow-2xl">
   <div class="container max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-4 relative">
     <div class="flex flex-wrap justify-center gap-4">
@@ -40,14 +39,12 @@
   </div>
 </nav>
 
-<!-- Dashboard Content -->
 <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
   <h1 class="text-4xl font-bold text-center text-indigo-800 mb-8">Welcome back, Teacher!</h1>
   <p class="text-center text-gray-600 mb-10 text-lg">
     <span id="greeting-time"></span> · User ID: <code id="user-id-display" class="text-indigo-600 text-sm">Loading...</code>
   </p>
 
-  <!-- Stats -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
     <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg text-center">
       <i class="fas fa-book-open text-4xl mb-3"></i>
@@ -66,7 +63,6 @@
     </div>
   </div>
 
-  <!-- Quick Actions -->
   <h2 class="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
     <a href="notes.html" class="bg-indigo-50 hover:bg-indigo-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
@@ -139,24 +135,28 @@ document.getElementById('signout-btn').onclick = () => {
 // --- Real-time Stats ---
 function syncStats(uid) {
   // Topics Count
+  // PATH: artifacts/APP_ID/users/{uid}/curriculum_topics
   onSnapshot(collection(db, 'artifacts', APP_ID, 'users', uid, 'curriculum_topics'), snap => {
     topicsCountEl.textContent = snap.size || 0;
   });
 
   // Completed Todos
+  // PATH: artifacts/APP_ID/users/{uid}/todo_items
   const completedQuery = query(collection(db, 'artifacts', APP_ID, 'users', uid, 'todo_items'), where('completed', '==', true));
   onSnapshot(completedQuery, snap => {
     completedCountEl.textContent = snap.size || 0;
   });
 
-  // Notes Count (collection group query for nested notes)
+  // Notes Count (Collection Group Query - FIX APPLIED)
+  // Queries all collections named 'daily_notes' and filters by the 'userId' field.
   const notesGroup = collectionGroup(db, 'daily_notes');
-  onSnapshot(notesGroup, snap => {
-    let totalNotes = 0;
-    snap.forEach(doc => {
-      if(doc.ref.path.includes(`/users/${uid}/`)) totalNotes++;
-    });
-    notesCountEl.textContent = totalNotes;
+  
+  // FIX: Filter the collection group by the current user's ID
+  const notesQuery = query(notesGroup, where('userId', '==', uid)); 
+  
+  onSnapshot(notesQuery, snap => {
+    // snap.size now correctly counts only notes belonging to the user
+    notesCountEl.textContent = snap.size || 0;
   });
 }
 </script>
