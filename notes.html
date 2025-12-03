@@ -1,95 +1,80 @@
+This is my notes.html. What do you think the issue is
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Educator Hub - Dashboard</title>
+<title>Educator Hub - Notes</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
   body { font-family: 'Inter', sans-serif; }
-  .spinner {
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top: 4px solid #fff;
-      border-radius: 50%;
-      width: 1.5rem;
-      height: 1.5rem;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
-  }
-  @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-  }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
+<!-- Navbar -->
 <nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-4 relative">
-    <div class="flex flex-wrap justify-center gap-4">
-      <a href="dashboard.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Home 🏠</a>
-      <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
-      <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
-      <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
-      <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-    </div>
-    <button id="signout-btn" class="absolute right-0 top-1/2 -translate-y-1/2 mr-4 px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition">Sign Out</button>
+  <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
+    <a href="dashboard.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
+    <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
+    <a href="notes.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner transition">Notes 📝</a>
+    <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
+    <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
   </div>
 </nav>
 
-<div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
-  <h1 class="text-4xl font-bold text-center text-indigo-800 mb-8">Welcome back, Teacher!</h1>
-  <p class="text-center text-gray-600 mb-10 text-lg">
-    <span id="greeting-time"></span> · User ID: <code id="user-id-display" class="text-indigo-600 text-sm">Loading...</code>
-  </p>
-
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-book-open text-4xl mb-3"></i>
-      <h3 id="topics-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-blue-100">Topics Covered</p>
-    </div>
-    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-check-circle text-4xl mb-3"></i>
-      <h3 id="completed-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-green-100">Completed Tasks</p>
-    </div>
-    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-sticky-note text-4xl mb-3"></i>
-      <h3 id="notes-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-purple-100">Total Notes</p>
-    </div>
+<div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-3xl font-bold text-indigo-700">Teaching Notes</h1>
+    <button id="newNoteBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+      <i class="fa-solid fa-plus mr-1"></i> New Note
+    </button>
   </div>
 
-  <h2 class="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-    <a href="notes.html" class="bg-indigo-50 hover:bg-indigo-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-edit text-3xl text-indigo-600 mb-3"></i>
-      <p class="font-semibold text-indigo-800">Write New Note</p>
-    </a>
-    <a href="curriculum_topics.html" class="bg-teal-50 hover:bg-teal-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-brain text-3xl text-teal-600 mb-3"></i>
-      <p class="font-semibold text-teal-800">Plan Topics</p>
-    </a>
-    <a href="todo.html" class="bg-amber-50 hover:bg-amber-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-list-check text-3xl text-amber-600 mb-3"></i>
-      <p class="font-semibold text-amber-800">View To-Do List</p>
-    </a>
-    <a href="resources.html" class="bg-pink-50 hover:bg-pink-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-tools text-3xl text-pink-600 mb-3"></i>
-      <p class="font-semibold text-pink-800">Open Tools</p>
-    </a>
+  <div id="notesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</div>
+
+<!-- Note Modal -->
+<div id="noteModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-2xl font-bold text-indigo-700">Add/Edit Note</h3>
+      <button id="closeNoteModal" class="text-gray-400 hover:text-gray-600 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <form id="noteForm" class="space-y-4">
+      <input type="text" id="noteTitle" placeholder="Title" class="w-full p-2 border rounded-md" required>
+      <textarea id="noteContent" rows="5" placeholder="Type your note here..." class="w-full p-2 border rounded-md"></textarea>
+      <button type="submit" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Save Note</button>
+    </form>
   </div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, query, where, onSnapshot, collectionGroup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signOut 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { 
+  getFirestore,
+  collection, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// --- Firebase Config ---
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
   authDomain: "school-organiser-5f512.firebaseapp.com",
@@ -98,68 +83,97 @@ const firebaseConfig = {
   messagingSenderId: "567803400438",
   appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
 };
-const APP_ID = "school-organiser-5f512";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// DOM Elements
-const userIdEl = document.getElementById('user-id-display');
-const greetingEl = document.getElementById('greeting-time');
-const topicsCountEl = document.getElementById('topics-count');
-const completedCountEl = document.getElementById('completed-count');
-const notesCountEl = document.getElementById('notes-count');
+// UI Elements
+const newNoteBtn = document.getElementById("newNoteBtn");
+const noteModal = document.getElementById("noteModal");
+const closeNoteModal = document.getElementById("closeNoteModal");
+const noteForm = document.getElementById("noteForm");
+const noteTitle = document.getElementById("noteTitle");
+const noteContent = document.getElementById("noteContent");
+const notesContainer = document.getElementById("notesContainer");
 
-// Greeting
-const hour = new Date().getHours();
-const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-greetingEl.textContent = `${greeting}!`;
+let currentUser = null;
+let editingNoteId = null;
 
-// Auth
+// Auth Guard
 onAuthStateChanged(auth, (user) => {
-  if (user) {
-    const uid = user.uid;
-    userIdEl.textContent = uid;
-    syncStats(uid);
+  if (!user) {
+    window.location.href = "index.html";
   } else {
-    window.location.href = "index.html"; // replace with your login page
+    currentUser = user;
+    loadNotes();
   }
 });
 
-// Sign Out
-document.getElementById('signout-btn').onclick = () => {
-  signOut(auth).then(() => window.location.href = "index.html");
-};
+// Notes Collection Reference
+const notesRef = () => collection(db, "users", currentUser.uid, "notes");
 
-// --- Real-time Stats ---
-function syncStats(uid) {
-  // Topics Count
-  // PATH: artifacts/APP_ID/users/{uid}/curriculum_topics
-  onSnapshot(collection(db, 'artifacts', APP_ID, 'users', uid, 'curriculum_topics'), snap => {
-    topicsCountEl.textContent = snap.size || 0;
-  });
+// Load Notes
+function loadNotes() {
+  const q = query(notesRef(), orderBy("createdAt", "desc"));
+  onSnapshot(q, snapshot => {
+    notesContainer.innerHTML = "";
+    snapshot.forEach(docSnap => {
+      const note = { id: docSnap.id, ...docSnap.data() };
+      const card = document.createElement("div");
+      card.className = "bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col justify-between";
+      card.innerHTML = `
+        <div>
+          <h3 class="font-bold text-indigo-700 text-lg mb-1">${note.title}</h3>
+          <p class="text-gray-700 text-sm mb-2">${note.content || ""}</p>
+        </div>
+        <div class="flex justify-end gap-2">
+          <button class="editNoteBtn text-blue-600"><i class="fa-solid fa-pen"></i></button>
+          <button class="deleteNoteBtn text-red-600"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      `;
+      notesContainer.appendChild(card);
 
-  // Completed Todos
-  // PATH: artifacts/APP_ID/users/{uid}/todo_items
-  const completedQuery = query(collection(db, 'artifacts', APP_ID, 'users', uid, 'todo_items'), where('completed', '==', true));
-  onSnapshot(completedQuery, snap => {
-    completedCountEl.textContent = snap.size || 0;
-  });
+      card.querySelector(".editNoteBtn").onclick = () => {
+        editingNoteId = note.id;
+        noteTitle.value = note.title;
+        noteContent.value = note.content || "";
+        noteModal.classList.remove("hidden");
+      };
 
-  // Notes Count (Collection Group Query - FIX APPLIED)
-  // Queries all collections named 'daily_notes' and filters by the 'userId' field.
-  const notesGroup = collectionGroup(db, 'daily_notes');
-  
-  // FIX: Filter the collection group by the current user's ID
-  const notesQuery = query(notesGroup, where('userId', '==', uid)); 
-  
-  onSnapshot(notesQuery, snap => {
-    // snap.size now correctly counts only notes belonging to the user
-    notesCountEl.textContent = snap.size || 0;
+      card.querySelector(".deleteNoteBtn").onclick = async () => {
+        if (confirm("Delete this note?")) {
+          await deleteDoc(doc(notesRef(), note.id));
+        }
+      };
+    });
   });
 }
-</script>
 
+// Modal Open/Close
+newNoteBtn.onclick = () => {
+  editingNoteId = null;
+  noteForm.reset();
+  noteModal.classList.remove("hidden");
+};
+closeNoteModal.onclick = () => noteModal.classList.add("hidden");
+
+// Save Note
+noteForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const data = {
+    title: noteTitle.value,
+    content: noteContent.value,
+    createdAt: serverTimestamp()
+  };
+  if (editingNoteId) {
+    await updateDoc(doc(notesRef(), editingNoteId), data);
+  } else {
+    await addDoc(notesRef(), data);
+  }
+  noteForm.reset();
+  noteModal.classList.add("hidden");
+};
+</script>
 </body>
 </html>
