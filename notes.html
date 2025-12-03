@@ -1,297 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educator Hub - Notes</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-    <style>
-        .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
-        .tab-active { @apply bg-white border-b-2 border-indigo-600 font-bold text-indigo-700; }
-        .collapsible-header { @apply flex justify-between items-center cursor-pointer p-4 rounded-t-xl; }
-        .drag-zone {
-            border: 2px dashed #9ca3af; background:#f9fafb; text-align:center;
-            padding:20px; margin-top:10px; border-radius:8px; transition:.2s;
-        }
-        .drag-over { border-color:#4f46e5; background:#eef2ff; }
-        button { @apply transition duration-200; }
-        .topic button { @apply transition duration-200 shadow-sm hover:shadow-md; }
-        #noteEditor { min-height: 400px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teaching Notes | Educator Hub</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-
 <body class="bg-gray-100 min-h-screen">
 
-    <!-- NAV BAR -->
-    <nav class="bg-indigo-700 p-4 shadow-2xl">
-        <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
-            <a href="dashboard.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-            <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
-            <a href="notes.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Notes 📝</a>
-            <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
-            <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-        </div>
-    </nav>
+<!-- Navbar -->
+<nav class="bg-indigo-700 p-4 shadow-2xl">
+  <div class="container max-w-5xl mx-auto flex flex-wrap justify-center gap-4">
+    <a href="index.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
+    <a href="topics.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
+    <a href="notes.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Notes 📝</a>
+    <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
+    <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
+    <button id="logoutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
+  </div>
+</nav>
 
-    <!-- MAIN CONTAINER -->
-    <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
+<div class="container max-w-5xl mx-auto p-6 mt-6">
+  <div class="flex justify-between items-center mb-4">
+    <h1 class="text-3xl font-bold text-indigo-700">Teaching Notes</h1>
+    <button id="newNoteBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+      <i class="fa-solid fa-plus mr-1"></i> New Note
+    </button>
+  </div>
 
-        <h1 class="text-3xl font-bold text-center text-gray-800">Quick Notes 📝</h1>
+  <div id="notesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+</div>
 
-        <!-- LOGIN BOX -->
-        <div id="loginBox" class="p-6 bg-indigo-50 rounded-xl space-y-4">
-            <h2 class="text-2xl text-indigo-700 font-bold text-center">Login Required</h2>
-
-            <input id="email" type="email" placeholder="Email"
-                   class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-
-            <input id="password" type="password" placeholder="Password"
-                   class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-
-            <button onclick="login()"
-                    class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">
-                Login
-            </button>
-
-            <p id="loginError" class="text-center text-red-600 font-semibold"></p>
-        </div>
-
-        <!-- LOADING -->
-        <p id="loadingStatus" class="hidden text-center text-gray-500 p-4">
-            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading your notes…
-        </p>
-
-        <p id="userIdDisplay" class="text-xs text-gray-400 mt-4 text-center hidden">User: N/A</p>
-
-        <!-- NOTES UI -->
-        <div id="notesInterface" class="hidden">
-
-            <div class="flex flex-col sm:flex-row justify-between items-center p-4 bg-indigo-50 rounded-xl shadow-inner mb-4">
-                <label class="text-lg font-semibold text-indigo-700">Select Date:</label>
-                <input type="date" id="noteDate"
-                       class="p-2 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                       disabled>
-                <p id="saveStatus" class="text-sm italic text-gray-600"></p>
-            </div>
-
-            <textarea id="noteEditor"
-                      placeholder="Start typing your notes… Auto-saves every few seconds."
-                      class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-base"
-                      disabled></textarea>
-
-            <div class="mt-8">
-                <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-calendar-alt"></i> Other Notes
-                </h2>
-                <div id="recentNotesList" class="space-y-3"></div>
-            </div>
-        </div>
-
+<!-- Note Modal -->
+<div id="noteModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+    <div class="flex justify-between items-center pb-3 border-b">
+      <h3 class="text-2xl font-bold text-indigo-700">Add/Edit Note</h3>
+      <button id="closeNoteModal" class="text-gray-400 hover:text-gray-600 text-xl">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
     </div>
+    <form id="noteForm" class="space-y-4">
+      <input type="text" id="noteTitle" placeholder="Title" class="w-full p-2 border rounded-md" required>
+      <textarea id="noteContent" rows="5" placeholder="Type your note here..." class="w-full p-2 border rounded-md"></textarea>
+      <button type="submit" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Save Note</button>
+    </form>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  signOut 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+import { 
+  getFirestore,
+  collection, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 
-    <!-- FIREBASE -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import {
-            getAuth,
-            signInWithEmailAndPassword,
-            onAuthStateChanged
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+// 🔥 YOUR NEW CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
+  authDomain: "school-organiser-5f512.firebaseapp.com",
+  projectId: "school-organiser-5f512",
+  storageBucket: "school-organiser-5f512.firebasestorage.app",
+  messagingSenderId: "567803400438",
+  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7",
+  measurementId: "G-9ZGHJPJW6M"
+};
 
-        import {
-            getFirestore,
-            doc,
-            setDoc,
-            onSnapshot,
-            collection,
-            query,
-            where,
-            getDocs
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        /* ----------------------------- CONFIG ------------------------------ */
+// 🔥 Init Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
-            authDomain: "school-organiser-5f512.firebaseapp.com",
-            projectId: "school-organiser-5f512",
-            storageBucket: "school-organiser-5f512.firebasestorage.app",
-            messagingSenderId: "567803400438",
-            appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7",
-            measurementId: "G-9ZGHJPJW6M"
-        };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+// UI Elements
+const logoutBtn = document.getElementById("logoutBtn");
+const newNoteBtn = document.getElementById("newNoteBtn");
+const noteModal = document.getElementById("noteModal");
+const closeNoteModal = document.getElementById("closeNoteModal");
+const noteForm = document.getElementById("noteForm");
+const noteTitle = document.getElementById("noteTitle");
+const noteContent = document.getElementById("noteContent");
+const notesContainer = document.getElementById("notesContainer");
 
-        /* ----------------------------- DOM REFS ------------------------------ */
+let currentUser = null;
+let editingNoteId = null;
 
-        const loginBox = document.getElementById("loginBox");
-        const loginError = document.getElementById("loginError");
-        const loadingStatus = document.getElementById("loadingStatus");
-        const notesInterface = document.getElementById("notesInterface");
-        const noteDateInput = document.getElementById("noteDate");
-        const noteEditor = document.getElementById("noteEditor");
-        const saveStatus = document.getElementById("saveStatus");
-        const recentNotesList = document.getElementById("recentNotesList");
-        const userIdDisplay = document.getElementById("userIdDisplay");
 
-        let userId = null;
-        let saveTimeout = null;
-        let currentMonthNotes = [];
+// -------------------- AUTH GUARD --------------------
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+  } else {
+    currentUser = user;
+    loadNotes();
+  }
+});
 
-        /* --------------------------- FIRESTORE PATHS -------------------------- */
+logoutBtn.onclick = async () => {
+  await signOut(auth);
+  window.location.href = "login.html";
+};
 
-        const NOTES_COLLECTION = (uid) => collection(db, "users", uid, "daily_notes");
-        const NOTE_DOC = (uid, date) => doc(db, "users", uid, "daily_notes", date);
 
-        /* ----------------------------- LOGIN ------------------------------ */
+// -------------------- NOTES FUNCTIONS --------------------
+function notesRef() {
+  return collection(db, "users", currentUser.uid, "notes");
+}
 
-        window.login = async function () {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
+function loadNotes() {
+  const q = query(notesRef(), orderBy("createdAt", "desc"));
 
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (e) {
-                loginError.textContent = e.message;
-            }
-        };
+  onSnapshot(q, (snapshot) => {
+    notesContainer.innerHTML = "";
 
-        /* ----------------------------- AUTH STATE ------------------------------ */
+    snapshot.forEach((docSnap) => {
+      const note = { id: docSnap.id, ...docSnap.data() };
 
-        onAuthStateChanged(auth, user => {
-            if (!user) {
-                loginBox.classList.remove("hidden");
-                return;
-            }
+      const card = document.createElement("div");
+      card.className =
+        "bg-white p-4 rounded-xl shadow hover:shadow-lg transition flex flex-col justify-between";
 
-            userId = user.uid;
+      card.innerHTML = `
+        <div>
+          <h3 class="font-bold text-indigo-700 text-lg mb-1">${note.title}</h3>
+          <p class="text-gray-700 text-sm mb-2">${note.content || ""}</p>
+        </div>
 
-            loginBox.classList.add("hidden");
-            loadingStatus.classList.remove("hidden");
-            userIdDisplay.classList.remove("hidden");
-            userIdDisplay.textContent = "User: " + userId;
+        <div class="flex justify-end gap-2">
+          <button class="editNoteBtn text-blue-600"><i class="fa-solid fa-pen"></i></button>
+          <button class="deleteNoteBtn text-red-600"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      `;
 
-            setupNotes();
-        });
+      notesContainer.appendChild(card);
 
-        /* ----------------------------- NOTES UI ------------------------------ */
+      // Edit
+      card.querySelector(".editNoteBtn").onclick = () => {
+        editingNoteId = note.id;
+        noteTitle.value = note.title;
+        noteContent.value = note.content || "";
+        noteModal.classList.remove("hidden");
+      };
 
-        function setupNotes() {
-            noteDateInput.value = new Date().toISOString().slice(0, 10);
-
-            noteDateInput.disabled = false;
-            noteEditor.disabled = false;
-
-            loadDate(noteDateInput.value);
-
-            noteDateInput.addEventListener("change", e => loadDate(e.target.value));
-            noteEditor.addEventListener("input", scheduleSave);
+      // Delete
+      card.querySelector(".deleteNoteBtn").onclick = async () => {
+        if (confirm("Delete this note?")) {
+          await deleteDoc(doc(notesRef(), note.id));
         }
+      };
+    });
+  });
+}
 
-        function loadDate(date) {
-            loadNote(date);
-            loadMonthNotes(date);
-        }
 
-        function loadNote(date) {
-            onSnapshot(NOTE_DOC(userId, date), snap => {
-                noteEditor.value = snap.exists() ? snap.data().content : "";
-                saveStatus.textContent = "Loaded for " + new Date(date).toDateString();
-            });
+// -------------------- MODAL --------------------
 
-            loadingStatus.classList.add("hidden");
-            notesInterface.classList.remove("hidden");
-        }
+newNoteBtn.onclick = () => {
+  editingNoteId = null;
+  noteForm.reset();
+  noteModal.classList.remove("hidden");
+};
 
-        async function loadMonthNotes(date) {
-            const month = date.slice(0, 7);
-            const start = month + "-01";
+closeNoteModal.onclick = () => {
+  noteModal.classList.add("hidden");
+};
 
-            const end = new Date(month + "-01");
-            end.setMonth(end.getMonth() + 1);
-            const nextMonth = end.toISOString().slice(0, 10);
 
-            const q = query(
-                NOTES_COLLECTION(userId),
-                where("date", ">=", start),
-                where("date", "<", nextMonth)
-            );
+// -------------------- SAVE NOTE --------------------
 
-            const snaps = await getDocs(q);
+noteForm.onsubmit = async (e) => {
+  e.preventDefault();
 
-            currentMonthNotes = snaps.docs
-                .map(d => ({ date: d.id, content: d.data().content }))
-                .filter(n => n.date !== date)
-                .sort((a, b) => b.date.localeCompare(a.date));
+  const data = {
+    title: noteTitle.value,
+    content: noteContent.value,
+    createdAt: serverTimestamp(),
+  };
 
-            renderMonthNotes(date);
-        }
+  if (editingNoteId) {
+    await updateDoc(doc(notesRef(), editingNoteId), data);
+  } else {
+    await addDoc(notesRef(), data);
+  }
 
-        function renderMonthNotes(selected) {
-            recentNotesList.innerHTML = "";
-
-            if (currentMonthNotes.length === 0) {
-                recentNotesList.innerHTML =
-                    `<p class="text-gray-500 italic text-center">
-                        No other notes for this month.
-                    </p>`;
-                return;
-            }
-
-            currentMonthNotes.forEach(n => {
-                const div = document.createElement("div");
-                div.className =
-                    "p-3 bg-white border rounded-lg shadow-sm hover:shadow-md cursor-pointer";
-
-                div.onclick = () => {
-                    noteDateInput.value = n.date;
-                    loadDate(n.date);
-                };
-
-                div.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-semibold text-indigo-700">
-                            ${new Date(n.date).toDateString()}
-                        </h3>
-                        <i class="fa fa-arrow-right text-indigo-400"></i>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-1">
-                        ${n.content.slice(0, 100) || "*Empty note*"}
-                    </p>
-                `;
-
-                recentNotesList.appendChild(div);
-            });
-        }
-
-        /* --------------------------- SAVE LOGIC ---------------------------- */
-
-        function scheduleSave() {
-            saveStatus.textContent = "Saving…";
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(saveNote, 1500);
-        }
-
-        async function saveNote() {
-            const date = noteDateInput.value;
-
-            await setDoc(NOTE_DOC(userId, date), {
-                content: noteEditor.value,
-                date: date,
-                timestamp: new Date().toISOString()
-            });
-
-            saveStatus.textContent = "Saved!";
-            loadMonthNotes(date);
-        }
-
-    </script>
+  noteForm.reset();
+  noteModal.classList.add("hidden");
+};
+</script>
 
 </body>
 </html>
