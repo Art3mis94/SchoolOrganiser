@@ -44,7 +44,7 @@
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
-    <form id="topicForm" class="space-y-4">
+    <form id="topicForm" class="space-y-4" data-id="">
       <input type="text" id="topicName" placeholder="Topic Name" class="w-full p-2 border rounded-md" required>
       <button type="submit" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Save Topic</button>
     </form>
@@ -60,15 +60,15 @@
         <i class="fa-solid fa-xmark"></i>
       </button>
     </div>
-    <form id="lessonForm" class="space-y-4">
+    <form id="lessonForm" class="space-y-4" data-id="">
       <input type="text" id="lessonTitle" placeholder="Lesson Title" class="w-full p-2 border rounded-md" required>
       <textarea id="lessonContent" rows="3" placeholder="Lesson content / learning outcome..." class="w-full p-2 border rounded-md"></textarea>
-      
-      <div id="lessonDropzone" class="dropzone">
-        Drag & Drop File Here or Click to Select
-        <input type="file" id="lessonFile" class="hidden">
-      </div>
-      <input type="url" id="lessonLink" placeholder="External link (Docs, Sheets, etc.)" class="w-full p-2 border rounded-md">
+
+      <div id="lessonFilesContainer" class="space-y-2"></div>
+      <button type="button" id="addFileBtn" class="w-full py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">Add File</button>
+
+      <div id="lessonLinksContainer" class="space-y-2"></div>
+      <button type="button" id="addLinkBtn" class="w-full py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Add Link</button>
 
       <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Save Lesson</button>
     </form>
@@ -76,159 +76,179 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
-  authDomain: "school-organiser-5f512.firebaseapp.com",
-  projectId: "school-organiser-5f512",
-  storageBucket: "school-organiser-5f512.appspot.com",
-  messagingSenderId: "567803400438",
-  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// UI elements
-const topicModal=document.getElementById('topicModal');
-const lessonModal=document.getElementById('lessonModal');
-const newTopicBtn=document.getElementById('newTopicBtn');
-const closeTopicModal=document.getElementById('closeTopicModal');
-const closeLessonModal=document.getElementById('closeLessonModal');
-const topicForm=document.getElementById('topicForm');
-const lessonForm=document.getElementById('lessonForm');
-const topicName=document.getElementById('topicName');
-const lessonTitle=document.getElementById('lessonTitle');
-const lessonContent=document.getElementById('lessonContent');
-const lessonLink=document.getElementById('lessonLink');
-const lessonDropzone=document.getElementById('lessonDropzone');
-const lessonFile=document.getElementById('lessonFile');
-const topicTree=document.getElementById('topicTree');
-const logoutBtn=document.getElementById('logoutBtn');
+import { auth, db } from './firebase-config.js';
+import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 let currentUser=null;
-let editingTopicId=null, editingLessonId=null, currentTopicId=null, tempLessonFileUrl='';
-
-// Auth guard
-onAuthStateChanged(auth,user=>{
-  if(!user) window.location.href='index.html';
-  currentUser=user;
-  loadTopics();
+onAuthStateChanged(auth, user=>{
+    if(!user) window.location.href='login.html';
+    currentUser=user;
+    loadTopics();
 });
 
-logoutBtn.onclick=async()=>{ await signOut(auth); window.location.href='index.html'; };
+document.getElementById('logoutBtn').onclick=async()=>{ await signOut(auth); window.location.href='login.html'; };
 
-// Topic modal
+// Topic modal refs
+const topicModal=document.getElementById('topicModal');
+const newTopicBtn=document.getElementById('newTopicBtn');
+const closeTopicModal=document.getElementById('closeTopicModal');
+const topicForm=document.getElementById('topicForm');
+const topicName=document.getElementById('topicName');
+
+// Lesson modal refs
+const lessonModal=document.getElementById('lessonModal');
+const closeLessonModal=document.getElementById('closeLessonModal');
+const lessonForm=document.getElementById('lessonForm');
+const lessonTitle=document.getElementById('lessonTitle');
+const lessonContent=document.getElementById('lessonContent');
+const lessonFilesContainer=document.getElementById('lessonFilesContainer');
+const lessonLinksContainer=document.getElementById('lessonLinksContainer');
+const addFileBtn=document.getElementById('addFileBtn');
+const addLinkBtn=document.getElementById('addLinkBtn');
+
+let editingTopicId=null, editingLessonId=null, currentTopicId=null;
+
+// Topic modal open/close
 newTopicBtn.onclick=()=>{ editingTopicId=null; topicForm.reset(); topicModal.classList.remove('hidden'); };
 closeTopicModal.onclick=()=>topicModal.classList.add('hidden');
 
-// Lesson modal
+// Lesson modal open/close
 closeLessonModal.onclick=()=>lessonModal.classList.add('hidden');
-lessonDropzone.onclick=()=>lessonFile.click();
-lessonDropzone.addEventListener('dragover', e=>{ e.preventDefault(); lessonDropzone.classList.add('dragover'); });
-lessonDropzone.addEventListener('dragleave', e=>{ lessonDropzone.classList.remove('dragover'); });
-lessonDropzone.addEventListener('drop', e=>{ 
-  e.preventDefault(); lessonDropzone.classList.remove('dragover'); 
-  const file=e.dataTransfer.files[0]; 
-  if(file) tempLessonFileUrl=URL.createObjectURL(file); 
-});
-lessonFile.onchange=()=>{ if(lessonFile.files[0]) tempLessonFileUrl=URL.createObjectURL(lessonFile.files[0]); };
+
+// Add file input dynamically
+addFileBtn.onclick=()=>{
+    const div=document.createElement('div');
+    div.className='flex gap-2';
+    div.innerHTML=`<input type="text" placeholder="File URL" class="flex-1 p-2 border rounded-md" required>
+                   <button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
+    lessonFilesContainer.appendChild(div);
+    div.querySelector('.removeBtn').onclick=()=>div.remove();
+};
+
+// Add link input dynamically
+addLinkBtn.onclick=()=>{
+    const div=document.createElement('div');
+    div.className='flex gap-2';
+    div.innerHTML=`<input type="url" placeholder="Link URL" class="flex-1 p-2 border rounded-md" required>
+                   <button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
+    lessonLinksContainer.appendChild(div);
+    div.querySelector('.removeBtn').onclick=()=>div.remove();
+};
 
 // Firestore refs
 const topicsRef=()=>collection(db,'users',currentUser.uid,'topics');
 
 // Load topics and lessons
 function loadTopics(){
-  const q=query(topicsRef(), orderBy('createdAt','asc'));
-  onSnapshot(q, snapshot=>{
-    topicTree.innerHTML='';
-    snapshot.docs.forEach(docSnap=>{
-      const topic={...docSnap.data(),id:docSnap.id};
-      const div=document.createElement('div'); div.className='bg-white p-4 rounded-xl shadow hover:shadow-lg transition';
-      div.innerHTML=`
-        <div class="flex justify-between items-center">
-          <h3 class="font-bold text-indigo-700">${topic.name}</h3>
-          <div class="flex gap-2">
-            <button class="addLessonBtn text-green-600"><i class="fa-solid fa-book-medical"></i></button>
-            <button class="editTopicBtn text-blue-600"><i class="fa-solid fa-pen"></i></button>
-            <button class="deleteTopicBtn text-red-600"><i class="fa-solid fa-trash"></i></button>
-          </div>
-        </div>
-        <div class="mt-2 lessonContainer space-y-2"></div>
-      `;
-      topicTree.appendChild(div);
+    const q=query(topicsRef(),orderBy('createdAt','asc'));
+    onSnapshot(q,snapshot=>{
+        const topicTree=document.getElementById('topicTree'); topicTree.innerHTML='';
+        snapshot.docs.forEach(docSnap=>{
+            const topic={...docSnap.data(),id:docSnap.id};
+            const div=document.createElement('div'); 
+            div.className='bg-white rounded-xl shadow hover:shadow-lg transition';
+            div.innerHTML=`
+                <div class="flex justify-between items-center p-4 cursor-pointer">
+                  <h3 class="font-bold text-indigo-700">${topic.name}</h3>
+                  <div class="flex gap-2">
+                    <button class="addLessonBtn text-green-600"><i class="fa-solid fa-book-medical"></i></button>
+                    <button class="editTopicBtn text-blue-600"><i class="fa-solid fa-pen"></i></button>
+                    <button class="deleteTopicBtn text-red-600"><i class="fa-solid fa-trash"></i></button>
+                    <button class="collapseBtn text-gray-600"><i class="fa-solid fa-chevron-down"></i></button>
+                  </div>
+                </div>
+                <div class="lessonContainer px-4 py-2 space-y-2 hidden"></div>
+            `;
+            topicTree.appendChild(div);
 
-      // Topic buttons
-      div.querySelector('.editTopicBtn').onclick=()=>{ editingTopicId=topic.id; topicName.value=topic.name; topicModal.classList.remove('hidden'); };
-      div.querySelector('.deleteTopicBtn').onclick=async()=>{ if(confirm('Delete this topic?')) await deleteDoc(doc(topicsRef(),topic.id)); };
-      div.querySelector('.addLessonBtn').onclick=()=>{ editingLessonId=null; currentTopicId=topic.id; lessonForm.reset(); tempLessonFileUrl=''; lessonModal.classList.remove('hidden'); };
+            const collapseBtn=div.querySelector('.collapseBtn');
+            const lessonContainer=div.querySelector('.lessonContainer');
+            collapseBtn.onclick=()=>{ lessonContainer.classList.toggle('hidden'); collapseBtn.querySelector('i').classList.toggle('fa-chevron-down'); collapseBtn.querySelector('i').classList.toggle('fa-chevron-up'); };
 
-      // Load lessons
-      const lessonsRef=collection(topicsRef(),topic.id,'lessons');
-      onSnapshot(query(lessonsRef, orderBy('createdAt','asc')), snap=>{
-        const lessonContainer=div.querySelector('.lessonContainer'); lessonContainer.innerHTML='';
-        snap.docs.forEach(lDoc=>{
-          const lesson={...lDoc.data(),id:lDoc.id};
-          const lDiv=document.createElement('div'); lDiv.className='p-2 border rounded-lg flex justify-between items-start bg-indigo-50';
-          lDiv.innerHTML=`
-            <div>
-              <h4 class="font-semibold">${lesson.title}</h4>
-              <p class="text-gray-700 text-sm">${lesson.content||''}</p>
-              ${lesson.link?`<p class="text-blue-600"><a href="${lesson.link}" target="_blank">${lesson.link}</a></p>`:''}
-              ${lesson.fileUrl?`<p class="text-purple-600"><a href="${lesson.fileUrl}" target="_blank">Open File</a></p>`:''}
-            </div>
-            <div class="flex gap-1">
-              <button class="editLessonBtn text-blue-600"><i class="fa-solid fa-pen"></i></button>
-              <button class="deleteLessonBtn text-red-600"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          `;
-          lessonContainer.appendChild(lDiv);
+            // Topic buttons
+            div.querySelector('.editTopicBtn').onclick=()=>{ editingTopicId=topic.id; topicName.value=topic.name; topicModal.classList.remove('hidden'); };
+            div.querySelector('.deleteTopicBtn').onclick=async()=>{ if(confirm('Delete this topic?')) await deleteDoc(doc(topicsRef(),topic.id)); };
+            div.querySelector('.addLessonBtn').onclick=()=>{ editingLessonId=null; currentTopicId=topic.id; lessonForm.reset(); lessonFilesContainer.innerHTML=''; lessonLinksContainer.innerHTML=''; lessonModal.classList.remove('hidden'); };
 
-          lDiv.querySelector('.editLessonBtn').onclick=()=>{
-            editingLessonId=lesson.id; currentTopicId=topic.id;
-            lessonTitle.value=lesson.title; lessonContent.value=lesson.content||'';
-            lessonLink.value=lesson.link||''; tempLessonFileUrl=lesson.fileUrl||'';
-            lessonModal.classList.remove('hidden');
-          };
-          lDiv.querySelector('.deleteLessonBtn').onclick=async()=>{
-            if(confirm('Delete this lesson?')) await deleteDoc(doc(lessonsRef,lesson.id));
-          };
+            // Load lessons
+            const lessonsRef=collection(topicsRef(),topic.id,'lessons');
+            onSnapshot(query(lessonsRef,orderBy('createdAt','asc')),snap=>{
+                lessonContainer.innerHTML='';
+                snap.docs.forEach(lDoc=>{
+                    const lesson={...lDoc.data(),id:lDoc.id};
+                    const lDiv=document.createElement('div');
+                    lDiv.className='p-2 border rounded-lg flex flex-col gap-1 bg-indigo-50';
+                    let filesHtml='';
+                    if(lesson.files && lesson.files.length) filesHtml=lesson.files.map(f=>`<p class="text-purple-600"><a href="${f}" target="_blank">Open File</a></p>`).join('');
+                    let linksHtml='';
+                    if(lesson.links && lesson.links.length) linksHtml=lesson.links.map(l=>`<p class="text-blue-600"><a href="${l}" target="_blank">${l}</a></p>`).join('');
+                    lDiv.innerHTML=`
+                        <div class="flex justify-between items-start">
+                          <div>
+                            <h4 class="font-semibold">${lesson.title}</h4>
+                            <p class="text-gray-700 text-sm">${lesson.content||''}</p>
+                            ${filesHtml}${linksHtml}
+                          </div>
+                          <div class="flex gap-1">
+                            <button class="editLessonBtn text-blue-600"><i class="fa-solid fa-pen"></i></button>
+                            <button class="deleteLessonBtn text-red-600"><i class="fa-solid fa-trash"></i></button>
+                          </div>
+                        </div>
+                    `;
+                    lessonContainer.appendChild(lDiv);
+
+                    lDiv.querySelector('.editLessonBtn').onclick=()=>{
+                        editingLessonId=lesson.id; currentTopicId=topic.id;
+                        lessonTitle.value=lesson.title;
+                        lessonContent.value=lesson.content||'';
+                        lessonFilesContainer.innerHTML='';
+                        lessonLinksContainer.innerHTML='';
+                        if(lesson.files) lesson.files.forEach(f=>{
+                            const div=document.createElement('div');
+                            div.className='flex gap-2';
+                            div.innerHTML=`<input type="text" value="${f}" class="flex-1 p-2 border rounded-md"><button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
+                            lessonFilesContainer.appendChild(div);
+                            div.querySelector('.removeBtn').onclick=()=>div.remove();
+                        });
+                        if(lesson.links) lesson.links.forEach(l=>{
+                            const div=document.createElement('div');
+                            div.className='flex gap-2';
+                            div.innerHTML=`<input type="url" value="${l}" class="flex-1 p-2 border rounded-md"><button type="button" class="removeBtn text-red-600 px-2">Remove</button>`;
+                            lessonLinksContainer.appendChild(div);
+                            div.querySelector('.removeBtn').onclick=()=>div.remove();
+                        });
+                        lessonModal.classList.remove('hidden');
+                    };
+                    lDiv.querySelector('.deleteLessonBtn').onclick=async()=>{
+                        if(confirm('Delete this lesson?')) await deleteDoc(doc(lessonsRef,lesson.id));
+                    };
+                });
+            });
         });
-      });
     });
-  });
 }
 
 // Topic form submit
 topicForm.onsubmit=async e=>{
-  e.preventDefault();
-  const data={ name: topicName.value, createdAt: new Date() };
-  if(editingTopicId) await updateDoc(doc(topicsRef(),editingTopicId),data);
-  else await addDoc(topicsRef(),data);
-  topicForm.reset(); topicModal.classList.add('hidden');
+    e.preventDefault();
+    const data={ name: topicName.value, createdAt: new Date() };
+    if(editingTopicId) await updateDoc(doc(topicsRef(),editingTopicId),data);
+    else await addDoc(topicsRef(),data);
+    topicForm.reset(); topicModal.classList.add('hidden');
 };
 
 // Lesson form submit
 lessonForm.onsubmit=async e=>{
-  e.preventDefault();
-  const data={
-    title: lessonTitle.value,
-    content: lessonContent.value||'',
-    link: lessonLink.value||null,
-    fileUrl: tempLessonFileUrl||null,
-    createdAt: new Date()
-  };
-  const lessonsRef=collection(topicsRef(),currentTopicId,'lessons');
-  if(editingLessonId) await updateDoc(doc(lessonsRef,editingLessonId),data);
-  else await addDoc(lessonsRef,data);
-  lessonForm.reset(); lessonModal.classList.add('hidden'); tempLessonFileUrl='';
+    e.preventDefault();
+    const files=[...lessonFilesContainer.querySelectorAll('input')].map(i=>i.value).filter(v=>v);
+    const links=[...lessonLinksContainer.querySelectorAll('input')].map(i=>i.value).filter(v=>v);
+    const data={ title: lessonTitle.value, content: lessonContent.value||'', files, links, createdAt: new Date() };
+    const lessonsRef=collection(topicsRef(),currentTopicId,'lessons');
+    if(editingLessonId) await updateDoc(doc(lessonsRef,editingLessonId),data);
+    else await addDoc(lessonsRef,data);
+    lessonForm.reset(); lessonFilesContainer.innerHTML=''; lessonLinksContainer.innerHTML=''; lessonModal.classList.add('hidden');
 };
 </script>
-
 </body>
 </html>
