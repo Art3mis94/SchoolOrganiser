@@ -3,332 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educator Hub - Notes</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <!-- Consolidated Application Styles -->
+    <title>Your Notes</title>
+
     <style>
-        /* ====================================== */
-        /* APPLICATION-WIDE COMPONENT STYLES      */
-        /* ====================================== */
-        .nav-active {
-            @apply bg-white text-indigo-700 shadow-inner;
-        }
-        .tab-active {
-            @apply bg-white border-b-2 border-indigo-600 font-bold text-indigo-700;
-        }
-        .collapsible-header {
-            @apply flex justify-between items-center cursor-pointer p-4 rounded-t-xl;
-        }
-        .drag-zone {
-            border: 2px dashed #9ca3af;
-            background-color: #f9fafb;
-            text-align: center;
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
             padding: 20px;
+        }
+        #login-container, #notes-container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
             margin-top: 10px;
+        }
+        .note {
+            background: #fafafa;
+            padding: 12px;
             border-radius: 8px;
-            transition: all 0.2s;
+            margin-top: 10px;
+            border-left: 4px solid #007bff;
         }
-        .drag-over {
-            border-color: #4f46e5;
-            background-color: #eef2ff;
-        }
-        /* Custom utility tag for curriculum status */
-        .topic-status-tag {
-            padding: 0.25rem 0.6rem;
-            border-radius: 9999px; 
-            font-size: 0.75rem; 
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); 
-        }
-        /* Toggle button for curriculum expansion */
-        .toggle-btn {
-            @apply text-gray-600 hover:text-indigo-600 transition-transform duration-200;
-        }
-        .toggle-btn span:last-child {
-            @apply transition-transform duration-200;
-        }
-        .toggle-btn.collapsed span:last-child {
-            @apply rotate-0;
-        }
-        .toggle-btn:not(.collapsed) span:last-child {
-            @apply rotate-90;
-        }
-        /* Curriculum Structure Styles (Topic/Lesson containers) */
-        .topic {
-            @apply flex flex-col gap-2;
-        }
-        .subtopics {
-            @apply ml-6 mt-2 space-y-2;
-        }
-        .lesson-group {
-            @apply mb-4;
-        }
-        .lesson {
-            @apply p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition;
-        }
-        .lesson h3 {
-            @apply text-lg font-semibold text-gray-800;
-        }
-        .lesson p {
-            @apply text-gray-600;
-        }
-        /* Completed item styles */
-        .completed {
-            @apply line-through text-gray-500;
-        }
-        /* Button defaults for the app */
         button {
-            @apply transition duration-200;
+            padding: 10px 16px;
+            border: none;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            border-radius: 6px;
+            margin-top: 10px;
         }
-        .topic button {
-            @apply transition duration-200 shadow-sm hover:shadow-md; 
-        }
-        /* Specific styles for the Notes editor */
-        #noteEditor {
-            min-height: 400px;
+        button:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-indigo-700 p-4 shadow-2xl">
-        <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
-            <!-- FIX 1: Changed link back to index.html -->
-            <a href="index.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-            <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
-            <a href="notes.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Notes 📝</a>
-            <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
-            <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-        </div>
-    </nav>
-    <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
-        <h1 class="text-3xl font-bold text-center text-gray-800">Quick Notes 📝</h1>
-        
-        <!-- Loading & Status -->
-        <p id="loadingStatus" class="text-center text-gray-500 p-4">
-            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing Firebase and loading notes...
-        </p>
-        <p id="userIdDisplay" class="text-xs text-gray-400 mt-4 text-center">User ID: N/A</p>
 
-        <!-- Date Selector -->
-        <div id="notesInterface" class="hidden">
-            <div class="flex flex-col sm:flex-row justify-between items-center p-4 bg-indigo-50 rounded-xl shadow-inner mb-4">
-                <label for="noteDate" class="text-lg font-semibold text-indigo-700">Select Date:</label>
-                <input type="date" id="noteDate" class="p-2 border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" disabled>
-                <p id="saveStatus" class="text-sm italic text-gray-600"></p>
-            </div>
-            
-            <!-- Note Editor -->
-            <textarea id="noteEditor" 
-                      placeholder="Start typing your notes for this date here. Notes auto-save every few seconds."
-                      class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base"
-                      disabled></textarea>
+<body>
 
-            <!-- Previous Notes -->
-            <div class="mt-8">
-                <h2 class="text-2xl font-bold text-gray-700 mb-4 flex items-center gap-2"><i class="fa-solid fa-calendar-alt"></i> Other Notes</h2>
-                <div id="recentNotesList" class="space-y-3">
-                    <p class="text-gray-500 italic">No other notes found for this month.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- LOGIN WRAPPER -->
+<div id="login-container" style="display:none;">
+    <h2>Login</h2>
+    <input id="email" type="email" placeholder="Email"><br><br>
+    <input id="password" type="password" placeholder="Password"><br><br>
+    <button onclick="login()">Login</button>
 
-    <!-- Firebase Logic -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <p id="login-error" style="color:red;"></p>
+</div>
 
-        setLogLevel('error');
+<!-- NOTES WRAPPER -->
+<div id="notes-container" style="display:none;">
+    <h2>Your Notes</h2>
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    <textarea id="noteText" placeholder="Write a note..."></textarea>
+    <br>
+    <button onclick="saveNote()">Save Note</button>
 
-        let db = null;
-        let auth = null;
-        let userId = null;
-        let saveTimeout = null;
-        let currentMonthNotes = []; // Stores notes for the current month
+    <h3>Saved Notes</h3>
+    <div id="notesList"></div>
 
-        const loadingStatus = document.getElementById('loadingStatus');
-        const userIdDisplay = document.getElementById('userIdDisplay');
-        const notesInterface = document.getElementById('notesInterface');
-        const noteDateInput = document.getElementById('noteDate');
-        const noteEditor = document.getElementById('noteEditor');
-        const saveStatus = document.getElementById('saveStatus');
-        const recentNotesList = document.getElementById('recentNotesList');
+    <br>
+    <button onclick="logout()">Log Out</button>
+</div>
 
-        // Firestore paths
-        const NOTES_COLLECTION = (uid) => collection(db, 'artifacts', appId, 'users', uid, 'daily_notes');
-        const NOTE_DOC_REF = (uid, dateId) => doc(db, 'artifacts', appId, 'users', uid, 'daily_notes', dateId);
 
-        // --- Utility Functions ---
-        function getTodayDateString() {
-            return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+<!-- FIREBASE SCRIPTS -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { 
+        getAuth, 
+        onAuthStateChanged, 
+        signInWithEmailAndPassword,
+        signOut
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+
+    import {
+        getFirestore,
+        collection,
+        addDoc,
+        onSnapshot,
+        query,
+        orderBy
+    } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+    // YOUR CONFIG (correct)
+    const firebaseConfig = {
+        apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
+        authDomain: "school-organiser-5f512.firebaseapp.com",
+        projectId: "school-organiser-5f512",
+        storageBucket: "school-organiser-5f512.firebasestorage.app",
+        messagingSenderId: "567803400438",
+        appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7",
+        measurementId: "G-9ZGHJPJW6M"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+
+    // 🔐 AUTH STATE CHECK
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById("login-container").style.display = "none";
+            document.getElementById("notes-container").style.display = "block";
+
+            loadNotes(user.uid);
+        } else {
+            document.getElementById("notes-container").style.display = "none";
+            document.getElementById("login-container").style.display = "block";
         }
+    });
 
-        function formatDateDisplay(dateString) {
-            return new Date(dateString).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        }
 
-        function getMonthStart(dateString) {
-            return dateString.substring(0, 7) + '-01'; // YYYY-MM-01
-        }
-        
-        // --- Firebase Initialization ---
+    // 🔑 LOGIN FUNCTION
+    window.login = function () {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
 
-        async function initializeFirebaseAndAuth() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, user => {
-                    if (user) {
-                        userId = user.uid;
-                        userIdDisplay.textContent = `User ID: ${userId}`;
-                        setupNotesUI();
-                        loadingStatus.classList.add('hidden');
-                        notesInterface.classList.remove('hidden');
-                    } else {
-                        // FIX 2: Redirect to the index page if unauthenticated
-                        window.location.href = "index.html";
-                    }
-                });
-
-            } catch (error) {
-                console.error("Firebase Initialization Error:", error);
-                loadingStatus.textContent = `Error initializing app: ${error.message}`;
-            }
-        }
-
-        function setupNotesUI() {
-            noteDateInput.value = getTodayDateString();
-            noteDateInput.disabled = false;
-            noteEditor.disabled = false;
-            
-            // Initial load for today's note and current month's list
-            loadNoteAndMonth(noteDateInput.value);
-
-            noteDateInput.addEventListener('change', (e) => loadNoteAndMonth(e.target.value));
-            noteEditor.addEventListener('input', scheduleSave);
-        }
-
-        async function loadNoteAndMonth(dateString) {
-            // 1. Load the specific note for the date
-            onSnapshot(NOTE_DOC_REF(userId, dateString), (docSnap) => {
-                const note = docSnap.exists() ? docSnap.data().content : '';
-                noteEditor.value = note;
-                saveStatus.textContent = `Note loaded for ${formatDateDisplay(dateString)}`;
-            }, (error) => {
-                console.error("Error loading note:", error);
-                saveStatus.textContent = "Error loading note.";
+        signInWithEmailAndPassword(auth, email, password)
+            .catch(error => {
+                document.getElementById("login-error").innerText = error.message;
             });
-            
-            // 2. Load all notes for the current month
-            await loadRecentNotes(dateString);
-        }
+    };
 
-        async function loadRecentNotes(currentDateString) {
-            const monthStart = getMonthStart(currentDateString);
-            const nextMonthStart = new Date(new Date(monthStart).setMonth(new Date(monthStart).getMonth() + 1)).toISOString().slice(0, 10);
-            
-            try {
-                const q = query(
-                    NOTES_COLLECTION(userId),
-                    where('date', '>=', monthStart),
-                    where('date', '<', nextMonthStart)
-                );
-                
-                const querySnapshot = await getDocs(q);
-                
-                currentMonthNotes = querySnapshot.docs.map(doc => ({
-                    date: doc.id,
-                    content: doc.data().content,
-                })).filter(note => note.date !== currentDateString); // Exclude the current note being edited
 
-                renderRecentNotes();
+    // 📝 SAVE NOTE
+    window.saveNote = async function () {
+        const user = auth.currentUser;
+        const noteText = document.getElementById("noteText").value.trim();
 
-            } catch (error) {
-                console.error("Error querying recent notes:", error);
-            }
-        }
+        if (!noteText) return;
 
-        function renderRecentNotes() {
-            recentNotesList.innerHTML = '';
-            
-            // Sort by date descending
-            currentMonthNotes.sort((a, b) => b.date.localeCompare(a.date));
+        await addDoc(collection(db, "users", user.uid, "notes"), {
+            text: noteText,
+            timestamp: Date.now()
+        });
 
-            if (currentMonthNotes.length === 0) {
-                recentNotesList.innerHTML = `<p class="text-gray-500 italic p-2 text-center">No other notes found for ${new Date(noteDateInput.value).toLocaleDateString('en-US', { month: 'long', year: 'numeric'})}.</p>`;
-                return;
-            }
+        document.getElementById("noteText").value = "";
+    };
 
-            currentMonthNotes.forEach(note => {
-                const item = document.createElement('div');
-                item.className = 'p-3 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition cursor-pointer';
-                item.onclick = () => { noteDateInput.value = note.date; loadNoteAndMonth(note.date); };
-                
-                const preview = note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '');
 
-                item.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-semibold text-indigo-700">${formatDateDisplay(note.date)}</h3>
-                        <i class="fa-solid fa-arrow-right text-indigo-400"></i>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-1">${preview || '*(Empty Note)*'}</p>
-                `;
-                recentNotesList.appendChild(item);
+    // 📥 LOAD NOTES
+    function loadNotes(uid) {
+        const notesRef = collection(db, "users", uid, "notes");
+        const q = query(notesRef, orderBy("timestamp", "desc"));
+
+        onSnapshot(q, snapshot => {
+            let html = "";
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                html += `<div class="note">${data.text}</div>`;
             });
-        }
-        
-        // --- Save Logic (Debounced) ---
 
-        function scheduleSave() {
-            saveStatus.textContent = "Typing... changes will save shortly.";
-            if (saveTimeout) {
-                clearTimeout(saveTimeout);
-            }
-            saveTimeout = setTimeout(saveNote, 3000); // Wait 3 seconds after last input
-        }
+            document.getElementById("notesList").innerHTML = html;
+        });
+    }
 
-        async function saveNote() {
-            const date = noteDateInput.value;
-            const content = noteEditor.value.trim();
 
-            if (!userId || !date) return;
-            
-            try {
-                // Use setDoc with the date as the document ID
-                await setDoc(NOTE_DOC_REF(userId, date), {
-                    content: content,
-                    date: date,
-                    timestamp: new Date().toISOString()
-                });
-                saveStatus.textContent = `Saved successfully at ${new Date().toLocaleTimeString()}!`;
-                
-                // If the content is not empty, ensure it appears in the recent list view
-                if (content) await loadRecentNotes(date); 
+    // 🚪 LOGOUT
+    window.logout = function () {
+        signOut(auth);
+    };
+</script>
 
-            } catch (error) {
-                console.error("Error saving note:", error);
-                saveStatus.textContent = `Error saving note: ${error.message}`;
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', initializeFirebaseAndAuth);
-    </script>
 </body>
 </html>
-
