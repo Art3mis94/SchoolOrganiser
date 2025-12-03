@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Educator Hub - Tools (Local Mode)</title>
+    <title>Educator Hub - Tools</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
@@ -91,13 +91,13 @@
         </div>
     </nav>
     <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
-        <h1 class="text-3xl font-bold text-center text-gray-800">Resources & Management Tools 🛠️ (Local Session Mode)</h1>
+        <h1 class="text-3xl font-bold text-center text-gray-800">Resources & Management Tools 🛠️</h1>
         
         <div id="loadingIndicator" class="text-center text-gray-500 p-8">
             <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing App & Loading Curriculum Data...
         </div>
         <div id="errorDisplay" class="hidden text-center text-red-600 p-4 bg-red-100 border border-red-300 rounded-lg font-medium"></div>
-        <p id="userIdDisplay" class="text-xs text-gray-400 mt-4 text-center">Data is only saved in your browser for this session.</p>
+        <p id="userIdDisplay" class="text-xs text-gray-400 mt-4 text-center">User ID: N/A</p>
 
         <div class="flex border-b border-gray-300">
             <button id="tabTools" onclick="showTab('tools')" class="tab-active py-2 px-4 text-gray-600 hover:text-indigo-700 transition">Management Tools</button>
@@ -114,7 +114,7 @@
                     <i id="iconLessonImport" class="fa-solid fa-caret-down text-green-700"></i>
                 </div>
                 <div id="contentLessonImport" class="p-6 pt-0 space-y-4">
-                    <p class="text-green-600 mb-4">Paste multiple links/text resources **OR** drag and drop a file to be added to a specific lesson. (Data is local only.)</p>
+                    <p class="text-green-600 mb-4">Paste multiple links/text resources **OR** drag and drop a file to be added to a specific lesson. (Requires curriculum data.)</p>
                     
                     <form id="lessonResourceImportForm" class="space-y-4">
                         <select id="importTopicSelect" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" disabled>
@@ -148,7 +148,7 @@
                     <i id="iconGeneralImport" class="fa-solid fa-caret-right text-indigo-700"></i>
                 </div>
                 <div id="contentGeneralImport" class="p-6 pt-0 space-y-4 hidden">
-                    <p class="text-indigo-600 mb-4">Save a quick link, text resource, or drag and drop a file that isn't yet tied to a specific lesson. (Data is local only.)</p>
+                    <p class="text-indigo-600 mb-4">Save a quick link, text resource, or drag and drop a file that isn't yet tied to a specific lesson. This data is cloud-synced.</p>
                     
                     <form id="generalResourceImportForm" class="space-y-4">
                         <textarea id="generalResourcesText" placeholder="Paste a general resource or link here" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y min-h-[80px]"></textarea>
@@ -169,12 +169,12 @@
             <div id="sectionBackup" class="bg-yellow-50 border-l-4 border-yellow-500 rounded-xl shadow-lg">
                 <div class="collapsible-header bg-yellow-100" onclick="toggleCollapse('contentBackup', 'iconBackup')">
                     <h2 class="text-xl font-bold text-yellow-700 flex items-center gap-3">
-                        <i class="fa-solid fa-database"></i> Local Data Management
+                        <i class="fa-solid fa-database"></i> Cloud Data Management
                     </h2>
                     <i id="iconBackup" class="fa-solid fa-caret-right text-yellow-700"></i>
                 </div>
                 <div id="contentBackup" class="p-6 pt-0 space-y-4 hidden">
-                    <p class="text-yellow-600 mb-4">Use this to manually download your current session's General Resources data as a backup.</p>
+                    <p class="text-yellow-600 mb-4">Your data is automatically saved to the cloud. Use this to manually download your General Resources data as a backup.</p>
                     
                     <div class="flex gap-4">
                         <button id="backupGeneralDataBtn" class="flex-1 p-3 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 transition shadow-md" disabled>
@@ -198,7 +198,7 @@
                     <i class="fa-solid fa-folder-open"></i> General Resources (Text & Files)
                 </h2>
                 <div id="generalResourcesList" class="space-y-3">
-                    <p class="text-gray-500 italic p-2 text-center">No general resources saved in this session yet.</p>
+                    <p class="text-gray-500 italic p-2 text-center">Loading general resources...</p>
                 </div>
             </div>
             
@@ -207,7 +207,7 @@
                     <i class="fa-solid fa-file-pdf"></i> Lesson Attachments (Curriculum Linked Files)
                 </h2>
                 <div id="uploadedFilesList" class="space-y-3">
-                    <p class="text-gray-500 italic p-2 text-center">No lesson attachments saved in this session yet.</p>
+                    <p class="text-gray-500 italic p-2 text-center">Lesson attachments will appear here once curriculum data is loaded.</p>
                 </div>
             </div>
 
@@ -216,11 +216,11 @@
     </div>
     
     <script type="module">
-        // Import only necessary Firebase modules for basic structure/mocking, but the database calls are removed.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
         
-        // This configuration is now only needed for the authentication redirect check, not for data persistence.
+        // Firebase config (Ensure this is your correct configuration)
         const firebaseConfig = {
           apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
           authDomain: "school-organiser-5f512.firebaseapp.com",
@@ -231,6 +231,7 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
         const auth = getAuth(app);
         
         // --- UI Elements ---
@@ -250,10 +251,10 @@
         const fileLessonDropZone = document.getElementById('fileLessonDropZone');
         const fileDropZone = document.getElementById('fileDropZone');
 
-        // --- State Variables (In-Memory Arrays) ---
-        // These now hold the *entire* app data for the session.
-        let localGeneralResources = []; 
-        let localCurriculumData = {}; // {topicId: {name: '...', lessons: {lessonId: {title: '...', files: [], links: []}}}}
+        // --- State Variables ---
+        let currentUser = null;
+        let curriculumTopics = []; // To hold topic data
+        let curriculumLessons = {}; // To hold lessons mapped by topicId
 
         // --- Utility Functions ---
         
@@ -266,7 +267,7 @@
             document.getElementById(`content${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.remove('hidden');
             document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('tab-active');
         }
-        window.showTab = showTab;
+        window.showTab = showTab; // Expose to global scope for HTML onclick
 
         function toggleCollapse(contentId, iconId) {
             const content = document.getElementById(contentId);
@@ -279,116 +280,172 @@
                 icon.classList.replace('fa-caret-down', 'fa-caret-right');
             }
         }
-        window.toggleCollapse = toggleCollapse;
+        window.toggleCollapse = toggleCollapse; // Expose to global scope for HTML onclick
 
-        function setAppState(isLoading) {
+        // Function to show/hide loading state and enable buttons
+        function setAppState(isLoading, message = '') {
             loadingIndicator.classList.toggle('hidden', !isLoading);
-            // Always enable buttons since we skip the Firebase waiting period
-            submitLessonImportBtn.disabled = false;
-            submitGeneralImportBtn.disabled = false;
-            backupGeneralDataBtn.disabled = false;
-            restoreGeneralDataBtn.disabled = false;
+            if (!isLoading) {
+                submitLessonImportBtn.disabled = false;
+                submitGeneralImportBtn.disabled = false;
+                backupGeneralDataBtn.disabled = false;
+                restoreGeneralDataBtn.disabled = false;
+            }
+            if (message) {
+                 errorDisplay.textContent = message;
+                 errorDisplay.classList.remove('hidden');
+            } else {
+                 errorDisplay.classList.add('hidden');
+            }
         }
 
-        // --- Local Data Management (MOCKING FIREBASE STRUCTURE) ---
+        // --- Firestore References ---
+        const topicsRef = (uid) => collection(db, 'users', uid, 'topics');
+        const generalResourcesRef = (uid) => collection(db, 'users', uid, 'generalResources');
 
-        /** Mocks the curriculum data structure, similar to the topic page's local logic. */
-        function initializeLocalCurriculum() {
-            // Mock Topics and Lessons for the dropdowns. 
-            // In a real local-only scenario, this data would be loaded from a static JSON or the user's input on the Topics page.
-            localCurriculumData = {
-                't1': { 
-                    name: 'Unit 1: Introduction to Web Dev', 
-                    lessons: {
-                        'l1a': { title: 'HTML Fundamentals', files: [], links: [] },
-                        'l1b': { title: 'CSS Layouts (Flexbox)', files: [], links: [] }
-                    }
-                },
-                't2': { 
-                    name: 'Unit 2: JavaScript & DOM', 
-                    lessons: {
-                        'l2a': { title: 'Variables and Functions', files: [], links: [] },
-                        'l2b': { title: 'Handling Events', files: [], links: [] }
-                    }
-                }
-            };
+        // --- Data Loading Functions ---
 
-            importTopicSelect.innerHTML = '<option value="">-- Select Parent Topic --</option>';
-            for (const topicId in localCurriculumData) {
-                const topic = localCurriculumData[topicId];
-                const option = document.createElement('option');
-                option.value = topicId;
-                option.textContent = topic.name;
-                importTopicSelect.appendChild(option);
+        /** Loads all topics and lessons for the import dropdowns. */
+        async function loadCurriculumSelects() {
+            if (!currentUser) return;
+            
+            try {
+                const topicsSnapshot = await getDocs(query(topicsRef(currentUser.uid), orderBy('createdAt', 'asc')));
+                curriculumTopics = [];
+                curriculumLessons = {};
+                
+                importTopicSelect.innerHTML = '<option value="">-- Select Parent Topic --</option>';
+                importLessonSelect.innerHTML = '<option value="">-- Select Target Lesson --</option>';
+                
+                // Use Promise.all to fetch lessons in parallel
+                const lessonPromises = [];
+                
+                topicsSnapshot.forEach(topicDoc => {
+                    const topic = { id: topicDoc.id, ...topicDoc.data() };
+                    curriculumTopics.push(topic);
+                    
+                    const option = document.createElement('option');
+                    option.value = topic.id;
+                    option.textContent = topic.name;
+                    importTopicSelect.appendChild(option);
+
+                    // Prepare lesson fetching promise
+                    const lessonsRef = collection(topicDoc.ref, 'lessons');
+                    const lessonPromise = getDocs(query(lessonsRef, orderBy('createdAt', 'asc'))).then(lessonsSnapshot => {
+                        curriculumLessons[topic.id] = lessonsSnapshot.docs.map(lessonDoc => ({
+                            id: lessonDoc.id,
+                            ...lessonDoc.data()
+                        }));
+                    });
+                    lessonPromises.push(lessonPromise);
+                });
+
+                await Promise.all(lessonPromises); // Wait for all lessons to be fetched
+
+                importTopicSelect.disabled = false;
+                importLessonSelect.disabled = true;
+                loadAllLessonAttachments(); // Load files for the "Resources View" tab
+            } catch (err) {
+                console.error("Error loading curriculum selects:", err);
+                // setAppState(false, "Failed to load curriculum data. Check console for details."); // Keep loading indicator hidden after error
             }
+        }
 
-            importTopicSelect.disabled = false;
+        /** Populates the lesson dropdown when a topic is selected. */
+        importTopicSelect.onchange = () => {
+            const topicId = importTopicSelect.value;
+            importLessonSelect.innerHTML = '<option value="">-- Select Target Lesson --</option>';
             importLessonSelect.disabled = true;
-            renderLocalResources();
-        }
 
-        /** Renders the General Resources list from localGeneralResources array. */
-        function renderLocalGeneralResources() {
-            generalResourcesList.innerHTML = '';
-            if (localGeneralResources.length === 0) {
-                generalResourcesList.innerHTML = '<p class="text-gray-500 italic p-2 text-center">No general resources saved in this session yet.</p>';
+            if (topicId && curriculumLessons[topicId]) {
+                curriculumLessons[topicId].forEach(lesson => {
+                    const option = document.createElement('option');
+                    option.value = lesson.id;
+                    option.textContent = lesson.title;
+                    importLessonSelect.appendChild(option);
+                });
+                importLessonSelect.disabled = false;
             }
+        };
+        
+        /** Sets up real-time listener for General Resources */
+        function loadGeneralResources() {
+            if (!currentUser) return;
 
-            localGeneralResources.forEach((resource, index) => {
-                const resourceDiv = document.createElement('div');
-                resourceDiv.className = 'flex justify-between items-center p-3 bg-white rounded-lg border shadow-sm';
-                
-                let iconClass = 'fa-file-alt text-gray-600';
-                let textContent = resource.text || 'Untitled File';
-                let linkTarget = '#';
+            const q = query(generalResourcesRef(currentUser.uid), orderBy('createdAt', 'desc'));
 
-                if (resource.url) { 
-                    iconClass = resource.type === 'file' ? 'fa-file-upload text-purple-600' : 'fa-link text-blue-600';
-                    linkTarget = resource.url;
-                    textContent = resource.text || resource.url;
-                } else if (resource.text && resource.text.startsWith('http')) {
-                    iconClass = 'fa-link text-blue-600';
-                    linkTarget = resource.text;
+            onSnapshot(q, (snapshot) => {
+                generalResourcesList.innerHTML = '';
+                if (snapshot.empty) {
+                    generalResourcesList.innerHTML = '<p class="text-gray-500 italic p-2 text-center">No general resources saved yet.</p>';
                 }
-                
-                resourceDiv.innerHTML = `
-                    <div class="truncate flex items-center gap-2">
-                        <i class="fa-solid ${iconClass}"></i>
-                        <a href="${linkTarget}" target="_blank" class="text-gray-700 hover:text-indigo-600 truncate">
-                            ${textContent}
-                        </a>
-                    </div>
-                    <button class="deleteResourceBtn text-red-500 hover:text-red-700 ml-4 flex-shrink-0" data-index="${index}">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
-                `;
-                generalResourcesList.appendChild(resourceDiv);
-            });
 
-            // Delete listener for local resources
-            generalResourcesList.querySelectorAll('.deleteResourceBtn').forEach(btn => {
-                btn.onclick = (e) => {
-                    const index = parseInt(e.currentTarget.dataset.index);
-                    if (confirm('Delete this general resource from this session?')) {
-                        localGeneralResources.splice(index, 1);
-                        renderLocalGeneralResources();
+                snapshot.docs.forEach(docSnap => {
+                    const resource = { id: docSnap.id, ...docSnap.data() };
+                    const resourceDiv = document.createElement('div');
+                    resourceDiv.className = 'flex justify-between items-center p-3 bg-white rounded-lg border shadow-sm';
+                    
+                    let iconClass = 'fa-file-alt text-gray-600';
+                    let textContent = resource.text || 'Untitled File';
+                    let linkTarget = '#';
+
+                    if (resource.url) { // Assumed file or external link
+                        iconClass = resource.type === 'file' ? 'fa-file-upload text-purple-600' : 'fa-link text-blue-600';
+                        linkTarget = resource.url;
+                        textContent = resource.text || resource.url;
+                    } else if (resource.text && resource.text.startsWith('http')) {
+                        iconClass = 'fa-link text-blue-600';
+                        linkTarget = resource.text;
                     }
-                };
+                    
+                    resourceDiv.innerHTML = `
+                        <div class="truncate flex items-center gap-2">
+                            <i class="fa-solid ${iconClass}"></i>
+                            <a href="${linkTarget}" target="_blank" class="text-gray-700 hover:text-indigo-600 truncate">
+                                ${textContent}
+                            </a>
+                        </div>
+                        <button class="deleteResourceBtn text-red-500 hover:text-red-700 ml-4 flex-shrink-0" data-id="${resource.id}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    `;
+                    generalResourcesList.appendChild(resourceDiv);
+                });
+
+                // Attach delete listeners
+                generalResourcesList.querySelectorAll('.deleteResourceBtn').forEach(btn => {
+                    btn.onclick = async (e) => {
+                        const resourceId = e.currentTarget.dataset.id;
+                        if (confirm('Delete this general resource?')) {
+                            try {
+                                await deleteDoc(doc(generalResourcesRef(currentUser.uid), resourceId));
+                            } catch (e) {
+                                console.error("Error deleting document: ", e);
+                            }
+                        }
+                    };
+                });
+            }, (error) => {
+                console.error("Error setting up General Resources listener:", error);
+                // setAppState(false, "Error loading resources.");
             });
         }
 
-        /** Renders the Lesson Attachments list from localCurriculumData structure. */
-        function renderLocalLessonAttachments() {
+        /** Loads all files attached to lessons across all topics for the "Resources View" tab. */
+        async function loadAllLessonAttachments() {
             uploadedFilesList.innerHTML = '';
             let fileCount = 0;
             
-            for (const topicId in localCurriculumData) {
-                const topic = localCurriculumData[topicId];
-                for (const lessonId in topic.lessons) {
-                    const lesson = topic.lessons[lessonId];
+            for (const topic of curriculumTopics) {
+                const lessons = curriculumLessons[topic.id] || [];
+                
+                for (const lesson of lessons) {
+                    // Files/links are stored as arrays in the lesson document
+                    const files = lesson.files || [];
+                    const links = lesson.links || [];
                     
                     // Display linked files
-                    (lesson.files || []).forEach(file => {
+                    files.forEach(file => {
                         fileCount++;
                         const fileDiv = document.createElement('div');
                         fileDiv.className = 'p-3 bg-white rounded-lg border shadow-sm flex justify-between items-center';
@@ -407,7 +464,7 @@
                     });
 
                     // Display linked links
-                    (lesson.links || []).forEach(link => {
+                    links.forEach(link => {
                         fileCount++;
                         const linkDiv = document.createElement('div');
                         linkDiv.className = 'p-3 bg-white rounded-lg border shadow-sm flex justify-between items-center';
@@ -428,39 +485,14 @@
             }
 
             if (fileCount === 0) {
-                uploadedFilesList.innerHTML = '<p class="text-gray-500 italic p-2 text-center">No files or links saved in this session yet.</p>';
+                uploadedFilesList.innerHTML = '<p class="text-gray-500 italic p-2 text-center">No files or links are currently attached to lessons.</p>';
             }
         }
-        
-        function renderLocalResources() {
-            renderLocalGeneralResources();
-            renderLocalLessonAttachments();
-        }
-
-        // --- Dropdown Logic ---
-        importTopicSelect.onchange = () => {
-            const topicId = importTopicSelect.value;
-            importLessonSelect.innerHTML = '<option value="">-- Select Target Lesson --</option>';
-            importLessonSelect.disabled = true;
-
-            if (topicId && localCurriculumData[topicId]) {
-                const lessons = localCurriculumData[topicId].lessons;
-                for (const lessonId in lessons) {
-                    const lesson = lessons[lessonId];
-                    const option = document.createElement('option');
-                    option.value = lessonId;
-                    option.textContent = lesson.title;
-                    importLessonSelect.appendChild(option);
-                }
-                importLessonSelect.disabled = false;
-            }
-        };
 
 
-        // --- Drag & Drop Handlers (Simplified) ---
+        // --- Drag & Drop Handlers (Simplified - No Storage Upload Implemented) ---
 
         function setupDragAndDrop(dropZone, fileInput, isLessonImport) {
-            // ... (Drag and drop listeners remain the same for local file selection)
             dropZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 dropZone.classList.add('drag-over');
@@ -491,7 +523,7 @@
         setupDragAndDrop(fileDropZone, document.getElementById('generalFile'), false);
 
 
-        // --- Form Submit Handlers (Local Saving) ---
+        // --- Form Submit Handlers (Simplified) ---
 
         // General Resource Import (Quick Save)
         document.getElementById('generalResourceImportForm').onsubmit = async (e) => {
@@ -512,37 +544,35 @@
             try {
                 if (resourcesText) {
                     const lines = resourcesText.split('\n').filter(line => line.trim() !== '');
-                    lines.forEach(text => {
-                        localGeneralResources.unshift({ // Add to start of array
+                    for (const text of lines) {
+                        await addDoc(generalResourcesRef(currentUser.uid), {
                             text: text,
                             type: text.startsWith('http') ? 'link' : 'text',
-                            createdAt: new Date().toISOString()
+                            createdAt: new Date()
                         });
-                    });
+                    }
                 }
 
                 if (generalFile) {
-                    // MOCKING the file data structure
-                    localGeneralResources.unshift({
+                    // SIMULATION ONLY: In a real app, this is where you'd upload to Firebase Storage
+                    await addDoc(generalResourcesRef(currentUser.uid), {
                         text: generalFile.name,
-                        url: `blob:${URL.createObjectURL(generalFile)}`, // Use a blob URL for local testing
+                        url: `simulated-storage-link/${generalFile.name}`, 
                         type: 'file',
-                        createdAt: new Date().toISOString()
+                        createdAt: new Date()
                     });
-                    document.getElementById('generalFile').value = ''; 
+                    document.getElementById('generalFile').value = ''; // Clear file input
                     fileDropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Drag and Drop File Here (Max 5MB)`;
                 }
 
                 document.getElementById('generalResourcesText').value = '';
-                renderLocalResources(); // Rerender UI
-                
-                messageDisplay.textContent = 'Resources saved to session successfully!';
+                messageDisplay.textContent = 'Resources saved successfully!';
                 messageDisplay.classList.remove('hidden', 'text-red-600');
                 messageDisplay.classList.add('text-green-600');
                 
             } catch (e) {
-                console.error("Error saving general resources locally: ", e);
-                messageDisplay.textContent = 'Local save failed! Check console.';
+                console.error("Error saving general resources: ", e);
+                messageDisplay.textContent = 'Save failed! Check console.';
                 messageDisplay.classList.remove('hidden', 'text-green-600');
                 messageDisplay.classList.add('text-red-600');
             }
@@ -572,6 +602,7 @@
             }
 
             try {
+                const lessonRef = doc(topicsRef(currentUser.uid), topicId, 'lessons', lessonId);
                 const newLinks = [];
                 const newFiles = [];
 
@@ -583,60 +614,73 @@
                 }
 
                 if (lessonFile) {
-                    // MOCKING the file data structure
+                    // SIMULATION ONLY
                     newFiles.push({
                         name: lessonFile.name,
-                        url: `blob:${URL.createObjectURL(lessonFile)}` 
+                        url: `simulated-storage-link/${lessonFile.name}` 
                     });
-                    document.getElementById('lessonFile').value = ''; 
+                    document.getElementById('lessonFile').value = ''; // Clear file input
                     fileLessonDropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-file-circle-plus mr-2"></i> Drag and Drop File Attachment Here (Max 5MB)`;
                 }
                 
-                // Get local lesson object and update its arrays directly
-                const lesson = localCurriculumData[topicId].lessons[lessonId];
-                lesson.links = [...(lesson.links || []), ...newLinks];
-                lesson.files = [...(lesson.files || []), ...newFiles];
+                // Get current lesson data to append new links/files
+                const lessonData = curriculumLessons[topicId].find(l => l.id === lessonId);
+                const existingLinks = lessonData.links || [];
+                const existingFiles = lessonData.files || [];
 
-                renderLocalResources(); // Rerender UI
+                await updateDoc(lessonRef, {
+                    links: [...existingLinks, ...newLinks],
+                    files: [...existingFiles, ...newFiles]
+                });
+                
+                // Manually update the in-memory data after a successful save
+                lessonData.links = [...existingLinks, ...newLinks];
+                lessonData.files = [...existingFiles, ...newFiles];
 
                 document.getElementById('importResourcesText').value = '';
-                messageDisplay.textContent = 'Resources added to lesson (session only) successfully!';
+                messageDisplay.textContent = 'Resources added to lesson successfully!';
                 messageDisplay.classList.remove('hidden', 'text-red-600');
                 messageDisplay.classList.add('text-green-600');
 
             } catch (e) {
-                console.error("Error importing lesson resources locally: ", e);
-                messageDisplay.textContent = 'Local import failed! Check console.';
+                console.error("Error importing lesson resources: ", e);
+                messageDisplay.textContent = 'Import failed! Check console.';
                 messageDisplay.classList.remove('hidden', 'text-green-600');
                 messageDisplay.classList.add('text-red-600');
             }
         };
         
         // --- Backup/Restore Functions (Placeholders) ---
-        // Note: These need proper implementation to actually work with local arrays.
+        // These buttons are now enabled but require implementation for actual JSON export/import.
         document.getElementById('backupGeneralDataBtn').onclick = () => {
-             alert(`Local data arrays contain ${localGeneralResources.length} items. Implement JSON export logic here.`);
+             alert("Backup functionality requires full implementation of data serialization.");
         };
         document.getElementById('restoreGeneralDataBtn').onclick = () => {
              alert("Restore functionality requires full implementation of file reading and data validation.");
         };
 
 
-        // --- Initialization ---
+        // --- Authentication & Initialization ---
 
-        // Skip the Firebase Auth check since we are not saving data.
-        // We initialize the local data immediately.
-        (() => {
-            initializeLocalCurriculum();
-            setAppState(false); // Hide loading indicator
-            // Still check auth just in case the user wants to sign out (though data won't persist)
-            onAuthStateChanged(auth, user => {
-                if (!user) {
-                    // If the user logs out, ensure they are redirected
-                    // window.location.href = 'index.html'; 
-                }
-            });
-        })();
+        onAuthStateChanged(auth, async user => {
+            if (user) {
+                currentUser = user;
+                userIdDisplay.textContent = `User ID: ${user.uid}`;
+                
+                // 1. Load data for dropdowns and file list
+                await loadCurriculumSelects(); // Important to await this for the file list
+                
+                // 2. Set up real-time listener for General Resources
+                loadGeneralResources();
+
+                // 3. Hide loading indicator and enable buttons
+                setAppState(false);
+
+            } else {
+                // User is signed out, redirect to login/home
+                window.location.href = 'index.html'; 
+            }
+        });
 
     </script>
 </body>
