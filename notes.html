@@ -28,7 +28,6 @@
 <body class="bg-gray-100 min-h-screen">
     <nav class="bg-indigo-700 p-4 shadow-2xl">
         <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
-            <!-- Ensure navigation links are functional -->
             <a href="dashboard.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
             <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
             <a href="notes.html" class="px-4 py-2 nav-active rounded-lg transition">Notes 📝</a>
@@ -41,7 +40,7 @@
         
         <!-- Loading & Status -->
         <p id="loadingStatus" class="text-center text-gray-500 p-4">
-            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing Firebase and loading notes...
+            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Checking authentication state...
         </p>
         <p id="userIdDisplay" class="text-xs text-gray-400 mt-4 text-center">User ID: N/A</p>
 
@@ -76,10 +75,9 @@
         import { getAuth, onAuthStateChanged, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // IMPORTANT: Set log level to 'error' to suppress spam, use 'debug' if troubleshooting
         setLogLevel('error');
 
-        // === USER'S FIREBASE CONFIGURATION ===
+        // === USER'S FIREBASE CONFIGURATION (Hardcoded for persistence across pages) ===
         const firebaseConfig = {
             apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
             authDomain: "school-organiser-5f512.firebaseapp.com",
@@ -89,8 +87,6 @@
             appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7",
             measurementId: "G-9ZGHJPJW6M"
         };
-        
-        // This is extracted from the config to form the Firestore path correctly
         const appId = "school-organiser-5f512"; 
         // =====================================
 
@@ -98,8 +94,8 @@
         let auth = null;
         let userId = null;
         let saveTimeout = null;
-        let currentNoteListener = null; // Holds the unsubscribe function for the current note's listener
-        let isEditing = false; // Flag to prevent listener from overwriting user input
+        let currentNoteListener = null; 
+        let isEditing = false; 
 
         const loadingStatus = document.getElementById('loadingStatus');
         const userIdDisplay = document.getElementById('userIdDisplay');
@@ -119,7 +115,6 @@
         }
 
         function formatDateDisplay(dateString) {
-            // Use 'T00:00:00' to treat it as a date, not a date-time in the current timezone
             const date = new Date(dateString + 'T00:00:00');
             return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         }
@@ -136,19 +131,20 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // Check for existing authenticated session
+                // CRITICAL FIX: onAuthStateChanged guarantees Firebase has checked for a persistent session.
                 onAuthStateChanged(auth, user => {
                     if (user) {
+                        // User session found and valid
                         userId = user.uid;
                         userIdDisplay.textContent = `User ID: ${userId}`;
                         setupNotesUI();
                         loadingStatus.classList.add('hidden');
                         notesInterface.classList.remove('hidden');
                     } else {
-                        // User is not logged in, redirect to login page
+                        // No user session found
                         loadingStatus.innerHTML = '<i class="fa-solid fa-lock mr-2"></i> Not logged in. Redirecting to login...';
+                        userIdDisplay.textContent = 'User ID: N/A (Redirecting)';
                         setTimeout(() => {
-                            // Assuming your login page is named login.html
                             window.location.href = "login.html"; 
                         }, 1500);
                     }
@@ -161,42 +157,42 @@
         }
 
         function setupNotesUI() {
+            // This function is only called when we have a valid userId
             noteDateInput.value = getTodayDateString();
             noteDateInput.disabled = false;
             noteEditor.disabled = false;
             
-            // Initial load for today's note and current month's list
             loadNoteAndMonth(noteDateInput.value);
 
             noteDateInput.addEventListener('change', (e) => loadNoteAndMonth(e.target.value));
             
-            // Set isEditing flags to prevent immediate listener overwrites
             noteEditor.addEventListener('focus', () => { isEditing = true; });
             noteEditor.addEventListener('blur', () => { 
                 isEditing = false; 
-                // Force a save immediately on blur if typing was scheduled
                 if (saveTimeout) saveNote(); 
             });
             noteEditor.addEventListener('input', scheduleSave);
         }
 
         function loadNoteAndMonth(dateString) {
-            // 1. Unsubscribe from the previous note listener to prevent stale updates
+            // Ensure userId is available before attempting Firestore access
+            if (!userId) {
+                console.error("loadNoteAndMonth called before userId was set.");
+                return;
+            }
+
             if (currentNoteListener) {
                 currentNoteListener(); 
                 currentNoteListener = null;
             }
 
-            // 2. Setup the real-time listener for the currently selected note
             currentNoteListener = onSnapshot(NOTE_DOC_REF(userId, dateString), (docSnap) => {
                 const note = docSnap.exists() ? docSnap.data().content : '';
                 
-                // Only update the editor if the user is NOT actively typing
                 if (!isEditing) {
                     noteEditor.value = note;
                     saveStatus.textContent = `Note loaded for ${formatDateDisplay(dateString)}`;
                 } else {
-                    // This handles status feedback when the user's *own* save syncs back
                     saveStatus.textContent = `Saved and synced at ${new Date().toLocaleTimeString()}`;
                 }
                 
@@ -205,33 +201,30 @@
                 saveStatus.textContent = "Error loading note.";
             });
             
-            // 3. Load all notes for the current month
             loadRecentNotes(dateString);
         }
 
         async function loadRecentNotes(currentDateString) {
-            const monthStart = getMonthStart(currentDateString);
+            if (!userId) return; // Guard against missing userId
             
-            // Calculate the start of the next month for accurate query range
+            const monthStart = getMonthStart(currentDateString);
             const nextMonth = new Date(currentDateString + 'T00:00:00');
             nextMonth.setMonth(nextMonth.getMonth() + 1);
             const nextMonthStart = nextMonth.toISOString().slice(0, 10);
             
             try {
-                // Query for all notes between the start of the current month and the start of the next
                 const q = query(
                     NOTES_COLLECTION(userId),
                     where('date', '>=', monthStart),
                     where('date', '<', nextMonthStart) 
                 );
                 
-                // Using getDocs for the list, as it's less critical than the active editor
                 const querySnapshot = await getDocs(q); 
                 
                 const currentMonthNotes = querySnapshot.docs.map(doc => ({
                     date: doc.id,
                     content: doc.data().content,
-                })).filter(note => note.date !== currentDateString); // Exclude the current note being edited
+                })).filter(note => note.date !== currentDateString);
 
                 renderRecentNotes(currentMonthNotes);
 
@@ -243,7 +236,6 @@
         function renderRecentNotes(notes) {
             recentNotesList.innerHTML = '';
             
-            // Sort by date descending
             notes.sort((a, b) => b.date.localeCompare(a.date));
 
             if (notes.length === 0) {
@@ -254,7 +246,6 @@
             notes.forEach(note => {
                 const item = document.createElement('div');
                 item.className = 'p-3 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition cursor-pointer';
-                // Click handler to load the selected note
                 item.onclick = () => { noteDateInput.value = note.date; loadNoteAndMonth(note.date); };
                 
                 const preview = note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '');
@@ -277,29 +268,28 @@
             if (saveTimeout) {
                 clearTimeout(saveTimeout);
             }
-            // Debounce: save 3 seconds after the last keystroke
             saveTimeout = setTimeout(saveNote, 3000); 
         }
 
         async function saveNote() {
-            // Clear the timeout whether we save now or were forced to save
             clearTimeout(saveTimeout); 
             saveTimeout = null;
 
             const date = noteDateInput.value;
             const content = noteEditor.value.trim();
 
-            if (!userId || !date) return;
+            if (!userId || !date) {
+                 console.error("Attempted save failed: userId or date missing.");
+                 return;
+            }
             
             try {
-                // setDoc creates or overwrites the document with the date as the ID
                 await setDoc(NOTE_DOC_REF(userId, date), {
                     content: content,
                     date: date,
                     timestamp: new Date().toISOString()
                 });
                 
-                // Reload the recent notes list to ensure the current note's preview is updated
                 if (content.length > 0) {
                     await loadRecentNotes(date); 
                 }
