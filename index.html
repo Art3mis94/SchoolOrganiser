@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login | Educator Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     body { font-family: 'Inter', sans-serif; background:#f7f9fb; display:flex; justify-content:center; min-height:100vh; padding:1rem; }
   </style>
@@ -39,6 +40,7 @@
   </div>
 
   <!-- Loading / Redirecting Screen (brief) -->
+  <!-- Note: We are removing 'hidden' from the HTML here and letting JS control visibility -->
   <div id="loading-panel" class="hidden text-center flex-col items-center space-y-4">
     <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
     <p class="text-lg text-gray-700">Taking you to your dashboard...</p>
@@ -67,9 +69,11 @@
   const loadingPanel = document.getElementById('loading-panel');
   const status = document.getElementById('status-message');
 
-  // Redirect to dashboard if already logged in
+  // Function to transition to the dashboard loading screen
   function goToDashboard() {
     authPanel.classList.add('hidden');
+    // FIX: Add 'flex' to ensure the spinner is centered correctly when visible
+    loadingPanel.classList.add('flex'); 
     loadingPanel.classList.remove('hidden');
     setTimeout(() => {
       window.location.href = "dashboard.html";
@@ -81,8 +85,9 @@
     if (user) {
       goToDashboard();
     } else {
+      // FIX: If no user, ensure the auth panel is visible and the loading panel is hidden
       authPanel.classList.remove('hidden');
-      loadingPanel.classList.add('flex');
+      loadingPanel.classList.remove('flex'); // Ensure flex is removed if it was added
       loadingPanel.classList.add('hidden');
     }
   });
@@ -125,3 +130,4 @@
 </script>
 </body>
 </html>
+
