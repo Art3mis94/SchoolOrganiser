@@ -171,12 +171,12 @@
         syncDashboardStats(userId); 
       } else {
         // Redirect to login if not authenticated
-        window.location.href = "login.html";
+        window.location.href = "index.html";
       }
     });
 
     document.getElementById('signout-btn').onclick = () => {
-      signOut(auth).then(() => window.location.href = "login.html");
+      signOut(auth).then(() => window.location.href = "index.html");
     };
 
     // --- Real-time Syncing Functions ---
