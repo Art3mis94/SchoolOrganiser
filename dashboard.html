@@ -3,84 +3,97 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Curriculum Topics | Educator Hub</title>
+<title>Educator Hub - Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
-.dropzone { border: 2px dashed #4f46e5; border-radius:0.5rem; padding:1rem; text-align:center; cursor:pointer; transition:0.2s; }
-.dropzone.dragover { background-color:#e0e7ff; }
+  .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
+  body { font-family: 'Inter', sans-serif; }
+  .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid #fff;
+      border-radius: 50%;
+      width: 1.5rem;
+      height: 1.5rem;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+  }
+  @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+  }
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-<!-- Navbar -->
+<!-- Navigation -->
 <nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-5xl mx-auto flex flex-wrap justify-center gap-4">
-    <a href="index.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-    <a href="topics.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Topics 🧠</a>
-    <a href="notes.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
-    <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
-    <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-    <button id="logoutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
+  <div class="container max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-4 relative">
+    <div class="flex flex-wrap justify-center gap-4">
+      <a href="dashboard.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Home 🏠</a>
+      <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
+      <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
+      <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
+      <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
+    </div>
+    <button id="signout-btn" class="absolute right-0 top-1/2 -translate-y-1/2 mr-4 px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition">Sign Out</button>
   </div>
 </nav>
 
-<div class="container max-w-5xl mx-auto p-6 mt-6">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-3xl font-bold text-indigo-700">Curriculum Topics</h1>
-    <button id="newTopicBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
-      <i class="fa-solid fa-plus mr-1"></i> New Topic
-    </button>
-  </div>
-  <div id="topicTree" class="space-y-3"></div>
-</div>
+<!-- Dashboard Content -->
+<div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
+  <h1 class="text-4xl font-bold text-center text-indigo-800 mb-8">Welcome back, Teacher!</h1>
+  <p class="text-center text-gray-600 mb-10 text-lg">
+    <span id="greeting-time"></span> · User ID: <code id="user-id-display" class="text-indigo-600 text-sm">Loading...</code>
+  </p>
 
-<!-- Topic Modal -->
-<div id="topicModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-    <div class="flex justify-between items-center pb-3 border-b">
-      <h3 class="text-2xl font-bold text-indigo-700">Add/Edit Topic</h3>
-      <button id="closeTopicModal" class="text-gray-400 hover:text-gray-600 text-xl">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+  <!-- Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg text-center">
+      <i class="fas fa-book-open text-4xl mb-3"></i>
+      <h3 id="topics-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
+      <p class="text-blue-100">Topics Covered</p>
     </div>
-    <form id="topicForm" class="space-y-4">
-      <input type="text" id="topicName" placeholder="Topic Name" class="w-full p-2 border rounded-md" required>
-      <button type="submit" class="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Save Topic</button>
-    </form>
-  </div>
-</div>
-
-<!-- Lesson Modal -->
-<div id="lessonModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
-    <div class="flex justify-between items-center pb-3 border-b">
-      <h3 class="text-2xl font-bold text-green-700">Add/Edit Lesson</h3>
-      <button id="closeLessonModal" class="text-gray-400 hover:text-gray-600 text-xl">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
+    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg text-center">
+      <i class="fas fa-check-circle text-4xl mb-3"></i>
+      <h3 id="completed-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
+      <p class="text-green-100">Completed Tasks</p>
     </div>
-    <form id="lessonForm" class="space-y-4">
-      <input type="text" id="lessonTitle" placeholder="Lesson Title" class="w-full p-2 border rounded-md" required>
-      <textarea id="lessonContent" rows="3" placeholder="Lesson content / learning outcome..." class="w-full p-2 border rounded-md"></textarea>
-      
-      <div id="lessonDropzone" class="dropzone">
-        Drag & Drop File Here or Click to Select
-        <input type="file" id="lessonFile" class="hidden">
-      </div>
-      <input type="url" id="lessonLink" placeholder="External link (Docs, Sheets, etc.)" class="w-full p-2 border rounded-md">
+    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg text-center">
+      <i class="fas fa-sticky-note text-4xl mb-3"></i>
+      <h3 id="notes-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
+      <p class="text-purple-100">Total Notes</p>
+    </div>
+  </div>
 
-      <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Save Lesson</button>
-    </form>
+  <!-- Quick Actions -->
+  <h2 class="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+    <a href="notes.html" class="bg-indigo-50 hover:bg-indigo-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
+      <i class="fas fa-edit text-3xl text-indigo-600 mb-3"></i>
+      <p class="font-semibold text-indigo-800">Write New Note</p>
+    </a>
+    <a href="curriculum_topics.html" class="bg-teal-50 hover:bg-teal-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
+      <i class="fas fa-brain text-3xl text-teal-600 mb-3"></i>
+      <p class="font-semibold text-teal-800">Plan Topics</p>
+    </a>
+    <a href="todo.html" class="bg-amber-50 hover:bg-amber-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
+      <i class="fas fa-list-check text-3xl text-amber-600 mb-3"></i>
+      <p class="font-semibold text-amber-800">View To-Do List</p>
+    </a>
+    <a href="resources.html" class="bg-pink-50 hover:bg-pink-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
+      <i class="fas fa-tools text-3xl text-pink-600 mb-3"></i>
+      <p class="font-semibold text-pink-800">Open Tools</p>
+    </a>
   </div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, query, where, onSnapshot, collectionGroup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// Firebase config
+// --- Firebase Config ---
 const firebaseConfig = {
   apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
   authDomain: "school-organiser-5f512.firebaseapp.com",
@@ -89,145 +102,63 @@ const firebaseConfig = {
   messagingSenderId: "567803400438",
   appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
 };
+const APP_ID = "school-organiser-5f512";
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-// UI elements
-const topicModal=document.getElementById('topicModal');
-const lessonModal=document.getElementById('lessonModal');
-const newTopicBtn=document.getElementById('newTopicBtn');
-const closeTopicModal=document.getElementById('closeTopicModal');
-const closeLessonModal=document.getElementById('closeLessonModal');
-const topicForm=document.getElementById('topicForm');
-const lessonForm=document.getElementById('lessonForm');
-const topicName=document.getElementById('topicName');
-const lessonTitle=document.getElementById('lessonTitle');
-const lessonContent=document.getElementById('lessonContent');
-const lessonLink=document.getElementById('lessonLink');
-const lessonDropzone=document.getElementById('lessonDropzone');
-const lessonFile=document.getElementById('lessonFile');
-const topicTree=document.getElementById('topicTree');
-const logoutBtn=document.getElementById('logoutBtn');
+// DOM Elements
+const userIdEl = document.getElementById('user-id-display');
+const greetingEl = document.getElementById('greeting-time');
+const topicsCountEl = document.getElementById('topics-count');
+const completedCountEl = document.getElementById('completed-count');
+const notesCountEl = document.getElementById('notes-count');
 
-let currentUser=null;
-let editingTopicId=null, editingLessonId=null, currentTopicId=null, tempLessonFileUrl='';
+// Greeting
+const hour = new Date().getHours();
+const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+greetingEl.textContent = `${greeting}!`;
 
-// Auth guard
-onAuthStateChanged(auth,user=>{
-  if(!user) window.location.href='index.html';
-  currentUser=user;
-  loadTopics();
+// Auth
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    const uid = user.uid;
+    userIdEl.textContent = uid;
+    syncStats(uid);
+  } else {
+    window.location.href = "index.html"; // replace with your login page
+  }
 });
 
-logoutBtn.onclick=async()=>{ await signOut(auth); window.location.href='index.html'; };
+// Sign Out
+document.getElementById('signout-btn').onclick = () => {
+  signOut(auth).then(() => window.location.href = "index.html");
+};
 
-// Topic modal
-newTopicBtn.onclick=()=>{ editingTopicId=null; topicForm.reset(); topicModal.classList.remove('hidden'); };
-closeTopicModal.onclick=()=>topicModal.classList.add('hidden');
+// --- Real-time Stats ---
+function syncStats(uid) {
+  // Topics Count
+  onSnapshot(collection(db, 'artifacts', APP_ID, 'users', uid, 'curriculum_topics'), snap => {
+    topicsCountEl.textContent = snap.size || 0;
+  });
 
-// Lesson modal
-closeLessonModal.onclick=()=>lessonModal.classList.add('hidden');
-lessonDropzone.onclick=()=>lessonFile.click();
-lessonDropzone.addEventListener('dragover', e=>{ e.preventDefault(); lessonDropzone.classList.add('dragover'); });
-lessonDropzone.addEventListener('dragleave', e=>{ lessonDropzone.classList.remove('dragover'); });
-lessonDropzone.addEventListener('drop', e=>{ 
-  e.preventDefault(); lessonDropzone.classList.remove('dragover'); 
-  const file=e.dataTransfer.files[0]; 
-  if(file) tempLessonFileUrl=URL.createObjectURL(file); 
-});
-lessonFile.onchange=()=>{ if(lessonFile.files[0]) tempLessonFileUrl=URL.createObjectURL(lessonFile.files[0]); };
+  // Completed Todos
+  const completedQuery = query(collection(db, 'artifacts', APP_ID, 'users', uid, 'todo_items'), where('completed', '==', true));
+  onSnapshot(completedQuery, snap => {
+    completedCountEl.textContent = snap.size || 0;
+  });
 
-// Firestore refs
-const topicsRef=()=>collection(db,'users',currentUser.uid,'topics');
-
-// Load topics and lessons
-function loadTopics(){
-  const q=query(topicsRef(), orderBy('createdAt','asc'));
-  onSnapshot(q, snapshot=>{
-    topicTree.innerHTML='';
-    snapshot.docs.forEach(docSnap=>{
-      const topic={...docSnap.data(),id:docSnap.id};
-      const div=document.createElement('div'); div.className='bg-white p-4 rounded-xl shadow hover:shadow-lg transition';
-      div.innerHTML=`
-        <div class="flex justify-between items-center">
-          <h3 class="font-bold text-indigo-700">${topic.name}</h3>
-          <div class="flex gap-2">
-            <button class="addLessonBtn text-green-600"><i class="fa-solid fa-book-medical"></i></button>
-            <button class="editTopicBtn text-blue-600"><i class="fa-solid fa-pen"></i></button>
-            <button class="deleteTopicBtn text-red-600"><i class="fa-solid fa-trash"></i></button>
-          </div>
-        </div>
-        <div class="mt-2 lessonContainer space-y-2"></div>
-      `;
-      topicTree.appendChild(div);
-
-      // Topic buttons
-      div.querySelector('.editTopicBtn').onclick=()=>{ editingTopicId=topic.id; topicName.value=topic.name; topicModal.classList.remove('hidden'); };
-      div.querySelector('.deleteTopicBtn').onclick=async()=>{ if(confirm('Delete this topic?')) await deleteDoc(doc(topicsRef(),topic.id)); };
-      div.querySelector('.addLessonBtn').onclick=()=>{ editingLessonId=null; currentTopicId=topic.id; lessonForm.reset(); tempLessonFileUrl=''; lessonModal.classList.remove('hidden'); };
-
-      // Load lessons
-      const lessonsRef=collection(topicsRef(),topic.id,'lessons');
-      onSnapshot(query(lessonsRef, orderBy('createdAt','asc')), snap=>{
-        const lessonContainer=div.querySelector('.lessonContainer'); lessonContainer.innerHTML='';
-        snap.docs.forEach(lDoc=>{
-          const lesson={...lDoc.data(),id:lDoc.id};
-          const lDiv=document.createElement('div'); lDiv.className='p-2 border rounded-lg flex justify-between items-start bg-indigo-50';
-          lDiv.innerHTML=`
-            <div>
-              <h4 class="font-semibold">${lesson.title}</h4>
-              <p class="text-gray-700 text-sm">${lesson.content||''}</p>
-              ${lesson.link?`<p class="text-blue-600"><a href="${lesson.link}" target="_blank">${lesson.link}</a></p>`:''}
-              ${lesson.fileUrl?`<p class="text-purple-600"><a href="${lesson.fileUrl}" target="_blank">Open File</a></p>`:''}
-            </div>
-            <div class="flex gap-1">
-              <button class="editLessonBtn text-blue-600"><i class="fa-solid fa-pen"></i></button>
-              <button class="deleteLessonBtn text-red-600"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          `;
-          lessonContainer.appendChild(lDiv);
-
-          lDiv.querySelector('.editLessonBtn').onclick=()=>{
-            editingLessonId=lesson.id; currentTopicId=topic.id;
-            lessonTitle.value=lesson.title; lessonContent.value=lesson.content||'';
-            lessonLink.value=lesson.link||''; tempLessonFileUrl=lesson.fileUrl||'';
-            lessonModal.classList.remove('hidden');
-          };
-          lDiv.querySelector('.deleteLessonBtn').onclick=async()=>{
-            if(confirm('Delete this lesson?')) await deleteDoc(doc(lessonsRef,lesson.id));
-          };
-        });
-      });
+  // Notes Count (collection group query for nested notes)
+  const notesGroup = collectionGroup(db, 'daily_notes');
+  onSnapshot(notesGroup, snap => {
+    let totalNotes = 0;
+    snap.forEach(doc => {
+      if(doc.ref.path.includes(`/users/${uid}/`)) totalNotes++;
     });
+    notesCountEl.textContent = totalNotes;
   });
 }
-
-// Topic form submit
-topicForm.onsubmit=async e=>{
-  e.preventDefault();
-  const data={ name: topicName.value, createdAt: new Date() };
-  if(editingTopicId) await updateDoc(doc(topicsRef(),editingTopicId),data);
-  else await addDoc(topicsRef(),data);
-  topicForm.reset(); topicModal.classList.add('hidden');
-};
-
-// Lesson form submit
-lessonForm.onsubmit=async e=>{
-  e.preventDefault();
-  const data={
-    title: lessonTitle.value,
-    content: lessonContent.value||'',
-    link: lessonLink.value||null,
-    fileUrl: tempLessonFileUrl||null,
-    createdAt: new Date()
-  };
-  const lessonsRef=collection(topicsRef(),currentTopicId,'lessons');
-  if(editingLessonId) await updateDoc(doc(lessonsRef,editingLessonId),data);
-  else await addDoc(lessonsRef,data);
-  lessonForm.reset(); lessonModal.classList.add('hidden'); tempLessonFileUrl='';
-};
 </script>
 
 </body>
