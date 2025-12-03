@@ -13,11 +13,9 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-  <!-- Navigation — now with emojis and perfect mobile layout -->
   <nav class="bg-indigo-700 text-white shadow-2xl">
     <div class="max-w-4xl mx-auto px-4 py-4">
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <!-- Left: Menu items -->
         <div class="flex flex-wrap justify-center gap-3 text-sm md:text-base">
           <a href="index.html" class="px-4 py-2 nav-active rounded-lg font-bold">Home</a>
           <a href="curriculum_topics.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">Topics</a>
@@ -25,8 +23,6 @@
           <a href="todo.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">To-Do List</a>
           <a href="resources.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">Tools</a>
         </div>
-
-        <!-- Right: Sign Out Button -->
         <button id="signout-btn" class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition shadow-lg">
           Sign Out
         </button>
@@ -34,37 +30,36 @@
     </div>
   </nav>
 
-  <!-- Main Dashboard -->
   <div class="max-w-4xl mx-auto p-6 mt-8">
     <div class="bg-white rounded-3xl shadow-2xl p-8">
       <h1 class="text-4xl font-bold text-center text-indigo-800 mb-4">
-        Welcome back, Teacher!
+        Welcome back, <span id="teacher-name">Teacher</span>!
       </h1>
       <p class="text-center text-gray-600 text-lg mb-10">
         <span id="greeting-time"></span> · User ID: <code id="user-id-display" class="text-indigo-600 text-sm">Loading...</code>
       </p>
 
-      <!-- Stats -->
+      <!-- Real Stats from Firestore -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl text-center shadow-xl">
           <i class="fas fa-book-open text-5xl mb-4"></i>
-          <div class="text-4xl font-bold">24</div>
-          <div class="text-blue-100">Topics Covered</div>
+          <div id="topics-count" class="text-4xl font-bold">0</div>
+          <div class="text-blue-100">Topics Created</div>
         </div>
         <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-8 rounded-2xl text-center shadow-xl">
           <i class="fas fa-check-circle text-5xl mb-4"></i>
-          <div class="text-4xl font-bold">18</div>
+          <div id="completed-count" class="text-4xl font-bold">0</div>
           <div class="text-green-100">Completed</div>
         </div>
         <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-8 rounded-2xl text-center shadow-xl">
           <i class="fas fa-sticky-note text-5xl mb-4"></i>
-          <div class="text-4xl font-bold">67</div>
+          <div id="notes-count" class="text-4xl font-bold">0</div>
           <div class="text-purple-100">Total Notes</div>
         </div>
       </div>
 
-      <!-- Quick Actions + Activity -->
-      <h2 class="text-2xl font-bold mb-6">Quick Actions</h2>
+      <!-- Quick Actions -->
+      <h2 class="text-2xl font-bold mb-6 text-gray-800">Quick Actions</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <a href="notes.html" class="bg-indigo-50 hover:bg-indigo-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
           <i class="fas fa-edit text-4xl text-indigo-600 mb-3"></i>
@@ -84,14 +79,14 @@
         </a>
       </div>
 
-      <p class="text-center text-gray-500 mt-12">You're doing great — keep going!</p>
+      <p class="text-center text-gray-500 mt-12 text-lg">Keep up the amazing work!</p>
     </div>
   </div>
 
-  <!-- Firebase Auth -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
@@ -104,29 +99,52 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
     const userIdEl = document.getElementById('user-id-display');
+    const topicsCountEl = document.getElementById('topics-count');
+    const completedCountEl = document.getElementById('completed-count');
+    const notesCountEl = document.getElementById('notes-count');
     const greetingEl = document.getElementById('greeting-time');
 
     // Greeting
     const hour = new Date().getHours();
     greetingEl.textContent = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
-    // Check login state
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        userIdEl.textContent = user.uid;
-      } else {
-        // Not logged in — redirect
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
         window.location.href = "index.html";
+        return;
+      }
+
+      userIdEl.textContent = user.uid;
+
+      try {
+        // Count topics
+        const topicsSnap = await getDocs(collection(db, "users", user.uid, "topics"));
+        topicsCountEl.textContent = topicsSnap.size;
+
+        // Count completed topics
+        const completedSnap = await getDocs(
+          query(collection(db, "users", user.uid, "topics"), where("completed", "==", true))
+        );
+        completedCountEl.textContent = completedSnap.size;
+
+        // Count notes
+        const notesSnap = await getDocs(collection(db, "users", user.uid, "daily_notes"));
+        notesCountEl.textContent = notesSnap.size;
+
+      } catch (err) {
+        console.error("Error loading stats:", err);
+        topicsCountEl.textContent = "—";
+        completedCountEl.textContent = "—";
+        notesCountEl.textContent = "—";
       }
     });
 
     // Sign out
     document.getElementById('signout-btn').onclick = () => {
-      signOut(auth).then(() => {
-        window.location.href = "index.html";
-      });
+      signOut(auth).then(() => window.location.href = "index.html");
     };
   </script>
 </body>
