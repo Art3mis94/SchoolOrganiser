@@ -14,33 +14,37 @@
 <body class="bg-gray-100 min-h-screen">
 
   <nav class="bg-indigo-700 text-white shadow-2xl">
-    <div class="max-w-4xl mx-auto px-4 py-4">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div class="flex flex-wrap justify-center gap-3 text-sm md:text-base">
-          <a href="index.html" class="px-4 py-2 nav-active rounded-lg font-bold">Home</a>
-          <a href="curriculum_topics.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">Topics</a>
-          <a href="notes.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">Notes</a>
-          <a href="todo.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">To-Do List</a>
-          <a href="resources.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">Tools</a>
-        </div>
-        <button id="signout-btn" class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-bold transition shadow-lg">
-          Sign Out
-        </button>
+    <div class="max-w-4xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-wrap gap-3">
+        <a href="index.html" class="px-4 py-2 nav-active rounded-lg font-bold">Home</a>
+        <a href="curriculum_topics.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">Topics</a>
+        <a href="notes.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">Notes</a>
+        <a href="todo.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">To-Do List</a>
+        <a href="resources.html" class="px-4 py-2 hover:bg-indigo-600 rounded-lg font-medium transition">Tools</a>
       </div>
+      <button id="signout-btn" class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-bold shadow-lg">
+        Sign Out
+      </button>
     </div>
   </nav>
 
   <div class="max-w-4xl mx-auto p-6 mt-8">
     <div class="bg-white rounded-3xl shadow-2xl p-8">
       <h1 class="text-4xl font-bold text-center text-indigo-800 mb-4">
-        Welcome back, <span id="teacher-name">Teacher</span>!
+        Welcome back, Teacher!
       </h1>
       <p class="text-center text-gray-600 text-lg mb-10">
-        <span id="greeting-time"></span> · User ID: <code id="user-id-display" class="text-indigo-600 text-sm">Loading...</code>
+        <span id="greeting-time"></span> · User ID: <code id="user-id-display" class="text-indigo-600 text-sm">…</code>
       </p>
 
-      <!-- Real Stats from Firestore -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <!-- Loading spinner -->
+      <div id="loading" class="text-center my-12">
+        <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+        <p class="mt-4 text-gray-600">Loading your real stats...</p>
+      </div>
+
+      <!-- Real Stats -->
+      <div id="stats" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 hidden">
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl text-center shadow-xl">
           <i class="fas fa-book-open text-5xl mb-4"></i>
           <div id="topics-count" class="text-4xl font-bold">0</div>
@@ -49,7 +53,7 @@
         <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-8 rounded-2xl text-center shadow-xl">
           <i class="fas fa-check-circle text-5xl mb-4"></i>
           <div id="completed-count" class="text-4xl font-bold">0</div>
-          <div class="text-green-100">Completed</div>
+          <div class="text-green-100">Completed Topics</div>
         </div>
         <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-8 rounded-2xl text-center shadow-xl">
           <i class="fas fa-sticky-note text-5xl mb-4"></i>
@@ -58,35 +62,29 @@
         </div>
       </div>
 
-      <!-- Quick Actions -->
+      <!-- Quick Actions (same as before) -->
       <h2 class="text-2xl font-bold mb-6 text-gray-800">Quick Actions</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <a href="notes.html" class="bg-indigo-50 hover:bg-indigo-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-          <i class="fas fa-edit text-4xl text-indigo-600 mb-3"></i>
-          <p class="font-bold">New Note</p>
+          <i class="fas fa-edit text-4xl text-indigo-600 mb-3"></i><p class="font-bold">New Note</p>
         </a>
         <a href="curriculum_topics.html" class="bg-teal-50 hover:bg-teal-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-          <i class="fas fa-brain text-4xl text-teal-600 mb-3"></i>
-          <p class="font-bold">Topics</p>
+          <i class="fas fa-brain text-4xl text-teal-600 mb-3"></i><p class="font-bold">Topics</p>
         </a>
         <a href="todo.html" class="bg-amber-50 hover:bg-amber-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-          <i class="fas fa-list-check text-4xl text-amber-600 mb-3"></i>
-          <p class="font-bold">To-Do</p>
+          <i class="fas fa-list-check text-4xl text-amber-600 mb-3"></i><p class="font-bold">To-Do</p>
         </a>
         <a href="resources.html" class="bg-pink-50 hover:bg-pink-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-          <i class="fas fa-tools text-4xl text-pink-600 mb-3"></i>
-          <p class="font-bold">Tools</p>
+          <i class="fas fa-tools text-4xl text-pink-600 mb-3"></i><p class="font-bold">Tools</p>
         </a>
       </div>
-
-      <p class="text-center text-gray-500 mt-12 text-lg">Keep up the amazing work!</p>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
@@ -97,52 +95,54 @@
       appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
     };
 
+    const appId = "1:567803400438:web:56ea2010e2d2a54fcc5cd7";   // ← this is the important part
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
     const userIdEl = document.getElementById('user-id-display');
-    const topicsCountEl = document.getElementById('topics-count');
-    const completedCountEl = document.getElementById('completed-count');
-    const notesCountEl = document.getElementById('notes-count');
-    const greetingEl = document.getElementById('greeting-time');
+    const topicsEl = document.getElementById('topics-count');
+    const completedEl = document.getElementById('completed-count');
+    const notesEl = document.getElementById('notes-count');
+    const loading = document.getElementById('loading');
+    const stats = document.getElementById('stats');
 
-    // Greeting
     const hour = new Date().getHours();
-    greetingEl.textContent = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    document.getElementById('greeting-time').textContent = 
+      hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
-      }
+      if (!user) { window.location.href = "index.html"; return; }
 
       userIdEl.textContent = user.uid;
 
       try {
-        // Count topics
-        const topicsSnap = await getDocs(collection(db, "users", user.uid, "topics"));
-        topicsCountEl.textContent = topicsSnap.size;
+        // CORRECT PATH — matches your notes.html
+        const base = collection(db, "artifacts", appId, "users", user.uid);
 
-        // Count completed topics
-        const completedSnap = await getDocs(
-          query(collection(db, "users", user.uid, "topics"), where("completed", "==", true))
-        );
-        completedCountEl.textContent = completedSnap.size;
+        // Topics count
+        const topicsSnap = await getDocs(collection(base, "topics"));
+        topicsEl.textContent = topicsSnap.size;
 
-        // Count notes
-        const notesSnap = await getDocs(collection(db, "users", user.uid, "daily_notes"));
-        notesCountEl.textContent = notesSnap.size;
+        // Completed topics count
+        const completedSnap = await getDocs(query(collection(base, "topics"), where("completed", "==", true)));
+        completedEl.textContent = completedSnap.size;
 
-      } catch (err) {
-        console.error("Error loading stats:", err);
-        topicsCountEl.textContent = "—";
-        completedCountEl.textContent = "—";
-        notesCountEl.textContent = "—";
+        // Notes count
+        const notesSnap = await getDocs(collection(base, "daily_notes"));
+        notesEl.textContent = notesSnap.size;
+
+        // Hide spinner, show stats
+        loading.classList.add('hidden');
+        stats.classList.remove('hidden');
+
+      } catch (e) {
+        console.error(e);
+        loading.innerHTML = "<p class='text-red-600'>Error loading data</p>";
       }
     });
 
-    // Sign out
     document.getElementById('signout-btn').onclick = () => {
       signOut(auth).then(() => window.location.href = "index.html");
     };
