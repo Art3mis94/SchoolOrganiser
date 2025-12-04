@@ -5,100 +5,75 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Educator Hub - Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 <style>
-  .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
-  body { font-family: 'Inter', sans-serif; }
-  .spinner {
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top: 4px solid #fff;
-      border-radius: 50%;
-      width: 1.5rem;
-      height: 1.5rem;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
-  }
-  @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-  }
+    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
 </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body>
 
+<!-- Navigation Bar -->
 <nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-4 relative">
-    <div class="flex flex-wrap justify-center gap-4">
-      <a href="dashboard.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Home 🏠</a>
-      <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
-      <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
-      <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
-      <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
+    <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
+        <a href="dashboard.html" class="px-4 py-2 nav-active font-semibold rounded-lg transition">Home 🏠</a>
+        <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
+        <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
+        <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
+        <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
     </div>
-    <button id="signout-btn" class="absolute right-0 top-1/2 -translate-y-1/2 mr-4 px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition">Sign Out</button>
-  </div>
 </nav>
 
-<div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
-  <h1 class="text-4xl font-bold text-center text-indigo-800 mb-2">
-    Welcome back, <span id="user-name-display">Educator</span>!
-  </h1>
-  <p class="text-center text-gray-600 mb-10 text-lg">
-    <span id="greeting-time"></span>
-  </p>
+<!-- Dashboard Content -->
+<div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-8">
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-book-open text-4xl mb-3"></i>
-      <h3 id="topics-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-blue-100">Topics Covered</p>
-    </div>
-    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-check-circle text-4xl mb-3"></i>
-      <h3 id="completed-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-green-100">Completed Tasks</p>
-    </div>
-    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-sticky-note text-4xl mb-3"></i>
-      <h3 id="notes-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-purple-100">Total Notes</p>
-    </div>
-  </div>
+    <h1 class="text-3xl font-bold text-center text-gray-800">Welcome to Your Dashboard 🎓</h1>
 
-  <h2 class="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-    <a href="notes.html" class="bg-indigo-50 hover:bg-indigo-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-edit text-3xl text-indigo-600 mb-3"></i>
-      <p class="font-semibold text-indigo-800">Write New Note</p>
-    </a>
-    <a href="curriculum_topics.html" class="bg-teal-50 hover:bg-teal-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-brain text-3xl text-teal-600 mb-3"></i>
-      <p class="font-semibold text-teal-800">Plan Topics</p>
-    </a>
-    <a href="todo.html" class="bg-amber-50 hover:bg-amber-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-list-check text-3xl text-amber-600 mb-3"></i>
-      <p class="font-semibold text-amber-800">View To-Do List</p>
-    </a>
-    <a href="resources.html" class="bg-pink-50 hover:bg-pink-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-tools text-3xl text-pink-600 mb-3"></i>
-      <p class="font-semibold text-pink-800">Open Tools</p>
-    </a>
-  </div>
+    <p id="userIdDisplay" class="text-center text-gray-500">Loading user...</p>
+
+    <!-- Stats Section -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Topics -->
+        <div class="bg-indigo-600 text-white p-6 rounded-2xl shadow-xl flex flex-col items-center">
+            <i class="fa-solid fa-brain text-4xl mb-3"></i>
+            <h2 class="text-xl font-bold">Topics</h2>
+            <p id="topicsCount" class="text-3xl font-bold mt-2">0</p>
+        </div>
+
+        <!-- Notes -->
+        <div class="bg-orange-500 text-white p-6 rounded-2xl shadow-xl flex flex-col items-center">
+            <i class="fa-solid fa-note-sticky text-4xl mb-3"></i>
+            <h2 class="text-xl font-bold">Notes</h2>
+            <p id="notesCount" class="text-3xl font-bold mt-2">0</p>
+        </div>
+
+        <!-- Pending Tasks -->
+        <div class="bg-green-600 text-white p-6 rounded-2xl shadow-xl flex flex-col items-center">
+            <i class="fa-solid fa-list-check text-4xl mb-3"></i>
+            <h2 class="text-xl font-bold">Pending Tasks</h2>
+            <p id="pendingTasksCount" class="text-3xl font-bold mt-2">0</p>
+        </div>
+
+    </div>
+
 </div>
 
-<footer class="container max-w-4xl mx-auto mt-4 p-4 text-center text-gray-500 text-xs">
-    <p>
-        App Version 1.0. | Your User ID: <span id="user-id-display" class="font-mono text-gray-700">Loading...</span>
-    </p>
-</footer>
-
-
+<!-- Firebase Logic -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, query, where, onSnapshot, collectionGroup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { 
+    getFirestore, 
+    doc, 
+    getDoc, 
+    collection, 
+    getDocs,
+    onSnapshot 
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// --- Firebase Config ---
+// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
   authDomain: "school-organiser-5f512.firebaseapp.com",
@@ -107,73 +82,67 @@ const firebaseConfig = {
   messagingSenderId: "567803400438",
   appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
 };
-const APP_ID = "school-organiser-5f512";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// DOM Elements - Added user-name-display
-const userIdEl = document.getElementById('user-id-display');
-const greetingEl = document.getElementById('greeting-time');
-const userNameEl = document.getElementById('user-name-display'); // <-- NEW
-const topicsCountEl = document.getElementById('topics-count');
-const completedCountEl = document.getElementById('completed-count');
-const notesCountEl = document.getElementById('notes-count');
+// Elements
+const userIdDisplay = document.getElementById("userIdDisplay");
+const topicsCountEl = document.getElementById("topicsCount");
+const notesCountEl = document.getElementById("notesCount");
+const pendingTasksCountEl = document.getElementById("pendingTasksCount");
 
-// Greeting
-const hour = new Date().getHours();
-const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-greetingEl.textContent = `${greeting}!`;
+// Firestore paths
+const USER_PATH = (uid) => ['artifacts', 'school-organiser-5f512', 'users', uid];
 
-// Auth
-onAuthStateChanged(auth, (user) => {
-  if (user) {
+// Real-Time Dashboard Sync
+onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+        userIdDisplay.textContent = "Not signed in";
+        return;
+    }
+
     const uid = user.uid;
-    
-    // --- Display Name Logic ---
-    // If displayName exists (usually from Google sign-in), use it.
-    // Otherwise, use the part of the email before the @ symbol.
-    const userName = user.displayName || user.email.split('@')[0];
-    userNameEl.textContent = userName;
-    
-    // Display User ID in the footer (less prominent)
-    userIdEl.textContent = uid; 
-    
-    syncStats(uid);
-  } else {
-    window.location.href = "index.html"; // replace with your login page
-  }
-});
+    userIdDisplay.textContent = `User ID: ${uid}`;
 
-// Sign Out
-document.getElementById('signout-btn').onclick = () => {
-  signOut(auth).then(() => window.location.href = "index.html");
-};
-
-// --- Real-time Stats ---
-function syncStats(uid) {
-  // Topics Count
-  onSnapshot(collection(db, 'artifacts', APP_ID, 'users', uid, 'curriculum_topics'), snap => {
-    topicsCountEl.textContent = snap.size || 0;
-  });
-
-  // Completed Todos
-  const completedQuery = query(collection(db, 'artifacts', APP_ID, 'users', uid, 'todo_items'), where('completed', '==', true));
-  onSnapshot(completedQuery, snap => {
-    completedCountEl.textContent = snap.size || 0;
-  });
-
-  // Notes Count (collection group query for nested notes)
-  const notesGroup = collectionGroup(db, 'daily_notes');
-  onSnapshot(notesGroup, snap => {
-    let totalNotes = 0;
-    snap.forEach(doc => {
-      if(doc.ref.path.includes(`/users/${uid}/`)) totalNotes++;
+    // ---------------------------
+    // ⭐ COUNT TOPICS
+    // ---------------------------
+    const topicsRef = collection(db, ...USER_PATH(uid), 'topics');
+    onSnapshot(topicsRef, snap => {
+        topicsCountEl.textContent = snap.size;
     });
-    notesCountEl.textContent = totalNotes;
-  });
-}
+
+    // ---------------------------
+    // ⭐ COUNT NOTES
+    // ---------------------------
+    const notesRef = collection(db, ...USER_PATH(uid), 'daily_notes');
+    onSnapshot(notesRef, snap => {
+        notesCountEl.textContent = snap.size;
+    });
+
+    // ---------------------------
+    // ⭐ COUNT PENDING TASKS  
+    // (MATCHES todo.html EXACTLY)
+    // ---------------------------
+    const todoDocRef = doc(db, ...USER_PATH(uid), 'task_planner', 'todo_list');
+
+    onSnapshot(todoDocRef, (docSnap) => {
+        if (!docSnap.exists()) {
+            pendingTasksCountEl.textContent = "0";
+            return;
+        }
+
+        const data = docSnap.data();
+        const tasks = data.tasks || [];
+
+        const pending = tasks.filter(t => !t.completed).length;
+
+        pendingTasksCountEl.textContent = pending;
+    });
+
+});
 </script>
 
 </body>
