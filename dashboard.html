@@ -1,180 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Educator Hub - Dashboard</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<style>
-  .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
-  body { font-family: 'Inter', sans-serif; }
-  .spinner {
-      border: 4px solid rgba(255, 255, 255, 0.3);
-      border-top: 4px solid #fff;
-      border-radius: 50%;
-      width: 1.5rem;
-      height: 1.5rem;
-      animation: spin 1s linear infinite;
-      margin: 0 auto;
-  }
-  @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Educator Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', sans-serif; background:#f7f9fb; display:flex; justify-content:center; min-height:100vh; padding:1rem; }
+    #loading-panel { justify-content: center; align-items: center; }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body>
 
-<nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-4 relative">
-    <div class="flex flex-wrap justify-center gap-4">
-      <a href="dashboard.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Home 🏠</a>
-      <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
-      <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
-      <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
-      <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-    </div>
-    <button id="signout-btn" class="absolute right-0 top-1/2 -translate-y-1/2 mr-4 px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition">Sign Out</button>
-  </div>
-</nav>
+<div id="app-container" class="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 mt-10">
+  
+  <div id="auth-panel">
+    <h1 class="text-3xl font-bold text-center mb-8 text-indigo-800">Welcome Back</h1>
+    <p class="text-center text-gray-600 mb-8">Sign in to access your Educator Hub</p>
 
-<div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
-  <h1 class="text-4xl font-bold text-center text-indigo-800 mb-2">
-    Welcome back, <span id="user-name-display">Educator</span>!
-  </h1>
-  <p class="text-center text-gray-600 mb-10 text-lg">
-    <span id="greeting-time"></span>
-  </p>
+    <div class="space-y-4">
+      <button id="google-btn" class="w-full py-4 bg-white border-2 border-gray-300 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-gray-50 transition">
+        <img src="https://www.google.com/favicon.ico" width="20" alt="Google"> Sign in with Google
+      </button>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-book-open text-4xl mb-3"></i>
-      <h3 id="topics-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-blue-100">Topics Covered</p>
+      <div class="relative text-center text-gray-500 my-6">
+        <span class="bg-white px-4">or</span>
+        <hr class="absolute inset-x-0 top-1/2">
+      </div>
+      
+      <input type="text" id="display-name" placeholder="Your Name (Required for Sign Up)" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      
+      <input type="email" id="email" placeholder="Email" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <input type="password" id="password" placeholder="Password" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+
+      <button id="login-btn" class="w-full py-3 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 transition">Log In</button>
+      <button id="signup-btn" class="w-full py-3 bg-green-600 text-white rounded-lg font-bold hover:bg-green-700 transition">Create Account</button>
     </div>
-    <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-check-circle text-4xl mb-3"></i>
-      <h3 id="completed-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-green-100">Completed Tasks</p>
-    </div>
-    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-sticky-note text-4xl mb-3"></i>
-      <h3 id="notes-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-purple-100">Total Notes</p>
-    </div>
+
+    <p id="status-message" class="text-center mt-6 text-sm text-red-600 h-5"></p>
   </div>
 
-  <h2 class="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-    <a href="notes.html" class="bg-indigo-50 hover:bg-indigo-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-edit text-3xl text-indigo-600 mb-3"></i>
-      <p class="font-semibold text-indigo-800">Write New Note</p>
-    </a>
-    <a href="curriculum_topics.html" class="bg-teal-50 hover:bg-teal-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-brain text-3xl text-teal-600 mb-3"></i>
-      <p class="font-semibold text-teal-800">Plan Topics</p>
-    </a>
-    <a href="todo.html" class="bg-amber-50 hover:bg-amber-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-list-check text-3xl text-amber-600 mb-3"></i>
-      <p class="font-semibold text-amber-800">View To-Do List</p>
-    </a>
-    <a href="resources.html" class="bg-pink-50 hover:bg-pink-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-tools text-3xl text-pink-600 mb-3"></i>
-      <p class="font-semibold text-pink-800">Open Tools</p>
-    </a>
+  <div id="loading-panel" class="hidden text-center flex-col items-center space-y-4">
+    <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+    <p class="text-lg text-gray-700">Taking you to your dashboard...</p>
   </div>
 </div>
 
-<footer class="container max-w-4xl mx-auto mt-4 p-4 text-center text-gray-500 text-xs">
-    <p>
-        App Version 1.0. | Your User ID: <span id="user-id-display" class="font-mono text-gray-700">Loading...</span>
-    </p>
-</footer>
-
-
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, query, where, onSnapshot, collectionGroup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  // Added updateProfile import
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-// --- Firebase Config ---
-const firebaseConfig = {
-  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
-  authDomain: "school-organiser-5f512.firebaseapp.com",
-  projectId: "school-organiser-5f512",
-  storageBucket: "school-organiser-5f512.appspot.com",
-  messagingSenderId: "567803400438",
-  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
-};
-const APP_ID = "school-organiser-5f512";
+  const firebaseConfig = {
+    apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
+    authDomain: "school-organiser-5f512.firebaseapp.com",
+    projectId: "school-organiser-5f512",
+    storageBucket: "school-organiser-5f512.appspot.com",
+    messagingSenderId: "567803400438",
+    appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7",
+    measurementId: "G-9ZGHJPJW6M"
+  };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const provider = new GoogleAuthProvider();
 
-// DOM Elements - Added user-name-display
-const userIdEl = document.getElementById('user-id-display');
-const greetingEl = document.getElementById('greeting-time');
-const userNameEl = document.getElementById('user-name-display'); // <-- NEW
-const topicsCountEl = document.getElementById('topics-count');
-const completedCountEl = document.getElementById('completed-count');
-const notesCountEl = document.getElementById('notes-count');
+  // DOM elements
+  const authPanel = document.getElementById('auth-panel');
+  const loadingPanel = document.getElementById('loading-panel');
+  const status = document.getElementById('status-message');
+  const nameInput = document.getElementById('display-name'); 
 
-// Greeting
-const hour = new Date().getHours();
-const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-greetingEl.textContent = `${greeting}!`;
-
-// Auth
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    const uid = user.uid;
-    
-    // --- Display Name Logic ---
-    // If displayName exists (usually from Google sign-in), use it.
-    // Otherwise, use the part of the email before the @ symbol.
-    const userName = user.displayName || user.email.split('@')[0];
-    userNameEl.textContent = userName;
-    
-    // Display User ID in the footer (less prominent)
-    userIdEl.textContent = uid; 
-    
-    syncStats(uid);
-  } else {
-    window.location.href = "index.html"; // replace with your login page
+  // Function to transition to the dashboard loading screen
+  function goToDashboard() {
+    authPanel.classList.add('hidden');
+    loadingPanel.classList.add('flex'); 
+    loadingPanel.classList.remove('hidden');
+    // Fast redirect
+    setTimeout(() => {
+      window.location.href = "dashboard.html";
+    }, 100); 
   }
-});
 
-// Sign Out
-document.getElementById('signout-btn').onclick = () => {
-  signOut(auth).then(() => window.location.href = "index.html");
-};
-
-// --- Real-time Stats ---
-function syncStats(uid) {
-  // Topics Count
-  onSnapshot(collection(db, 'artifacts', APP_ID, 'users', uid, 'curriculum_topics'), snap => {
-    topicsCountEl.textContent = snap.size || 0;
+  // Check auth state on load
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      goToDashboard();
+    } else {
+      authPanel.classList.remove('hidden');
+      loadingPanel.classList.remove('flex'); 
+      loadingPanel.classList.add('hidden');
+    }
   });
 
-  // Completed Todos
-  const completedQuery = query(collection(db, 'artifacts', APP_ID, 'users', uid, 'todo_items'), where('completed', '==', true));
-  onSnapshot(completedQuery, snap => {
-    completedCountEl.textContent = snap.size || 0;
-  });
+  // Google Sign-In
+  document.getElementById('google-btn').onclick = () => {
+    status.textContent = 'Signing in...';
+    signInWithPopup(auth, provider)
+      .then(() => goToDashboard())
+      .catch((error) => {
+        status.textContent = error.code === 'auth/popup-closed-by-user' 
+          ? 'Sign in cancelled.' 
+          : error.message;
+      });
+  };
 
-  // Notes Count (collection group query for nested notes)
-  const notesGroup = collectionGroup(db, 'daily_notes');
-  onSnapshot(notesGroup, snap => {
-    let totalNotes = 0;
-    snap.forEach(doc => {
-      if(doc.ref.path.includes(`/users/${uid}/`)) totalNotes++;
-    });
-    notesCountEl.textContent = totalNotes;
-  });
-}
+  // Email Login
+  document.getElementById('login-btn').onclick = () => {
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('password').value;
+    if (!email || !pass) return status.textContent = 'Please fill in both fields';
+
+    status.textContent = 'Logging in...';
+    signInWithEmailAndPassword(auth, email, pass)
+      .then(() => goToDashboard())
+      .catch((e) => status.textContent = e.message);
+  };
+
+  // Sign Up (Updated to set Display Name)
+  document.getElementById('signup-btn').onclick = () => {
+    const name = nameInput.value.trim();
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('password').value;
+    
+    if (!name || !email || !pass) return status.textContent = 'Please fill in Name, Email, and Password';
+
+    status.textContent = 'Creating account...';
+    createUserWithEmailAndPassword(auth, email, pass)
+      .then((userCredential) => {
+        // Save the display name immediately after account creation
+        return updateProfile(userCredential.user, {
+            displayName: name
+        });
+      })
+      .then(() => goToDashboard())
+      .catch((e) => status.textContent = e.message);
+  };
 </script>
-
 </body>
 </html>
