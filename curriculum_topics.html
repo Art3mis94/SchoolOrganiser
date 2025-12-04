@@ -1,141 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Curriculum Topics | Educator Hub</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curriculum Topics & Lessons</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
-  /* small helpers to match your app styling */
-  .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
-  .collapsible-header { @apply flex justify-between items-center cursor-pointer p-4 rounded-t-xl; }
-  .dropzone { border: 2px dashed #4f46e5; border-radius: .5rem; padding: 1rem; text-align:center; cursor:pointer; transition: .15s; }
-  .dropzone.dragover { background-color: #e0e7ff; }
-  body { font-family: 'Inter', sans-serif; }
+    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
+    .section-box { @apply bg-white p-5 rounded-xl shadow-lg border border-gray-200; }
+    .lesson-box { @apply bg-indigo-50 border border-indigo-200 rounded-lg p-4 mt-2 shadow-sm; }
+    .collapsible-header { @apply flex justify-between items-center cursor-pointer py-3; }
+    .hidden-section { display: none; }
 </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body>
 
-<!-- NAV -->
+<!-- NAV BAR -->
 <nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-5xl mx-auto flex flex-wrap justify-center gap-4">
-    <a href="dashboard.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-    <a href="curriculum_topics.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Topics 🧠</a>
-    <a href="notes.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
-    <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
-    <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-    <button id="logoutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
-  </div>
+    <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
+        <a href="dashboard.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
+        <a href="curriculum_topics.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Topics 🧠</a>
+        <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
+        <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
+        <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
+    </div>
 </nav>
 
-<!-- CONTAINER -->
-<div class="container max-w-5xl mx-auto p-6 mt-6">
-  <div class="flex justify-between items-center mb-4">
-    <h1 class="text-3xl font-bold text-indigo-700">Curriculum Topics</h1>
-    <div class="flex gap-2">
-      <button id="newTopicBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
-        <i class="fa-solid fa-plus mr-1"></i> New Topic
-      </button>
-      <button id="refreshBtn" title="Reload" class="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition">
-        <i class="fa-solid fa-arrows-rotate"></i>
-      </button>
-    </div>
-  </div>
+<!-- PAGE CONTENT -->
+<div class="container max-w-4xl mx-auto p-6 mt-8 space-y-8">
 
-  <div id="statusMessage" class="text-center text-sm text-gray-500 mb-4"></div>
+    <h1 class="text-3xl font-bold text-gray-800 text-center">Curriculum Topics & Lessons</h1>
 
-  <div id="topicTree" class="space-y-4"></div>
-</div>
+    <!-- ADD TOPIC -->
+    <div class="section-box">
+        <div class="collapsible-header" onclick="toggleSection('addTopicSection')">
+            <h2 class="text-xl font-bold text-indigo-700">+ Create New Topic</h2>
+            <i class="fa-solid fa-chevron-down text-indigo-600"></i>
+        </div>
 
-<!-- TOPIC MODAL -->
-<div id="topicModal" class="fixed inset-0 bg-gray-600 bg-opacity-60 hidden items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-    <div class="flex justify-between items-center pb-3 border-b">
-      <h3 id="topicModalTitle" class="text-2xl font-bold text-indigo-700">Add Topic</h3>
-      <button id="closeTopicModal" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <form id="topicForm" class="mt-4 space-y-4">
-      <input id="topicName" type="text" class="w-full p-3 border rounded-md" placeholder="Topic name (e.g., Ecology)" required />
-      <div class="flex gap-2">
-        <button type="submit" class="flex-1 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Save Topic</button>
-        <button id="cancelTopicBtn" type="button" class="flex-1 py-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
+        <div id="addTopicSection" class="hidden-section mt-4">
+            <input id="topicTitleInput" type="text" placeholder="Topic title"
+                class="w-full p-3 border rounded-lg mb-3">
 
-<!-- SUBTOPIC MODAL -->
-<div id="subtopicModal" class="fixed inset-0 bg-gray-600 bg-opacity-60 hidden items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-    <div class="flex justify-between items-center pb-3 border-b">
-      <h3 id="subtopicModalTitle" class="text-2xl font-bold text-indigo-700">Add Subtopic</h3>
-      <button id="closeSubtopicModal" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <form id="subtopicForm" class="mt-4 space-y-4">
-      <input id="subtopicName" type="text" class="w-full p-3 border rounded-md" placeholder="Subtopic name (optional)" required />
-      <div class="flex gap-2">
-        <button type="submit" class="flex-1 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Save Subtopic</button>
-        <button id="cancelSubtopicBtn" type="button" class="flex-1 py-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- NOTE MODAL -->
-<div id="noteModal" class="fixed inset-0 bg-gray-600 bg-opacity-60 hidden items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6">
-    <div class="flex justify-between items-center pb-3 border-b">
-      <h3 id="noteModalTitle" class="text-2xl font-bold text-indigo-700">Add Note</h3>
-      <button id="closeNoteModal" class="text-gray-400 hover:text-gray-600 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="addTopic()"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg font-semibold">
+                Add Topic
+            </button>
+        </div>
     </div>
 
-    <form id="noteForm" class="mt-4 space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input id="noteTitle" type="text" class="w-full p-3 border rounded-md" placeholder="Note title (optional)" />
-        <input id="noteDate" type="date" class="w-full p-3 border rounded-md" />
-      </div>
-      <textarea id="noteContent" rows="6" class="w-full p-3 border rounded-md" placeholder="Note content..."></textarea>
+    <!-- TOPICS DISPLAY -->
+    <div id="topicsList"></div>
 
-      <div class="flex gap-2">
-        <button type="submit" class="flex-1 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Save Note</button>
-        <button id="cancelNoteBtn" type="button" class="flex-1 py-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Cancel</button>
-      </div>
-    </form>
-  </div>
 </div>
 
-<!-- SCRIPTS -->
+<!-- FIREBASE LOGIC -->
 <script type="module">
-/* eslint-disable no-console */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
-  getFirestore,
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  orderBy,
-  serverTimestamp,
+    getFirestore, collection, addDoc, doc, deleteDoc,
+    updateDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-/*
-  CONFIG:
-  You can either let the environment inject __firebase_config and __app_id
-  or paste your firebaseConfig and APP_ID below (uncomment).
-*/
-
-// const firebaseConfig = { ... } // <-- paste if you prefer
-// const APP_ID = "school-organiser-5f512";
-
-const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'school-organiser-5f512';
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+const firebaseConfig = {
   apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
   authDomain: "school-organiser-5f512.firebaseapp.com",
   projectId: "school-organiser-5f512",
@@ -144,542 +74,187 @@ const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__f
   appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
 };
 
-let app, auth, db, currentUserId = null;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-// DOM refs
-const topicTree = document.getElementById('topicTree');
-const statusMessage = document.getElementById('statusMessage');
-const newTopicBtn = document.getElementById('newTopicBtn');
-const refreshBtn = document.getElementById('refreshBtn');
-const logoutBtn = document.getElementById('logoutBtn');
+let userId = null;
 
-// Topic modal refs
-const topicModal = document.getElementById('topicModal');
-const topicForm = document.getElementById('topicForm');
-const topicNameInput = document.getElementById('topicName');
-const topicModalTitle = document.getElementById('topicModalTitle');
-const closeTopicModal = document.getElementById('closeTopicModal');
-const cancelTopicBtn = document.getElementById('cancelTopicBtn');
-
-// Subtopic modal refs
-const subtopicModal = document.getElementById('subtopicModal');
-const subtopicForm = document.getElementById('subtopicForm');
-const subtopicNameInput = document.getElementById('subtopicName');
-const subtopicModalTitle = document.getElementById('subtopicModalTitle');
-const closeSubtopicModal = document.getElementById('closeSubtopicModal');
-const cancelSubtopicBtn = document.getElementById('cancelSubtopicBtn');
-
-// Note modal refs
-const noteModal = document.getElementById('noteModal');
-const noteForm = document.getElementById('noteForm');
-const noteTitleInput = document.getElementById('noteTitle');
-const noteDateInput = document.getElementById('noteDate');
-const noteContentInput = document.getElementById('noteContent');
-const noteModalTitle = document.getElementById('noteModalTitle');
-const closeNoteModal = document.getElementById('closeNoteModal');
-const cancelNoteBtn = document.getElementById('cancelNoteBtn');
-
-// state for editing
-let editingTopicId = null;
-let editingSubtopicId = null;
-let editingNoteId = null;
-let activeTopicIdForSubtopic = null;
-let activeTopicIdForNote = null;
-let activeSubtopicIdForNote = null;
-
-// small helper
-function showStatus(msg, err = false) {
-  statusMessage.textContent = msg;
-  statusMessage.className = err ? 'text-center text-sm text-red-600 mb-4' : 'text-center text-sm text-gray-500 mb-4';
-  if (!msg) statusMessage.className = '';
+function toggleSection(id){
+    document.getElementById(id).classList.toggle("hidden-section");
 }
 
-// open / close helpers
-function openModal(modalEl) { modalEl.classList.remove('hidden'); modalEl.style.display = 'flex'; }
-function closeModal(modalEl) { modalEl.classList.add('hidden'); modalEl.style.display = 'none'; }
+/* --------------------------
+      REALTIME TOPICS
+---------------------------*/
+onAuthStateChanged(auth, user => {
+    if (!user) return (window.location = "index.html");
 
-// Build Firestore references (per your chosen structure)
-function topicsCollectionRef(uid) {
-  return collection(db, 'artifacts', APP_ID, 'users', uid, 'topics');
-}
-function subtopicsCollectionRef(uid, topicId) {
-  return collection(db, 'artifacts', APP_ID, 'users', uid, 'topics', topicId, 'subtopics');
-}
-function notesCollectionRef(uid, topicId, subId) {
-  return collection(db, 'artifacts', APP_ID, 'users', uid, 'topics', topicId, 'subtopics', subId, 'notes');
-}
+    userId = user.uid;
 
-// Initialize Firebase & Auth
-async function init() {
-  try {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
+    const topicsRef = collection(db, "artifacts", "school-organiser-5f512", "users", userId, "curriculum_topics");
 
-    // If your environment provides an initial token, sign with that; otherwise rely on normal sign-in state
-    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-      await signInWithCustomToken(auth, __initial_auth_token);
-    } else {
-      // If you want anonymous fallback uncomment the next line:
-      // await signInAnonymously(auth);
-    }
+    onSnapshot(topicsRef, snap => {
+        const list = document.getElementById("topicsList");
+        list.innerHTML = "";
 
-    onAuthStateChanged(auth, user => {
-      if (!user) {
-        // Not signed in — redirect to login/index
-        window.location.href = "index.html";
-        return;
-      }
-      currentUserId = user.uid;
-      showStatus('Connected. Loading topics...');
-      subscribeToTopics(currentUserId);
+        snap.forEach(docSnap => {
+            const data = docSnap.data();
+            list.appendChild(renderTopic(docSnap.id, data));
+        });
     });
-
-  } catch (err) {
-    console.error('Firebase init error', err);
-    showStatus('Firebase error: ' + (err.message || err), true);
-  }
-}
-
-/* ---------------------------------------------------------
-   SUBSCRIBE: Real-time topics list (and nested subcollections)
-   We'll subscribe to the top-level topics collection and for
-   each topic, we'll create a snapshot listener for its subtopics.
-   --------------------------------------------------------- */
-const topicUnsubscribeMap = new Map(); // topicId -> unsubscribe function for its subtopics
-
-function unsubscribeAllTopicListeners() {
-  topicUnsubscribeMap.forEach(unsub => { try { unsub(); } catch(e){} });
-  topicUnsubscribeMap.clear();
-}
-
-function subscribeToTopics(uid) {
-  // Unsubscribe previous if any
-  unsubscribeAllTopicListeners();
-
-  const q = query(topicsCollectionRef(uid), orderBy('createdAt', 'asc'));
-  const unsubTopics = onSnapshot(q, snapshot => {
-    renderTopics(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-  }, err => {
-    console.error('topics onSnapshot error', err);
-    showStatus('Error loading topics. Check console.', true);
-  });
-
-  // save top-level unsub to map under key 'TOPICS' if you want to clear later
-  topicUnsubscribeMap.set('TOPICS', unsubTopics);
-}
-
-/* ---------------------------------------------------------
-   RENDERING: topics, subtopics, notes
-   Each topic is collapsible. Inside each topic we render its
-   subtopics; each subtopic is also collapsible and shows notes.
-   --------------------------------------------------------- */
-function renderTopics(topics) {
-  topicTree.innerHTML = '';
-
-  if (!topics || topics.length === 0) {
-    topicTree.innerHTML = `<p class="text-gray-500 italic p-4 text-center">No topics yet. Click "New Topic" to start.</p>`;
-    return;
-  }
-
-  topics.forEach(topic => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden border border-gray-200';
-
-    wrapper.innerHTML = `
-      <div class="collapsible-header bg-gray-50 hover:bg-gray-100 transition duration-150 px-4">
-        <div class="flex items-center gap-4">
-          <button class="toggleTopicBtn text-indigo-600" title="Toggle topic"><i class="fa-solid fa-chevron-down"></i></button>
-          <h3 class="font-bold text-indigo-700 text-lg">${escapeHtml(topic.name)}</h3>
-        </div>
-        <div class="flex gap-3 items-center">
-          <button class="btnAddSubtopic text-green-600 hover:text-green-700" title="Add Subtopic"><i class="fa-solid fa-plus"></i></button>
-          <button class="btnEditTopic text-blue-600 hover:text-blue-700" title="Edit Topic"><i class="fa-solid fa-pen"></i></button>
-          <button class="btnDeleteTopic text-red-600 hover:text-red-700" title="Delete Topic"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      </div>
-      <div class="subtopicsContainer px-4 py-4 space-y-3 hidden border-t border-gray-200"></div>
-    `;
-
-    // append first so we can query child nodes
-    topicTree.appendChild(wrapper);
-
-    const toggleBtn = wrapper.querySelector('.toggleTopicBtn');
-    const subtopicsContainer = wrapper.querySelector('.subtopicsContainer');
-    const btnAddSubtopic = wrapper.querySelector('.btnAddSubtopic');
-    const btnEditTopic = wrapper.querySelector('.btnEditTopic');
-    const btnDeleteTopic = wrapper.querySelector('.btnDeleteTopic');
-
-    // clicking header area should toggle, but not when clicking buttons
-    wrapper.querySelector('.collapsible-header').addEventListener('click', (ev) => {
-      if (ev.target.closest('button')) return;
-      subtopicsContainer.classList.toggle('hidden');
-      toggleBtn.querySelector('i').classList.toggle('fa-rotate-180');
-    });
-
-    // add subtopic
-    btnAddSubtopic.onclick = (e) => {
-      e.stopPropagation();
-      editingSubtopicId = null;
-      activeTopicIdForSubtopic = topic.id;
-      subtopicNameInput.value = '';
-      subtopicModalTitle.textContent = `Add Subtopic to "${topic.name}"`;
-      openModal(subtopicModal);
-    };
-
-    // edit topic
-    btnEditTopic.onclick = (e) => {
-      e.stopPropagation();
-      editingTopicId = topic.id;
-      topicModalTitle.textContent = 'Edit Topic';
-      topicNameInput.value = topic.name || '';
-      openModal(topicModal);
-    };
-
-    // delete topic
-    btnDeleteTopic.onclick = async (e) => {
-      e.stopPropagation();
-      if (!confirm(`Delete topic "${topic.name}" and all its subtopics/notes? This cannot be undone.`)) return;
-      try {
-        await deleteDoc(doc(topicsCollectionRef(currentUserId), topic.id));
-        showStatus('Topic deleted');
-      } catch (err) {
-        console.error('delete topic', err);
-        showStatus('Failed to delete topic. See console.', true);
-      }
-    };
-
-    // subscribe to subtopics for this topic
-    attachSubtopicsListener(topic.id, subtopicsContainer);
-  });
-}
-
-// Attach a listener for a topic's subtopics; renders them into the given container.
-function attachSubtopicsListener(topicId, containerEl) {
-  // If we already have a listener for this topic, clear it first
-  if (topicUnsubscribeMap.has(topicId)) {
-    try { topicUnsubscribeMap.get(topicId)(); } catch(e) {}
-  }
-
-  const q = query(subtopicsCollectionRef(currentUserId, topicId), orderBy('createdAt','asc'));
-  const unsub = onSnapshot(q, snapshot => {
-    renderSubtopics(topicId, snapshot.docs.map(d => ({ id: d.id, ...d.data() })), containerEl);
-  }, err => {
-    console.error('subtopics onSnapshot error', err);
-    showStatus('Failed to load subtopics. See console.', true);
-  });
-
-  topicUnsubscribeMap.set(topicId, unsub);
-}
-
-// Render subtopics array into container for a given topicId
-function renderSubtopics(topicId, subtopics, containerEl) {
-  containerEl.innerHTML = '';
-
-  const headerControls = document.createElement('div');
-  headerControls.className = 'flex justify-between items-center mb-2';
-  headerControls.innerHTML = `<p class="text-sm text-gray-500">Subtopics: ${subtopics.length}</p>`;
-  containerEl.appendChild(headerControls);
-
-  if (!subtopics || subtopics.length === 0) {
-    const p = document.createElement('p');
-    p.className = 'text-gray-500 italic p-2';
-    p.textContent = 'No subtopics yet.';
-    containerEl.appendChild(p);
-    return;
-  }
-
-  subtopics.forEach(sub => {
-    const subWrap = document.createElement('div');
-    subWrap.className = 'bg-indigo-50 p-3 rounded-lg shadow-sm';
-
-    subWrap.innerHTML = `
-      <div class="flex justify-between items-start gap-3">
-        <div class="flex items-center gap-3">
-          <button class="toggleSubBtn text-indigo-600"><i class="fa-solid fa-chevron-down"></i></button>
-          <div>
-            <h4 class="font-semibold text-indigo-800">${escapeHtml(sub.name)}</h4>
-            <p class="text-sm text-gray-600">${sub.description ? escapeHtml(sub.description) : ''}</p>
-          </div>
-        </div>
-        <div class="flex gap-2 items-center">
-          <button class="btnAddNote text-green-600 hover:text-green-700" title="Add Note"><i class="fa-solid fa-sticky-note"></i></button>
-          <button class="btnEditSub text-blue-600 hover:text-blue-700" title="Edit Subtopic"><i class="fa-solid fa-pen"></i></button>
-          <button class="btnDeleteSub text-red-600 hover:text-red-700" title="Delete Subtopic"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      </div>
-      <div class="notesContainer mt-3 hidden space-y-2"></div>
-    `;
-    containerEl.appendChild(subWrap);
-
-    const toggleSubBtn = subWrap.querySelector('.toggleSubBtn');
-    const notesContainer = subWrap.querySelector('.notesContainer');
-    const btnAddNote = subWrap.querySelector('.btnAddNote');
-    const btnEditSub = subWrap.querySelector('.btnEditSub');
-    const btnDeleteSub = subWrap.querySelector('.btnDeleteSub');
-
-    // clicking header toggles notes
-    subWrap.querySelector('h4').closest('div').parentElement.addEventListener('click', (e) => {
-      // prevent when clicking the control buttons
-      if (e.target.closest('button')) return;
-      notesContainer.classList.toggle('hidden');
-      toggleSubBtn.querySelector('i').classList.toggle('fa-rotate-180');
-    });
-
-    // add note
-    btnAddNote.onclick = (e) => {
-      e.stopPropagation();
-      editingNoteId = null;
-      activeTopicIdForNote = topicId;
-      activeSubtopicIdForNote = sub.id;
-      noteModalTitle.textContent = `Add Note to "${sub.name}"`;
-      noteTitleInput.value = '';
-      noteDateInput.value = new Date().toISOString().slice(0,10);
-      noteContentInput.value = '';
-      openModal(noteModal);
-    };
-
-    // edit subtopic
-    btnEditSub.onclick = (e) => {
-      e.stopPropagation();
-      editingSubtopicId = sub.id;
-      activeTopicIdForSubtopic = topicId;
-      subtopicModalTitle.textContent = `Edit Subtopic`;
-      subtopicNameInput.value = sub.name || '';
-      openModal(subtopicModal);
-    };
-
-    // delete subtopic
-    btnDeleteSub.onclick = async (e) => {
-      e.stopPropagation();
-      if (!confirm(`Delete subtopic "${sub.name}" and its notes?`)) return;
-      try {
-        await deleteDoc(doc(subtopicsCollectionRef(currentUserId, topicId), sub.id));
-        showStatus('Subtopic deleted');
-      } catch (err) {
-        console.error('delete subtopic', err);
-        showStatus('Failed to delete subtopic. See console.', true);
-      }
-    };
-
-    // subscribe to notes for this subtopic and render them
-    attachNotesListener(topicId, sub.id, notesContainer);
-  });
-}
-
-// attach listener for notes inside a subtopic
-function attachNotesListener(topicId, subId, containerEl) {
-  const notesQuery = query(notesCollectionRef(currentUserId, topicId, subId), orderBy('createdAt','desc'));
-  // We could collect unsubscribe functions in a map if needed; for now snapshot is fine
-  onSnapshot(notesQuery, snapshot => {
-    renderNotes(topicId, subId, snapshot.docs.map(d => ({ id: d.id, ...d.data() })), containerEl);
-  }, err => {
-    console.error('notes onSnapshot', err);
-    showStatus('Failed to load notes. See console.', true);
-  });
-}
-
-// render notes list into container
-function renderNotes(topicId, subId, notes, containerEl) {
-  containerEl.innerHTML = '';
-  if (!notes || notes.length === 0) {
-    const p = document.createElement('p');
-    p.className = 'text-gray-600 italic p-2';
-    p.textContent = 'No notes yet.';
-    containerEl.appendChild(p);
-    return;
-  }
-
-  notes.forEach(note => {
-    const nDiv = document.createElement('div');
-    nDiv.className = 'p-3 bg-white border border-gray-200 rounded-md flex justify-between items-start gap-3';
-    const noteDate = note.date || (note.createdAt && note.createdAt.toDate ? note.createdAt.toDate().toISOString().slice(0,10) : '');
-    nDiv.innerHTML = `
-      <div class="flex-1">
-        <div class="flex items-baseline justify-between gap-4">
-          <h5 class="font-semibold text-indigo-800">${escapeHtml(note.title || '(No title)')}</h5>
-          <small class="text-xs text-gray-500">${noteDate}</small>
-        </div>
-        <p class="text-sm text-gray-700 mt-1">${escapeHtml(truncate(note.content || '', 300))}</p>
-      </div>
-      <div class="flex flex-col gap-2 ml-4">
-        <button class="editNoteBtn text-blue-600 hover:text-blue-800" title="Edit Note"><i class="fa-solid fa-pen"></i></button>
-        <button class="deleteNoteBtn text-red-600 hover:text-red-800" title="Delete Note"><i class="fa-solid fa-trash"></i></button>
-      </div>
-    `;
-    containerEl.appendChild(nDiv);
-
-    nDiv.querySelector('.editNoteBtn').onclick = (e) => {
-      e.stopPropagation();
-      editingNoteId = note.id;
-      activeTopicIdForNote = topicId;
-      activeSubtopicIdForNote = subId;
-      noteModalTitle.textContent = 'Edit Note';
-      noteTitleInput.value = note.title || '';
-      noteDateInput.value = note.date || (note.createdAt && note.createdAt.toDate ? note.createdAt.toDate().toISOString().slice(0,10) : '');
-      noteContentInput.value = note.content || '';
-      openModal(noteModal);
-    };
-
-    nDiv.querySelector('.deleteNoteBtn').onclick = async (e) => {
-      e.stopPropagation();
-      if (!confirm('Delete this note?')) return;
-      try {
-        await deleteDoc(doc(notesCollectionRef(currentUserId, topicId, subId), note.id));
-        showStatus('Note deleted');
-      } catch (err) {
-        console.error('delete note', err);
-        showStatus('Failed to delete note. See console.', true);
-      }
-    };
-  });
-}
-
-/* -------------------------
-   FORM HANDLERS
-   ------------------------- */
-
-// TOPIC FORM
-topicForm.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  if (!currentUserId) { showStatus('Not authenticated', true); return; }
-
-  const name = topicNameInput.value.trim();
-  if (!name) { showStatus('Please provide a topic name.', true); return; }
-
-  const topicsRef = topicsCollectionRef(currentUserId);
-
-  try {
-    if (editingTopicId) {
-      await updateDoc(doc(topicsRef, editingTopicId), { name, updatedAt: serverTimestamp() });
-      showStatus('Topic updated');
-    } else {
-      await addDoc(topicsRef, { name, createdAt: serverTimestamp() });
-      showStatus('Topic added');
-    }
-  } catch (err) {
-    console.error('save topic', err);
-    showStatus('Failed to save topic. See console.', true);
-  } finally {
-    editingTopicId = null;
-    topicForm.reset();
-    closeModal(topicModal);
-  }
 });
 
-// SUBTOPIC FORM
-subtopicForm.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  if (!currentUserId || !activeTopicIdForSubtopic) { showStatus('Not ready', true); return; }
+/* --------------------------
+        ADD TOPIC
+---------------------------*/
+async function addTopic() {
+    const title = document.getElementById("topicTitleInput").value.trim();
+    if (!title) return;
 
-  const name = subtopicNameInput.value.trim();
-  if (!name) { showStatus('Please provide a subtopic name.', true); return; }
+    const topicsRef = collection(db, "artifacts", "school-organiser-5f512", "users", userId, "curriculum_topics");
 
-  const sRef = subtopicsCollectionRef(currentUserId, activeTopicIdForSubtopic);
+    await addDoc(topicsRef, {
+        title,
+        lessons: []
+    });
 
-  try {
-    if (editingSubtopicId) {
-      await updateDoc(doc(sRef, editingSubtopicId), { name, updatedAt: serverTimestamp() });
-      showStatus('Subtopic updated');
-    } else {
-      await addDoc(sRef, { name, createdAt: serverTimestamp() });
-      showStatus('Subtopic added');
-    }
-  } catch (err) {
-    console.error('save subtopic', err);
-    showStatus('Failed to save subtopic. See console.', true);
-  } finally {
-    editingSubtopicId = null;
-    activeTopicIdForSubtopic = null;
-    subtopicForm.reset();
-    closeModal(subtopicModal);
-  }
-});
+    document.getElementById("topicTitleInput").value = "";
+}
 
-// NOTE FORM
-noteForm.addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  if (!currentUserId || !activeTopicIdForNote || !activeSubtopicIdForNote) { showStatus('Not ready', true); return; }
+/* --------------------------
+       RENDER TOPIC
+---------------------------*/
+function renderTopic(id, topic){
+    const div = document.createElement("div");
+    div.className = "section-box";
 
-  const title = noteTitleInput.value.trim();
-  const date = noteDateInput.value || (new Date().toISOString().slice(0,10));
-  const content = noteContentInput.value.trim();
+    div.innerHTML = `
+        <div class="flex justify-between items-center">
+            <h2 class="font-bold text-xl text-indigo-700">${topic.title}</h2>
+            <button class="text-red-500" onclick="deleteTopic('${id}')">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </div>
 
-  const nRef = notesCollectionRef(currentUserId, activeTopicIdForNote, activeSubtopicIdForNote);
+        <div class="mt-3">
+            ${topic.lessons.map((l, i) => renderLesson(id, i, l)).join("")}
+        </div>
 
-  const payload = {
-    title,
-    date,
-    content,
-    updatedAt: serverTimestamp()
-  };
+        <!-- ADD LESSON -->
+        <div class="mt-4 p-3 bg-gray-50 border rounded-lg">
+            <h3 class="font-semibold mb-2 text-indigo-600">Add Lesson</h3>
+            <input id="lessonTitle-${id}" placeholder="Lesson title"
+                class="w-full p-2 border rounded mb-2">
 
-  try {
-    if (editingNoteId) {
-      await updateDoc(doc(nRef, editingNoteId), payload);
-      showStatus('Note updated');
-    } else {
-      await addDoc(nRef, { ...payload, createdAt: serverTimestamp() });
-      showStatus('Note added');
-    }
-  } catch (err) {
-    console.error('save note', err);
-    showStatus('Failed to save note. See console.', true);
-  } finally {
-    editingNoteId = null;
-    noteForm.reset();
-    closeModal(noteModal);
-  }
-});
+            <textarea id="lessonNotes-${id}" placeholder="Notes..."
+                class="w-full p-2 border rounded mb-2"></textarea>
 
-/* -----------------------
-   UI wiring: open modals, cancel buttons
-   ----------------------- */
-newTopicBtn.onclick = () => {
-  editingTopicId = null;
-  topicModalTitle.textContent = 'Add Topic';
-  topicForm.reset();
-  openModal(topicModal);
-};
-closeTopicModal.onclick = () => { editingTopicId = null; closeModal(topicModal); };
-cancelTopicBtn.onclick = () => { editingTopicId = null; closeModal(topicModal); };
+            <input id="lessonLinks-${id}" placeholder="Links (comma separated)"
+                class="w-full p-2 border rounded mb-2">
 
-closeSubtopicModal.onclick = () => { editingSubtopicId = null; activeTopicIdForSubtopic = null; closeModal(subtopicModal); };
-cancelSubtopicBtn.onclick = () => { editingSubtopicId = null; activeTopicIdForSubtopic = null; closeModal(subtopicModal); };
+            <input type="file" id="lessonFiles-${id}" multiple class="mb-2">
 
-closeNoteModal.onclick = () => { editingNoteId = null; activeTopicIdForNote = null; activeSubtopicIdForNote = null; closeModal(noteModal); };
-cancelNoteBtn.onclick = () => { editingNoteId = null; activeTopicIdForNote = null; activeSubtopicIdForNote = null; closeModal(noteModal); };
+            <button onclick="addLesson('${id}')"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded">
+                Add Lesson
+            </button>
+        </div>
+    `;
 
-refreshBtn.onclick = () => { if (currentUserId) subscribeToTopics(currentUserId); };
+    return div;
+}
 
-logoutBtn.onclick = async () => {
-  try {
-    await signOut(getAuth());
-    window.location.href = 'index.html';
-  } catch (err) {
-    console.error('signout', err);
-    showStatus('Sign out failed', true);
-  }
+/* --------------------------
+      RENDER LESSON
+---------------------------*/
+function renderLesson(topicId, index, lesson){
+    return `
+        <div class="lesson-box">
+            <div class="collapsible-header" onclick="toggleLesson('${topicId}-${index}')">
+                <h3 class="font-bold text-indigo-800">${lesson.title}</h3>
+                <i class="fa-solid fa-chevron-down text-indigo-700"></i>
+            </div>
+
+            <div id="lessonContent-${topicId}-${index}" class="hidden-section mt-2">
+
+                <p class="text-gray-700 mb-3">${lesson.notes || ""}</p>
+
+                <h4 class="font-semibold">Links:</h4>
+                <ul class="mb-3">
+                    ${lesson.links?.map(l => `<li><a href="${l}" target="_blank" class="text-indigo-600 underline">${l}</a></li>`).join("") || "None"}
+                </ul>
+
+                <h4 class="font-semibold">Attachments:</h4>
+                <ul class="mb-3">
+                    ${lesson.attachments?.map(a => `<li>${a}</li>`).join("") || "None"}
+                </ul>
+
+                <button onclick="deleteLesson('${topicId}', ${index})"
+                    class="text-red-600 font-semibold mt-3">
+                    Delete Lesson
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+window.toggleLesson = (id)=>{
+    document.getElementById("lessonContent-" + id).classList.toggle("hidden-section");
 };
 
-/* ------------------------
-   small util helpers
-   ------------------------ */
-function truncate(str, n){ return (str.length>n) ? str.slice(0,n-1)+'…' : str; }
-function escapeHtml(unsafe) {
-  if (!unsafe) return '';
-  return unsafe
-    .replaceAll('&', "&amp;")
-    .replaceAll('<', "&lt;")
-    .replaceAll('>', "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+/* --------------------------
+    ADD LESSON TO TOPIC
+---------------------------*/
+window.addLesson = async (topicId)=>{
+    const title = document.getElementById(`lessonTitle-${topicId}`).value.trim();
+    const notes = document.getElementById(`lessonNotes-${topicId}`).value.trim();
+    const linksRaw = document.getElementById(`lessonLinks-${topicId}`).value.trim();
+    const filesInput = document.getElementById(`lessonFiles-${topicId}`);
 
-/* ------------------------
-   Start
-   ------------------------ */
-init();
+    if(!title) return;
+
+    const links = linksRaw ? linksRaw.split(",").map(x=>x.trim()) : [];
+
+    const attachments = [...filesInput.files].map(f => f.name);
+
+    const ref = doc(db, "artifacts", "school-organiser-5f512", "users", userId, "curriculum_topics", topicId);
+
+    const snap = await (await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js")).getDoc(ref);
+    const data = snap.data();
+
+    data.lessons.push({title, notes, links, attachments});
+
+    await updateDoc(ref, data);
+
+    document.getElementById(`lessonTitle-${topicId}`).value="";
+    document.getElementById(`lessonNotes-${topicId}`).value="";
+    document.getElementById(`lessonLinks-${topicId}`).value="";
+    filesInput.value="";
+};
+
+/* --------------------------
+    DELETE LESSON
+---------------------------*/
+window.deleteLesson = async (topicId, index)=>{
+    const ref = doc(db, "artifacts", "school-organiser-5f512", "users", userId, "curriculum_topics", topicId);
+
+    const snap = await (await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js")).getDoc(ref);
+    const data = snap.data();
+
+    data.lessons.splice(index, 1);
+
+    await updateDoc(ref, data);
+};
+
+/* --------------------------
+    DELETE TOPIC
+---------------------------*/
+window.deleteTopic = async (topicId)=>{
+    const ref = doc(db, "artifacts", "school-organiser-5f512", "users", userId, "curriculum_topics", topicId);
+    await deleteDoc(ref);
+};
 </script>
+
 </body>
 </html>
