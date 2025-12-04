@@ -8,17 +8,31 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+
   .card { 
-    @apply bg-white rounded-3xl shadow-xl flex flex-col items-center justify-center cursor-pointer transition hover:shadow-2xl; 
-    padding-top: 4rem;
-    padding-bottom: 4rem;
+    @apply bg-white rounded-3xl shadow-xl flex flex-col items-center justify-center transition hover:shadow-2xl; 
+    padding: 3rem 2rem;
   }
+
   .card i {
-    font-size: 6rem; /* Make icon large */
+    font-size: 6rem; /* Large icon */
   }
-  .card h2 { @apply text-5xl font-bold text-indigo-700 mt-4; }
-  .card p { @apply text-lg font-semibold text-gray-700 mt-2; }
-  .card-subtext { @apply text-sm text-gray-500 mt-1; }
+
+  .card h2 {
+    @apply text-5xl font-bold text-indigo-700 mt-4;
+  }
+
+  .card p {
+    @apply text-lg font-semibold text-gray-700 mt-2;
+  }
+
+  .add-new-btn {
+    @apply mt-4 px-4 py-2 rounded-lg text-white font-semibold transition;
+  }
+
+  .topics-btn { @apply bg-indigo-600 hover:bg-indigo-700; }
+  .notes-btn { @apply bg-green-600 hover:bg-green-700; }
+  .tasks-btn { @apply bg-yellow-500 hover:bg-yellow-600; }
 </style>
 </head>
 <body>
@@ -47,27 +61,33 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
 
     <!-- Topics Card -->
-    <div id="topicsCard" class="card" onclick="window.location.href='curriculum_topics.html'">
+    <div class="card">
       <i class="fa-solid fa-brain text-indigo-500"></i>
       <h2 id="topicsCount">0</h2>
       <p>Topics Covered</p>
-      <p class="card-subtext">Add New Topic</p>
+      <button class="add-new-btn topics-btn" onclick="window.location.href='curriculum_topics.html'">
+        Add New Topic
+      </button>
     </div>
 
     <!-- Notes Card -->
-    <div id="notesCard" class="card" onclick="window.location.href='notes.html'">
+    <div class="card">
       <i class="fa-solid fa-sticky-note text-green-500"></i>
       <h2 id="notesCount">0</h2>
       <p>Total Notes</p>
-      <p class="card-subtext">Add New Note</p>
+      <button class="add-new-btn notes-btn" onclick="window.location.href='notes.html'">
+        Add New Note
+      </button>
     </div>
 
     <!-- Pending Tasks Card -->
-    <div id="tasksCard" class="card" onclick="window.location.href='todo.html'">
+    <div class="card">
       <i class="fa-solid fa-hourglass-start text-yellow-500"></i>
       <h2 id="pendingTasks">0</h2>
       <p>Pending Tasks</p>
-      <p class="card-subtext">Add New Task</p>
+      <button class="add-new-btn tasks-btn" onclick="window.location.href='todo.html'">
+        Add New Task
+      </button>
     </div>
 
   </div>
