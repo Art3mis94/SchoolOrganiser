@@ -8,10 +8,9 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-  .card { @apply bg-white p-6 rounded-2xl shadow-lg cursor-pointer hover:shadow-2xl transition flex flex-col justify-between; }
-  .card h2 { @apply text-3xl font-bold text-indigo-700; }
-  .card p { @apply text-gray-600 font-semibold; }
-  .card-details { @apply mt-2 text-gray-500 text-sm; }
+  .card { @apply bg-white p-8 rounded-3xl shadow-xl flex flex-col items-center justify-center cursor-pointer transition hover:shadow-2xl; }
+  .card h2 { @apply text-4xl font-bold text-indigo-700 mt-4; }
+  .card p { @apply text-gray-600 mt-2 text-center; }
 </style>
 </head>
 <body>
@@ -28,46 +27,39 @@
   </div>
 </nav>
 
-<div class="container max-w-5xl mx-auto p-8 mt-8 space-y-8">
+<div class="container max-w-6xl mx-auto p-8 mt-8">
 
-  <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Educator Hub Dashboard 👩‍🏫</h1>
+  <!-- Welcome -->
+  <div class="mb-12 text-center">
+      <h1 class="text-5xl font-bold text-gray-800" id="welcomeMessage">Welcome!</h1>
+      <p class="text-gray-600 mt-2">Here’s a quick overview of your curriculum and tasks.</p>
+  </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  <!-- Dashboard Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
 
     <!-- Topics Card -->
     <div id="topicsCard" class="card" onclick="window.location.href='curriculum_topics.html'">
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-brain text-indigo-500 text-4xl"></i>
-        <div>
-          <h2 id="topicsCount">0</h2>
-          <p>Topics Covered</p>
-        </div>
-      </div>
-      <p class="card-details" id="topicsPreview">Loading...</p>
+      <i class="fa-solid fa-brain text-indigo-500 text-7xl"></i>
+      <h2 id="topicsCount">0</h2>
+      <p class="text-lg font-semibold">Topics Covered</p>
+      <p class="text-gray-500 mt-2 text-center" id="topicsPreview">Loading...</p>
     </div>
 
     <!-- Notes Card -->
     <div id="notesCard" class="card" onclick="window.location.href='notes.html'">
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-sticky-note text-green-500 text-4xl"></i>
-        <div>
-          <h2 id="notesCount">0</h2>
-          <p>Total Notes</p>
-        </div>
-      </div>
-      <p class="card-details" id="notesPreview">Loading...</p>
+      <i class="fa-solid fa-sticky-note text-green-500 text-7xl"></i>
+      <h2 id="notesCount">0</h2>
+      <p class="text-lg font-semibold">Total Notes</p>
+      <p class="text-gray-500 mt-2 text-center" id="notesPreview">Loading...</p>
     </div>
 
     <!-- Pending Tasks Card -->
     <div id="tasksCard" class="card" onclick="window.location.href='todo.html'">
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-hourglass-start text-yellow-500 text-4xl"></i>
-        <div>
-          <h2 id="pendingTasks">0</h2>
-          <p>Pending Tasks</p>
-        </div>
-      </div>
-      <p class="card-details" id="tasksPreview">Loading...</p>
+      <i class="fa-solid fa-hourglass-start text-yellow-500 text-7xl"></i>
+      <h2 id="pendingTasks">0</h2>
+      <p class="text-lg font-semibold">Pending Tasks</p>
+      <p class="text-gray-500 mt-2 text-center" id="tasksPreview">Loading...</p>
     </div>
 
   </div>
@@ -76,7 +68,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, query, onSnapshot, orderBy, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, query, onSnapshot, orderBy, where, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
@@ -97,11 +89,14 @@ const notesCountEl = document.getElementById('notesCount');
 const notesPreviewEl = document.getElementById('notesPreview');
 const pendingTasksEl = document.getElementById('pendingTasks');
 const tasksPreviewEl = document.getElementById('tasksPreview');
+const welcomeMessageEl = document.getElementById('welcomeMessage');
 const logoutBtn = document.getElementById('logoutBtn');
 
 onAuthStateChanged(auth, user => {
     if(!user) return window.location.href='index.html';
     const uid = user.uid;
+    const displayName = user.displayName || 'Educator';
+    welcomeMessageEl.textContent = `Welcome, ${displayName}!`;
 
     // Topics
     const topicsRef = collection(db, 'users', uid, 'topics');
