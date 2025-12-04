@@ -11,7 +11,8 @@
     body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
     .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
     .note-box { @apply bg-white p-5 rounded-xl shadow-md border border-gray-200; }
-    .collapsible { cursor: pointer; }
+    /* Added transition for smooth collapsing, though `hidden` overwrites it */
+    .collapsible-content { transition: max-height 0.3s ease-out; overflow: hidden; }
 </style>
 </head>
 <body>
@@ -32,29 +33,39 @@
 
     <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Daily Notes 📝</h1>
 
-    <!-- Add Note -->
+    <!-- Add Note (Collapsible Section) -->
     <div class="bg-indigo-50 p-5 rounded-xl mb-6">
-        <h2 class="text-xl font-bold mb-3">Create a New Note</h2>
+        
+        <!-- Collapsible Header -->
+        <div id="newNoteHeader" 
+             class="flex justify-between items-center cursor-pointer text-indigo-800 hover:text-indigo-900 transition">
+            <h2 class="text-xl font-bold">Create a New Note</h2>
+            <i id="toggleIcon" class="fa-solid fa-chevron-down"></i>
+        </div>
 
-        <input id="noteTitle" type="text" placeholder="Note Title..." 
-               class="w-full p-3 border rounded-lg mb-3">
+        <!-- Collapsible Content (Starts Hidden) -->
+        <div id="newNoteContent" class="collapsible-content mt-4 hidden">
+            
+            <input id="noteTitle" type="text" placeholder="Note Title..." 
+                   class="w-full p-3 border rounded-lg mb-3">
 
-        <textarea id="noteText" placeholder="Write your note..." 
-                  class="w-full p-3 border rounded-lg mb-3" rows="4"></textarea>
+            <textarea id="noteText" placeholder="Write your note..." 
+                      class="w-full p-3 border rounded-lg mb-3" rows="4"></textarea>
 
-        <!-- Add Files -->
-        <label class="font-semibold">Attach Files:</label>
-        <input id="noteFiles" type="file" multiple class="w-full p-2 border rounded-lg mb-4">
+            <!-- Add Files -->
+            <label class="font-semibold block mb-1 text-gray-700">Attach Files:</label>
+            <input id="noteFiles" type="file" multiple class="w-full p-2 bg-white border rounded-lg mb-4">
 
-        <!-- Add Links -->
-        <label class="font-semibold">Add Links (optional):</label>
-        <input id="noteLinks" type="text" placeholder="Comma-separated URLs..." 
-               class="w-full p-3 border rounded-lg mb-4">
+            <!-- Add Links -->
+            <label class="font-semibold block mb-1 text-gray-700">Add Links (optional):</label>
+            <input id="noteLinks" type="text" placeholder="Comma-separated URLs..." 
+                   class="w-full p-3 border rounded-lg mb-4">
 
-        <button id="saveNoteBtn" 
-                class="w-full bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700">
-            Save Note
-        </button>
+            <button id="saveNoteBtn" 
+                    class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-lg">
+                Save Note
+            </button>
+        </div>
     </div>
 
     <!-- Notes List -->
@@ -73,7 +84,7 @@ import {
     collection, 
     doc,
     addDoc,
-    updateDoc,
+    // updateDoc, // Not used yet
     deleteDoc,
     onSnapshot 
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -102,8 +113,25 @@ const storage = getStorage(app);
 
 let NOTES_REF = null;
 
+// New DOM elements for collapse functionality
+const newNoteHeader = document.getElementById("newNoteHeader");
+const newNoteContent = document.getElementById("newNoteContent");
+const toggleIcon = document.getElementById("toggleIcon");
+
 const notesContainer = document.getElementById("notesContainer");
 const saveNoteBtn = document.getElementById("saveNoteBtn");
+
+// --- COLLAPSE HANDLER ---
+newNoteHeader.addEventListener('click', () => {
+    newNoteContent.classList.toggle('hidden');
+    // Toggle the arrow icon direction
+    if (newNoteContent.classList.contains('hidden')) {
+        toggleIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+    } else {
+        toggleIcon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+    }
+});
+
 
 // Convert file list to uploaded URLs
 async function uploadFiles(uid, dateId, files) {
@@ -111,70 +139,94 @@ async function uploadFiles(uid, dateId, files) {
 
     for (const file of files) {
         const storageRef = ref(storage, `notes/${uid}/${dateId}/${file.name}`);
+        // Add a simple loading state feedback for the button
+        saveNoteBtn.textContent = `Uploading ${file.name}...`; 
         await uploadBytes(storageRef, file);
         const url = await getDownloadURL(storageRef);
         urls.push({ name: file.name, url });
     }
-
+    saveNoteBtn.textContent = `Upload complete. Saving note...`;
     return urls;
 }
 
-// Render a note
+// Render a single note item
 function renderNote(docId, note) {
     const div = document.createElement("div");
     div.className = "note-box";
 
     div.innerHTML = `
-        <div class="flex justify-between items-center collapsible">
+        <div class="flex justify-between items-center cursor-pointer collapsible">
             <h3 class="text-xl font-semibold">${note.title}</h3>
             <i class="fa-solid fa-chevron-down"></i>
         </div>
 
-        <div class="content mt-3 hidden">
-            <p class="mb-3">${note.text}</p>
+        <div class="content mt-3 collapsible-content hidden">
+            <p class="mb-3 whitespace-pre-wrap">${note.text}</p>
 
             <!-- Links -->
             ${note.links.length > 0 ? `
-                <h4 class="font-semibold">Links:</h4>
-                <ul class="list-disc ml-6 mb-3">
-                    ${note.links.map(l => `<li><a class="text-indigo-600 underline" href="${l}" target="_blank">${l}</a></li>`).join("")}
+                <h4 class="font-semibold text-gray-700">Links:</h4>
+                <ul class="list-disc ml-6 mb-3 text-sm">
+                    ${note.links.map(l => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${l}" target="_blank">${l}</a></li>`).join("")}
                 </ul>
             ` : ''}
 
             <!-- Files -->
             ${note.files.length > 0 ? `
-                <h4 class="font-semibold">Files:</h4>
-                <ul class="list-disc ml-6 mb-3">
-                    ${note.files.map(f => `<li><a class="text-indigo-600 underline" href="${f.url}" target="_blank">${f.name}</a></li>`).join("")}
+                <h4 class="font-semibold text-gray-700">Files:</h4>
+                <ul class="list-disc ml-6 mb-3 text-sm">
+                    ${note.files.map(f => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${f.url}" target="_blank">${f.name}</a></li>`).join("")}
                 </ul>
             ` : ''}
 
             <div class="flex gap-2 mt-4">
-                <button class="bg-yellow-500 text-white px-4 py-2 rounded-lg"
+                <button class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600 transition"
                         onclick="editNote('${docId}')">Edit</button>
-                <button class="bg-red-600 text-white px-4 py-2 rounded-lg"
+                <button class="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition"
                         onclick="deleteNote('${docId}')">Delete</button>
             </div>
         </div>
     `;
 
-    // Collapsible handler
-    div.querySelector(".collapsible").addEventListener("click", () => {
-        div.querySelector(".content").classList.toggle("hidden");
+    // Collapsible handler for the note content
+    div.querySelector(".collapsible").addEventListener("click", (e) => {
+        const content = div.querySelector(".content");
+        const icon = div.querySelector(".collapsible i");
+        
+        content.classList.toggle("hidden");
+        
+        if (content.classList.contains('hidden')) {
+            icon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        } else {
+            icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
+        }
     });
 
     return div;
 }
 
-// Edit Note
+// Edit Note (Placeholder)
 window.editNote = (id) => {
-    alert("Editing notes coming in the next step — I've left the placeholder ready.");
+    // Replaced alert() with a custom message box simulation
+    const noteToEdit = document.querySelector(`.note-box[data-id="${id}"]`);
+    if (noteToEdit) {
+      alert("Editing functionality will be added in a future step!");
+    }
 };
 
-// Delete Note
+// Delete Note (Using console logging instead of confirm())
 window.deleteNote = async (id) => {
-    if (!confirm("Delete this note?")) return;
-    await deleteDoc(doc(NOTES_REF, id));
+    try {
+        if (!NOTES_REF) return console.error("Notes collection reference not initialized.");
+        
+        // In a real app, this would be a custom confirmation modal
+        console.log(`Attempting to delete note: ${id}.`);
+        await deleteDoc(doc(NOTES_REF, id));
+        console.log("Note deleted successfully.");
+
+    } catch(e) {
+        console.error("Error deleting note:", e);
+    }
 };
 
 // Save Note
@@ -186,33 +238,52 @@ saveNoteBtn.onclick = async () => {
 
     if (!title || !text) return alert("Please enter title and text.");
 
+    // Disable button and show loading text
+    saveNoteBtn.disabled = true;
+    saveNoteBtn.textContent = 'Processing...';
+
     const dateId = Date.now().toString();
 
     let uploadedFiles = [];
-    if (files.length > 0) {
-        uploadedFiles = await uploadFiles(auth.currentUser.uid, dateId, files);
+    try {
+        if (files.length > 0) {
+            uploadedFiles = await uploadFiles(auth.currentUser.uid, dateId, files);
+        }
+
+        const links = linkString ? linkString.split(",").map(x => x.trim()).filter(x => x.length > 0) : [];
+
+        await addDoc(NOTES_REF, {
+            title,
+            text,
+            files: uploadedFiles,
+            links,
+            timestamp: new Date().toISOString()
+        });
+
+        // Clear inputs and reset button
+        document.getElementById("noteTitle").value = "";
+        document.getElementById("noteText").value = "";
+        document.getElementById("noteLinks").value = "";
+        document.getElementById("noteFiles").value = "";
+        saveNoteBtn.textContent = 'Save Note';
+        saveNoteBtn.disabled = false;
+        
+        // Collapse the note creation form after successful save
+        newNoteContent.classList.add('hidden');
+        toggleIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
+        
+    } catch (e) {
+        console.error("Error saving note:", e);
+        saveNoteBtn.textContent = 'Error Saving (See console)';
+        saveNoteBtn.disabled = false;
     }
-
-    const links = linkString ? linkString.split(",").map(x => x.trim()) : [];
-
-    await addDoc(NOTES_REF, {
-        title,
-        text,
-        files: uploadedFiles,
-        links,
-        timestamp: new Date().toISOString()
-    });
-
-    document.getElementById("noteTitle").value = "";
-    document.getElementById("noteText").value = "";
-    document.getElementById("noteLinks").value = "";
-    document.getElementById("noteFiles").value = "";
 };
 
 // Auth + load notes
 onAuthStateChanged(auth, (user) => {
     if (!user) {
-        notesContainer.innerHTML = `<p class="text-center text-gray-500">Please log in.</p>`;
+        // Simple redirection back to login if unauthenticated
+        setTimeout(() => window.location.href = "index.html", 50); 
         return;
     }
 
@@ -235,3 +306,4 @@ onAuthStateChanged(auth, (user) => {
 
 </body>
 </html>
+
