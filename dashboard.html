@@ -9,23 +9,30 @@
 <style>
   body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
 
-  .metric-card { 
-    @apply bg-white rounded-3xl shadow-xl flex flex-col items-center justify-center p-12 transition hover:shadow-2xl; 
+  .metric-card {
+    @apply relative flex flex-col items-center justify-center rounded-3xl shadow-xl p-8 transition hover:shadow-2xl;
   }
 
-  .metric-card i {
-    font-size: 6rem; /* Large icon */
+  .metric-circle {
+    @apply relative flex items-center justify-center rounded-full shadow-lg;
+    width: 150px;
+    height: 150px;
   }
 
-  .metric-card h2 {
-    @apply text-5xl font-bold text-indigo-700 mt-4;
+  .metric-circle i {
+    font-size: 4rem;
+    color: white;
   }
 
-  .metric-card p {
-    @apply text-lg font-semibold text-gray-700 mt-2;
+  .metric-count {
+    @apply absolute text-white font-bold text-4xl;
   }
 
-  .action-card { 
+  .metric-label {
+    @apply mt-6 text-xl font-semibold text-gray-800;
+  }
+
+  .action-card {
     @apply bg-indigo-600 text-white rounded-3xl shadow-xl flex items-center justify-center p-6 cursor-pointer transition hover:bg-indigo-700 text-center;
   }
 
@@ -35,8 +42,9 @@
 
   .grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 2rem;
+    align-items: start;
   }
 </style>
 </head>
@@ -65,38 +73,44 @@
   <!-- Dashboard Metrics -->
   <div class="grid-container">
 
-    <!-- Topics Metric Card -->
-    <div class="metric-card">
-      <i class="fa-solid fa-brain text-indigo-500"></i>
-      <h2 id="topicsCount">0</h2>
-      <p>Topics Covered</p>
+    <!-- Topics Metric -->
+    <div class="metric-card bg-indigo-500">
+      <div class="metric-circle bg-indigo-600">
+        <i class="fa-solid fa-brain"></i>
+        <div class="metric-count" id="topicsCount">0</div>
+      </div>
+      <p class="metric-label">Topics Covered</p>
     </div>
 
-    <!-- Add New Topic Action Card -->
+    <!-- Add New Topic -->
     <div class="action-card" onclick="window.location.href='curriculum_topics.html'">
       <p><i class="fa-solid fa-plus mr-2"></i>Add New Topic</p>
     </div>
 
-    <!-- Notes Metric Card -->
-    <div class="metric-card">
-      <i class="fa-solid fa-sticky-note text-green-500"></i>
-      <h2 id="notesCount">0</h2>
-      <p>Total Notes</p>
+    <!-- Notes Metric -->
+    <div class="metric-card bg-green-500">
+      <div class="metric-circle bg-green-600">
+        <i class="fa-solid fa-sticky-note"></i>
+        <div class="metric-count" id="notesCount">0</div>
+      </div>
+      <p class="metric-label">Total Notes</p>
     </div>
 
-    <!-- Add New Note Action Card -->
+    <!-- Add New Note -->
     <div class="action-card" onclick="window.location.href='notes.html'">
       <p><i class="fa-solid fa-plus mr-2"></i>Add New Note</p>
     </div>
 
-    <!-- Pending Tasks Metric Card -->
-    <div class="metric-card">
-      <i class="fa-solid fa-hourglass-start text-yellow-500"></i>
-      <h2 id="pendingTasks">0</h2>
-      <p>Pending Tasks</p>
+    <!-- Pending Tasks Metric -->
+    <div class="metric-card bg-yellow-500">
+      <div class="metric-circle bg-yellow-600">
+        <i class="fa-solid fa-hourglass-start"></i>
+        <div class="metric-count" id="pendingTasks">0</div>
+      </div>
+      <p class="metric-label">Pending Tasks</p>
     </div>
 
-    <!-- Add New Task Action Card -->
+    <!-- Add New Task -->
     <div class="action-card" onclick="window.location.href='todo.html'">
       <p><i class="fa-solid fa-plus mr-2"></i>Add New Task</p>
     </div>
