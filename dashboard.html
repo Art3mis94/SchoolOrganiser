@@ -7,63 +7,77 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-    .card { @apply bg-white p-6 rounded-2xl shadow-lg cursor-pointer hover:shadow-2xl transition flex flex-col items-center justify-center gap-3; }
-    .card h2 { @apply text-2xl font-bold text-indigo-700; }
-    .card p { @apply text-gray-600 font-semibold; }
+  body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+  .card { @apply bg-white p-6 rounded-2xl shadow-lg cursor-pointer hover:shadow-2xl transition flex flex-col justify-between; }
+  .card h2 { @apply text-3xl font-bold text-indigo-700; }
+  .card p { @apply text-gray-600 font-semibold; }
+  .card-details { @apply mt-2 text-gray-500 text-sm; }
 </style>
 </head>
 <body>
 
 <!-- Navbar -->
 <nav class="bg-indigo-700 p-4 shadow-2xl">
-    <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
-        <a href="dashboard.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Home 🏠</a>
-        <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
-        <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
-        <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
-        <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-        <button id="logoutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
-    </div>
+  <div class="container max-w-5xl mx-auto flex flex-wrap justify-center gap-4">
+      <a href="dashboard.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Home 🏠</a>
+      <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
+      <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
+      <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
+      <a href="resources.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
+      <button id="logoutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
+  </div>
 </nav>
 
-<!-- Page Content -->
 <div class="container max-w-5xl mx-auto p-8 mt-8 space-y-8">
 
-    <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Welcome to Educator Hub 👋</h1>
+  <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Educator Hub Dashboard 👩‍🏫</h1>
 
-    <!-- Dashboard Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
-        <div id="topicsCard" class="card" onclick="window.location.href='curriculum_topics.html'">
-            <i class="fa-solid fa-brain text-indigo-500 text-4xl"></i>
-            <h2 id="topicsCount">0</h2>
-            <p>Topics Covered</p>
+    <!-- Topics Card -->
+    <div id="topicsCard" class="card" onclick="window.location.href='curriculum_topics.html'">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-brain text-indigo-500 text-4xl"></i>
+        <div>
+          <h2 id="topicsCount">0</h2>
+          <p>Topics Covered</p>
         </div>
-
-        <div id="notesCard" class="card" onclick="window.location.href='notes.html'">
-            <i class="fa-solid fa-sticky-note text-green-500 text-4xl"></i>
-            <h2 id="notesCount">0</h2>
-            <p>Total Notes</p>
-        </div>
-
-        <div id="tasksCard" class="card" onclick="window.location.href='todo.html'">
-            <i class="fa-solid fa-hourglass-start text-yellow-500 text-4xl"></i>
-            <h2 id="pendingTasks">0</h2>
-            <p>Pending Tasks</p>
-        </div>
-
+      </div>
+      <p class="card-details" id="topicsPreview">Loading...</p>
     </div>
 
+    <!-- Notes Card -->
+    <div id="notesCard" class="card" onclick="window.location.href='notes.html'">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-sticky-note text-green-500 text-4xl"></i>
+        <div>
+          <h2 id="notesCount">0</h2>
+          <p>Total Notes</p>
+        </div>
+      </div>
+      <p class="card-details" id="notesPreview">Loading...</p>
+    </div>
+
+    <!-- Pending Tasks Card -->
+    <div id="tasksCard" class="card" onclick="window.location.href='todo.html'">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-hourglass-start text-yellow-500 text-4xl"></i>
+        <div>
+          <h2 id="pendingTasks">0</h2>
+          <p>Pending Tasks</p>
+        </div>
+      </div>
+      <p class="card-details" id="tasksPreview">Loading...</p>
+    </div>
+
+  </div>
 </div>
 
-<!-- Firebase Logic -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, query, onSnapshot, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, query, onSnapshot, orderBy, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// --- Firebase Config ---
 const firebaseConfig = {
   apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
   authDomain: "school-organiser-5f512.firebaseapp.com",
@@ -78,24 +92,39 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const topicsCountEl = document.getElementById('topicsCount');
+const topicsPreviewEl = document.getElementById('topicsPreview');
 const notesCountEl = document.getElementById('notesCount');
+const notesPreviewEl = document.getElementById('notesPreview');
 const pendingTasksEl = document.getElementById('pendingTasks');
+const tasksPreviewEl = document.getElementById('tasksPreview');
 const logoutBtn = document.getElementById('logoutBtn');
 
 onAuthStateChanged(auth, user => {
-    if (!user) return window.location.href='index.html';
+    if(!user) return window.location.href='index.html';
     const uid = user.uid;
 
-    // Topics Count
+    // Topics
     const topicsRef = collection(db, 'users', uid, 'topics');
     onSnapshot(topicsRef, snapshot => {
         topicsCountEl.textContent = snapshot.size;
+        if(snapshot.empty) {
+            topicsPreviewEl.textContent = "No topics yet.";
+        } else {
+            const topicNames = snapshot.docs.slice(0,3).map(doc => doc.data().name);
+            topicsPreviewEl.textContent = `Latest: ${topicNames.join(", ")}${snapshot.size>3?'...':''}`;
+        }
     });
 
-    // Notes Count
+    // Notes
     const notesRef = collection(db, 'users', uid, 'daily_notes');
     onSnapshot(notesRef, snapshot => {
         notesCountEl.textContent = snapshot.size;
+        if(snapshot.empty) {
+            notesPreviewEl.textContent = "No notes yet.";
+        } else {
+            const latestNote = snapshot.docs[snapshot.docs.length-1].data();
+            notesPreviewEl.textContent = `Latest: ${latestNote.title || 'Untitled'}`;
+        }
     });
 
     // Pending Tasks
@@ -103,6 +132,12 @@ onAuthStateChanged(auth, user => {
     const pendingQuery = query(tasksRef, where('completed', '==', false));
     onSnapshot(pendingQuery, snapshot => {
         pendingTasksEl.textContent = snapshot.size;
+        if(snapshot.empty) {
+            tasksPreviewEl.textContent = "All caught up!";
+        } else {
+            const latestTask = snapshot.docs[snapshot.docs.length-1].data();
+            tasksPreviewEl.textContent = `Next: ${latestTask.text || 'Task'}`;
+        }
     });
 });
 
