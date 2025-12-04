@@ -10,26 +10,21 @@
   body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
 
   .metric-card {
-    @apply relative flex flex-col items-center justify-center rounded-3xl shadow-xl p-8 transition hover:shadow-2xl;
+    @apply flex flex-col items-center justify-center rounded-3xl shadow-lg p-6 transition hover:shadow-2xl bg-white;
   }
 
-  .metric-circle {
-    @apply relative flex items-center justify-center rounded-full shadow-lg;
-    width: 150px;
-    height: 150px;
-  }
-
-  .metric-circle i {
-    font-size: 4rem;
-    color: white;
+  .metric-icon {
+    font-size: 3.5rem;
+    color: #4f46e5;
+    margin-bottom: 0.5rem;
   }
 
   .metric-count {
-    @apply absolute text-white font-bold text-4xl;
+    @apply text-4xl font-bold text-gray-800;
   }
 
   .metric-label {
-    @apply mt-6 text-xl font-semibold text-gray-800;
+    @apply mt-2 text-lg font-semibold text-gray-600;
   }
 
   .action-card {
@@ -74,11 +69,9 @@
   <div class="grid-container">
 
     <!-- Topics Metric -->
-    <div class="metric-card bg-indigo-500">
-      <div class="metric-circle bg-indigo-600">
-        <i class="fa-solid fa-brain"></i>
-        <div class="metric-count" id="topicsCount">0</div>
-      </div>
+    <div class="metric-card">
+      <i class="fa-solid fa-brain metric-icon"></i>
+      <div class="metric-count" id="topicsCount">0</div>
       <p class="metric-label">Topics Covered</p>
     </div>
 
@@ -88,11 +81,9 @@
     </div>
 
     <!-- Notes Metric -->
-    <div class="metric-card bg-green-500">
-      <div class="metric-circle bg-green-600">
-        <i class="fa-solid fa-sticky-note"></i>
-        <div class="metric-count" id="notesCount">0</div>
-      </div>
+    <div class="metric-card">
+      <i class="fa-solid fa-sticky-note metric-icon"></i>
+      <div class="metric-count" id="notesCount">0</div>
       <p class="metric-label">Total Notes</p>
     </div>
 
@@ -102,11 +93,9 @@
     </div>
 
     <!-- Pending Tasks Metric -->
-    <div class="metric-card bg-yellow-500">
-      <div class="metric-circle bg-yellow-600">
-        <i class="fa-solid fa-hourglass-start"></i>
-        <div class="metric-count" id="pendingTasks">0</div>
-      </div>
+    <div class="metric-card">
+      <i class="fa-solid fa-hourglass-start metric-icon"></i>
+      <div class="metric-count" id="pendingTasks">0</div>
       <p class="metric-label">Pending Tasks</p>
     </div>
 
