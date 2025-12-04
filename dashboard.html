@@ -42,6 +42,7 @@
 
 <!-- Main Container -->
 <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
+  <!-- Welcome -->
   <h1 class="text-4xl font-bold text-center text-indigo-800 mb-2">
     Welcome back, <span id="user-name-display">Educator</span>!
   </h1>
@@ -51,40 +52,48 @@
 
   <!-- Stats Cards -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-    <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-book-open text-4xl mb-3"></i>
-      <h3 id="topics-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-blue-100">Topics Covered</p>
-    </div>
-    <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-hourglass-start text-4xl mb-3"></i>
-      <h3 id="pending-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-amber-100">Pending Tasks</p>
-    </div>
-    <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg text-center">
-      <i class="fas fa-sticky-note text-4xl mb-3"></i>
-      <h3 id="notes-count" class="text-2xl font-bold"><div class="spinner mx-auto"></div></h3>
-      <p class="text-purple-100">Total Notes</p>
-    </div>
+    <a href="curriculum_topics.html" class="group">
+      <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg text-center transition transform hover:scale-105 hover:shadow-2xl">
+        <i class="fas fa-book-open text-5xl mb-3 group-hover:animate-bounce"></i>
+        <h3 id="topics-count" class="text-3xl font-bold"><div class="spinner mx-auto"></div></h3>
+        <p class="text-blue-100">Topics Covered</p>
+      </div>
+    </a>
+
+    <a href="todo.html" class="group">
+      <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-6 rounded-2xl shadow-lg text-center transition transform hover:scale-105 hover:shadow-2xl">
+        <i class="fas fa-hourglass-start text-5xl mb-3 group-hover:animate-bounce"></i>
+        <h3 id="pending-count" class="text-3xl font-bold"><div class="spinner mx-auto"></div></h3>
+        <p class="text-amber-100">Pending Tasks</p>
+      </div>
+    </a>
+
+    <a href="notes.html" class="group">
+      <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-2xl shadow-lg text-center transition transform hover:scale-105 hover:shadow-2xl">
+        <i class="fas fa-sticky-note text-5xl mb-3 group-hover:animate-bounce"></i>
+        <h3 id="notes-count" class="text-3xl font-bold"><div class="spinner mx-auto"></div></h3>
+        <p class="text-purple-100">Total Notes</p>
+      </div>
+    </a>
   </div>
 
   <!-- Quick Actions -->
   <h2 class="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
     <a href="notes.html" class="bg-indigo-50 hover:bg-indigo-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-edit text-3xl text-indigo-600 mb-3"></i>
+      <i class="fas fa-edit text-4xl text-indigo-600 mb-3"></i>
       <p class="font-semibold text-indigo-800">Write New Note</p>
     </a>
     <a href="curriculum_topics.html" class="bg-teal-50 hover:bg-teal-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-brain text-3xl text-teal-600 mb-3"></i>
+      <i class="fas fa-brain text-4xl text-teal-600 mb-3"></i>
       <p class="font-semibold text-teal-800">Plan Topics</p>
     </a>
     <a href="todo.html" class="bg-amber-50 hover:bg-amber-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-list-check text-3xl text-amber-600 mb-3"></i>
+      <i class="fas fa-list-check text-4xl text-amber-600 mb-3"></i>
       <p class="font-semibold text-amber-800">View To-Do List</p>
     </a>
     <a href="resources.html" class="bg-pink-50 hover:bg-pink-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
-      <i class="fas fa-tools text-3xl text-pink-600 mb-3"></i>
+      <i class="fas fa-tools text-4xl text-pink-600 mb-3"></i>
       <p class="font-semibold text-pink-800">Open Tools</p>
     </a>
   </div>
@@ -101,8 +110,9 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, doc, onSnapshot, collectionGroup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, collectionGroup, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
   authDomain: "school-organiser-5f512.firebaseapp.com",
@@ -131,36 +141,46 @@ greetingEl.textContent = `${greeting}!`;
 
 // Auth
 onAuthStateChanged(auth, user => {
-  if (!user) return window.location.href='index.html';
-  const uid = user.uid;
-  const userName = user.displayName || user.email.split('@')[0];
-  userNameEl.textContent = userName;
-  userIdEl.textContent = uid;
+  if (user) {
+    const uid = user.uid;
+    const userName = user.displayName || user.email.split('@')[0];
+    userNameEl.textContent = userName;
+    userIdEl.textContent = uid;
 
-  // Topics count
-  const topicsRef = collection(db,'users',uid,'topics');
-  onSnapshot(topicsRef, snap => topicsCountEl.textContent = snap.size || 0);
+    // Topics count
+    const topicsRef = collection(db,'users',uid,'topics');
+    onSnapshot(topicsRef, snap => topicsCountEl.textContent = snap.size || 0);
 
-  // Pending tasks count
-  const todoDocRef = doc(db,'users',uid,'task_planner','todo_list');
-  onSnapshot(todoDocRef, docSnap => {
-    if (docSnap.exists()) {
-      const tasks = docSnap.data().tasks || [];
-      const pending = tasks.filter(t => !t.completed).length;
-      pendingCountEl.textContent = pending;
-    } else {
-      pendingCountEl.textContent = 0;
-    }
-  });
+    // Pending tasks count
+    const todoDocRef = doc(db,'users',uid,'task_planner','todo_list');
+    onSnapshot(todoDocRef, docSnap => {
+      if(docSnap.exists()){
+        const tasks = docSnap.data().tasks || [];
+        const pending = tasks.filter(t => !t.completed).length;
+        pendingCountEl.textContent = pending;
+      } else {
+        pendingCountEl.textContent = 0;
+      }
+    });
 
-  // Notes count
-  const notesRef = collection(db,'users',uid,'daily_notes');
-  onSnapshot(notesRef, snap => notesCountEl.textContent = snap.size || 0);
+    // Notes count
+    const notesGroup = collectionGroup(db,'daily_notes');
+    onSnapshot(notesGroup, snap => {
+      let totalNotes = 0;
+      snap.forEach(doc => {
+        if(doc.ref.path.includes(`/users/${uid}/`)) totalNotes++;
+      });
+      notesCountEl.textContent = totalNotes;
+    });
+
+  } else {
+    window.location.href='index.html';
+  }
 });
 
 // Sign out
 document.getElementById('signout-btn').onclick = () => {
-  signOut(auth).then(() => window.location.href='index.html');
+  signOut(auth).then(()=>window.location.href='index.html');
 };
 </script>
 
