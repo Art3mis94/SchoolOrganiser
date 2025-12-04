@@ -9,11 +9,15 @@
 <style>
   body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
   .card { 
-    @apply bg-white p-8 rounded-3xl shadow-xl flex flex-col items-center justify-center cursor-pointer transition hover:shadow-2xl; 
+    @apply bg-white rounded-3xl shadow-xl flex flex-col items-center justify-center cursor-pointer transition hover:shadow-2xl; 
+    padding-top: 4rem;
+    padding-bottom: 4rem;
   }
-  .card i { @apply text-7xl; }
-  .card h2 { @apply text-4xl font-bold text-indigo-700 mt-4; }
-  .card p { @apply text-gray-600 mt-2 text-center; }
+  .card i {
+    font-size: 6rem; /* Make icon large */
+  }
+  .card h2 { @apply text-5xl font-bold text-indigo-700 mt-4; }
+  .card p { @apply text-lg font-semibold text-gray-700 mt-2; }
   .card-subtext { @apply text-sm text-gray-500 mt-1; }
 </style>
 </head>
@@ -46,7 +50,7 @@
     <div id="topicsCard" class="card" onclick="window.location.href='curriculum_topics.html'">
       <i class="fa-solid fa-brain text-indigo-500"></i>
       <h2 id="topicsCount">0</h2>
-      <p class="text-lg font-semibold">Topics Covered</p>
+      <p>Topics Covered</p>
       <p class="card-subtext">Add New Topic</p>
     </div>
 
@@ -54,7 +58,7 @@
     <div id="notesCard" class="card" onclick="window.location.href='notes.html'">
       <i class="fa-solid fa-sticky-note text-green-500"></i>
       <h2 id="notesCount">0</h2>
-      <p class="text-lg font-semibold">Total Notes</p>
+      <p>Total Notes</p>
       <p class="card-subtext">Add New Note</p>
     </div>
 
@@ -62,7 +66,7 @@
     <div id="tasksCard" class="card" onclick="window.location.href='todo.html'">
       <i class="fa-solid fa-hourglass-start text-yellow-500"></i>
       <h2 id="pendingTasks">0</h2>
-      <p class="text-lg font-semibold">Pending Tasks</p>
+      <p>Pending Tasks</p>
       <p class="card-subtext">Add New Task</p>
     </div>
 
