@@ -26,7 +26,6 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-<!-- Navigation -->
 <nav class="bg-indigo-700 p-4 shadow-2xl">
   <div class="container max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-4 relative">
     <div class="flex flex-wrap justify-center gap-4">
@@ -40,14 +39,14 @@
   </div>
 </nav>
 
-<!-- Dashboard Content -->
 <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
-  <h1 class="text-4xl font-bold text-center text-indigo-800 mb-8">Welcome back, Teacher!</h1>
+  <h1 class="text-4xl font-bold text-center text-indigo-800 mb-2">
+    Welcome back, <span id="user-name-display">Educator</span>!
+  </h1>
   <p class="text-center text-gray-600 mb-10 text-lg">
-    <span id="greeting-time"></span> · User ID: <code id="user-id-display" class="text-indigo-600 text-sm">Loading...</code>
+    <span id="greeting-time"></span>
   </p>
 
-  <!-- Stats -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
     <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg text-center">
       <i class="fas fa-book-open text-4xl mb-3"></i>
@@ -66,7 +65,6 @@
     </div>
   </div>
 
-  <!-- Quick Actions -->
   <h2 class="text-2xl font-bold text-gray-800 mb-6">Quick Actions</h2>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
     <a href="notes.html" class="bg-indigo-50 hover:bg-indigo-100 p-6 rounded-xl text-center shadow-md hover:shadow-xl transition">
@@ -88,6 +86,13 @@
   </div>
 </div>
 
+<footer class="container max-w-4xl mx-auto mt-4 p-4 text-center text-gray-500 text-xs">
+    <p>
+        App Version 1.0. | Your User ID: <span id="user-id-display" class="font-mono text-gray-700">Loading...</span>
+    </p>
+</footer>
+
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -108,9 +113,10 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// DOM Elements
+// DOM Elements - Added user-name-display
 const userIdEl = document.getElementById('user-id-display');
 const greetingEl = document.getElementById('greeting-time');
+const userNameEl = document.getElementById('user-name-display'); // <-- NEW
 const topicsCountEl = document.getElementById('topics-count');
 const completedCountEl = document.getElementById('completed-count');
 const notesCountEl = document.getElementById('notes-count');
@@ -124,7 +130,16 @@ greetingEl.textContent = `${greeting}!`;
 onAuthStateChanged(auth, (user) => {
   if (user) {
     const uid = user.uid;
-    userIdEl.textContent = uid;
+    
+    // --- Display Name Logic ---
+    // If displayName exists (usually from Google sign-in), use it.
+    // Otherwise, use the part of the email before the @ symbol.
+    const userName = user.displayName || user.email.split('@')[0];
+    userNameEl.textContent = userName;
+    
+    // Display User ID in the footer (less prominent)
+    userIdEl.textContent = uid; 
+    
     syncStats(uid);
   } else {
     window.location.href = "index.html"; // replace with your login page
