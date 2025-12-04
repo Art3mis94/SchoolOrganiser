@@ -141,17 +141,17 @@ onAuthStateChanged(auth, user => {
   const topicsRef = collection(db,'users',uid,'topics');
   onSnapshot(topicsRef, snap => topicsCountEl.textContent = snap.size || 0);
 
-  // Pending tasks count
-  const todoDocRef = doc(db,'users',uid,'task_planner','todo_list');
-  onSnapshot(todoDocRef, docSnap => {
-    if (docSnap.exists()) {
-      const tasks = docSnap.data().tasks || [];
-      const pending = tasks.filter(t => !t.completed).length;
-      pendingCountEl.textContent = pending;
-    } else {
-      pendingCountEl.textContent = 0;
-    }
-  });
+// Pending tasks count
+const todoDocRef = doc(db,'artifacts','school-organiser-5f512','users',uid,'task_planner','todo_list');
+onSnapshot(todoDocRef, docSnap => {
+  if(docSnap.exists()){
+    const tasks = docSnap.data().tasks || [];
+    const pending = tasks.filter(t => !t.completed).length;
+    pendingCountEl.textContent = pending;
+  } else {
+    pendingCountEl.textContent = 0;
+  }
+});
 
   // Notes count
   const notesRef = collection(db,'users',uid,'daily_notes');
