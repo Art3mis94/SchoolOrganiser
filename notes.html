@@ -8,167 +8,174 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-  .note-box { @apply bg-white p-5 rounded-xl shadow-md border border-gray-200; }
-  .collapsible-content { transition: max-height 0.3s ease-out; overflow: hidden; }
+  .note-box { @apply bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition; }
+  .collapsible-content { transition: max-height 0.35s ease; overflow: hidden; }
 </style>
 </head>
-<body>
+<body class="min-h-screen">
 
-<nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
-    <a href="dashboard.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home</a>
-    <a href="curriculum_topics.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Topics</a>
-    <a href="notes.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Notes</a>
-    <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do</a>
-    <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools</a>
-    <button id="signout-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
+<nav class="bg-indigo-700 text-white p-4 shadow-lg">
+  <div class="max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
+    <a href="dashboard.html" class="px-5 py-2 rounded-lg hover:bg-indigo-600 transition">Home</a>
+    <a href="curriculum_topics.html" class="px-5 py-2 rounded-lg hover:bg-indigo-600 transition">Topics</a>
+    <a href="notes.html" class="px-5 py-2 bg-white text-indigo-700 font-bold rounded-lg">Notes</a>
+    <a href="todo.html" class="px-5 py-2 rounded-lg hover:bg-indigo-600 transition">To-Do</a>
+    <a href="resources.html" class="px-5 py-2 rounded-lg hover:bg-indigo-600 transition">Tools</a>
+    <button id="signout-btn" class="px-5 py-2 bg-red-600 rounded-lg hover:bg-red-700 transition">Sign Out</button>
   </div>
 </nav>
 
-<div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
-  <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Daily Notes</h1>
+<div class="max-w-4xl mx-auto p-6 mt-8">
+  <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Daily Notes</h1>
 
-  <div class="bg-indigo-50 p-5 rounded-xl mb-6">
-    <div id="newNoteHeader" class="flex justify-between items-center cursor-pointer text-indigo-800 hover:text-indigo-900 transition">
-      <h2 class="text-xl font-bold">Create a New Note</h2>
-      <i id="toggleIcon" class="fa-solid fa-chevron-down"></i>
+  <!-- Create Note -->
+  <div class="bg-indigo-50 rounded-xl p-6 mb-8">
+    <div id="newNoteHeader" class="flex justify-between items-center cursor-pointer">
+      <h2 class="text-2xl font-bold text-indigo-800">Create New Note</h2>
+      <i id="toggleIcon" class="fa-solid fa-chevron-down text-xl"></i>
     </div>
-    <div id="newNoteContent" class="collapsible-content mt-4 hidden">
-      <input id="noteTitle" type="text" placeholder="Note Title..." class="w-full p-3 border rounded-lg mb-3">
-      <textarea id="noteText" placeholder="Write your note..." class="w-full p-3 border rounded-lg mb-3" rows="4"></textarea>
-
-      <label class="font-semibold block mb-1 text-gray-700">Attach Files (will open/download externally):</label>
-      <input id="noteFiles" type="file" multiple class="w-full p-2 bg-white border rounded-lg mb-4">
-
-      <label class="font-semibold block mb-1 text-gray-700">Add Links (optional):</label>
-      <input id="noteLinks" type="text" placeholder="https://example.com, https://..." class="w-full p-3 border rounded-lg mb-4">
-
-      <button id="saveNoteBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-lg">
+    <div id="newNoteContent" class="mt-6 space-y-4 hidden">
+      <input id="noteTitle" type="text" placeholder="Note Title" class="w-full p-3 border rounded-lg">
+      <textarea id="noteText" placeholder="Your note..." rows="5" class="w-full p-3 border rounded-lg"></textarea>
+      <input id="noteFiles" type="file" multiple class="w-full p-3 border rounded-lg bg-white">
+      <input id="noteLinks" type="text" placeholder="Links (comma-separated)" class="w-full p-3 border rounded-lg mt-3">
+      <button id="saveNoteBtn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition">
         Save Note
       </button>
     </div>
   </div>
 
-  <div id="notesContainer" class="space-y-4"></div>
+  <div id="notesContainer" class="space-y-6">
+    <p class="text-center text-gray-500 italic">Loading your notes...</p>
+  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-const firebaseConfig = { /* your config */ };
+const firebaseConfig = {
+  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
+  authDomain: "school-organiser-5f512.firebaseapp.com",
+  projectId: "school-organiser-5f512",
+  storageBucket: "school-organiser-5f512.appspot.com",
+  messagingSenderId: "567803400438",
+  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
+};
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 let NOTES_REF = null;
-const fileMap = new Map(); // docId → [{name, blobURL, file}]
 
-document.getElementById("newNoteHeader").addEventListener("click", () => {
-  document.getElementById("newNoteContent").classList.toggle("hidden");
-  document.getElementById("toggleIcon").classList.toggle("fa-chevron-down");
-  document.getElementById("toggleIcon").classList.toggle("fa-chevron-up");
-});
+// Toggle create form
+document.getElementById("newNoteHeader").onclick = () => {
+  const content = document.getElementById("newNoteContent");
+  const icon = document.getElementById("toggleIcon");
+  content.classList.toggle("hidden");
+  icon.classList.toggle("fa-chevron-down");
+  icon.classList.toggle("fa-chevron-up");
+};
 
+// Render single note
 function renderNote(id, data) {
   const div = document.createElement("div");
   div.className = "note-box";
 
-  const files = fileMap.get(id) || [];
-  const links = data.links || [];
+  const filesHTML = (data.files || []).map(f => `
+    <li>
+      <a href="${f.url}" target="_blank" download="${f.name}" rel="noopener noreferrer"
+         class="text-indigo-600 hover:underline font-medium">
+        ${f.name}
+      </a>
+    </li>`).join('');
+
+  const linksHTML = (data.links || []).map(l => `
+    <li>
+      <a href="${l}" target="_blank" rel="noopener noreferrer"
+         class="text-indigo-600 hover:underline">
+        ${l}
+      </a>
+    </li>`).join('');
 
   div.innerHTML = `
     <div class="flex justify-between items-center cursor-pointer collapsible">
-      <h3 class="text-xl font-semibold">${data.title || "Untitled"}</h3>
-      <i class="fa-solid fa-chevron-down"></i>
+      <h3 class="text-xl font-semibold text-gray-800">${data.title || "Untitled"}</h3>
+      <i class="fa-solid fa-chevron-down text-gray-600"></i>
     </div>
-    <div class="content mt-3 collapsible-content hidden">
-      <p class="mb-3 whitespace-pre-wrap">${data.text || ""}</p>
-
-      ${links.length ? `<h4 class="font-semibold text-gray-700 mb-1">Links:</h4>
-        <ul class="list-disc ml-6 mb-4 text-sm">
-          ${links.map(l => `<li><a href="${l}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">${l}</a></li>`).join('')}
-        </ul>` : ''}
-
-      ${files.length ? `<h4 class="font-semibold text-gray-700 mb-1">Files:</h4>
-        <ul class="list-disc ml-6 mb-4 text-sm">
-          ${files.map(f => `
-            <li>
-              <a href="${f.blobURL}" 
-                 download="${f.name}" 
-                 target="_blank" 
-                 rel="noopener noreferrer"
-                 class="text-indigo-600 hover:underline">
-                ${f.name}
-              </a>
-            </li>`).join('')}
-        </ul>` : ''}
-
-      <div class="flex gap-2 mt-4">
-        <button onclick="editNote('${id}')" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">Edit</button>
-        <button onclick="deleteNote('${id}')" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Delete</button>
+    <div class="content mt-4 hidden space-y-4">
+      <p class="text-gray-700 whitespace-pre-wrap">${data.text || ""}</p>
+      ${data.links?.length ? `<div><strong>Links:</strong><ul class="list-disc ml-8 mt-2">${linksHTML}</ul></div>` : ''}
+      ${data.files?.length ? `<div><strong>Files:</strong><ul class="list-disc ml-8 mt-2">${filesHTML}</ul></div>` : ''}
+      <div class="flex gap-3 pt-4 border-t">
+        <button onclick="editNote('${id}')" class="bg-yellow-500 text-white px-5 py-2 rounded-lg hover:bg-yellow-600">Edit</button>
+        <button onclick="deleteNote('${id}', ${JSON.stringify(data.files || [])})" class="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700">Delete</button>
       </div>
     </div>
   `;
 
-  div.querySelector(".collapsible").addEventListener("click", () => {
-    const c = div.querySelector(".content");
-    const i = div.querySelector("i");
-    c.classList.toggle("hidden");
-    i.classList.toggle("fa-chevron-down");
-    i.classList.toggle("fa-chevron-up");
-  });
+  div.querySelector(".collapsible").onclick = () => {
+    div.querySelector(".content").classList.toggle("hidden");
+    div.querySelector("i").classList.toggle("fa-chevron-down");
+    div.querySelector("i").classList.toggle("fa-chevron-up");
+  };
 
   return div;
 }
 
+// Edit note
 window.editNote = async (id) => {
-  const ref = doc(NOTES_REF, id);
-  const snap = await ref.get();
-  const d = snap.data();
-  const title = prompt("New title", d.title);
-  const text = prompt("New text", d.text);
-  if (title !== null && text !== null) {
-    await updateDoc(ref, { title, text });
+  const newTitle = prompt("Edit title:", "");
+  const newText = prompt("Edit text:", "");
+  if (newTitle !== null && newText !== null) {
+    await updateDoc(doc(db, NOTES_REF.path, id), { title: newTitle, text: newText, updatedAt: serverTimestamp() });
   }
 };
 
-window.deleteNote = async (id) => {
-  if (!confirm("Delete this note?")) return;
-  fileMap.get(id)?.forEach(f => URL.revokeObjectURL(f.blobURL));
-  fileMap.delete(id);
-  await deleteDoc(doc(NOTES_REF, id));
+// Delete note + files from Storage
+window.deleteNote = async (id, files) => {
+  if (!confirm("Delete this note permanently?")) return;
+  for (const f of files) {
+    try { await deleteObject(ref(storage, f.path)); } catch(e) {}
+  }
+  await deleteDoc(doc(db, NOTES_REF.path, id));
 };
 
+// Save note with file upload
 document.getElementById("saveNoteBtn").onclick = async () => {
   const title = document.getElementById("noteTitle").value.trim();
   const text = document.getElementById("noteText").value.trim();
-  const links = document.getElementById("noteLinks").value.split(",").map(s => s.trim()).filter(Boolean);
-  const files = Array.from(document.getElementById("noteFiles").files);
+  const links = document.getElementById("noteLinks").value.split(",").map(l => l.trim()).filter(Boolean);
+  const files = document.getElementById("noteFiles").files;
 
   if (!title || !text) return alert("Title and text required");
 
   const btn = document.getElementById("saveNoteBtn");
   btn.disabled = true;
-  btn.textContent = "Saving...";
+  btn.textContent = "Uploading...";
 
-  const fileEntries = files.map(file => ({
-    name: file.name,
-    blobURL: URL.createObjectURL(file),
-    file
-  }));
+  const uploadedFiles = [];
+  for (const file of files) {
+    const path = `notes/${Date.now()}_${file.name}`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    uploadedFiles.push({ name: file.name, url, path });
+  }
 
-  const docRef = await addDoc(NOTES_REF, {
+  await addDoc(NOTES_REF, {
     title,
     text,
     links,
-    fileNames: fileEntries.map(f => f.name) // only names saved
+    files: uploadedFiles,
+    createdAt: serverTimestamp()
   });
 
-  fileMap.set(docRef.id, fileEntries);
-
-  // reset
+  // Reset form
   document.getElementById("noteTitle").value = "";
   document.getElementById("noteText").value = "";
   document.getElementById("noteLinks").value = "";
@@ -180,17 +187,23 @@ document.getElementById("saveNoteBtn").onclick = async () => {
   btn.textContent = "Save Note";
 };
 
+// Auth & real-time listener
 onAuthStateChanged(auth, user => {
   if (!user) return location.href = "index.html";
+
   NOTES_REF = collection(db, "users", user.uid, "daily_notes");
 
-  onSnapshot(NOTES_REF, snap => {
-    document.getElementById("notesContainer").innerHTML = snap.empty
-      ? `<p class="text-gray-500 italic text-center">No notes yet.</p>`
+  onSnapshot(NOTES_REF, snapshot => {
+    const container = document.getElementById("notesContainer");
+    container.innerHTML = snapshot.empty
+      ? `<p class="text-center text-gray-500 italic text-lg">No notes yet. Create one!</p>`
       : "";
-    snap.forEach(d => {
-      document.getElementById("notesContainer").appendChild(renderNote(d.id, d.data()));
-    });
+
+    snapshot.docs
+      .sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0))
+      .forEach(doc => {
+        container.appendChild(renderNote(doc.id, doc.data()));
+      });
   });
 });
 
