@@ -38,7 +38,7 @@
       <input id="noteTitle" type="text" placeholder="Note Title..." class="w-full p-3 border rounded-lg mb-3">
       <textarea id="noteText" placeholder="Write your note..." class="w-full p-3 border rounded-lg mb-3" rows="4"></textarea>
 
-      <label class="font-semibold block mb-1 text-gray-700">Attach Files:</label>
+      <label class="font-semibold block mb-1 text-gray-700">Attach Files (Local Only):</label>
       <input id="noteFiles" type="file" multiple class="w-full p-2 bg-white border rounded-lg mb-4">
 
       <label class="font-semibold block mb-1 text-gray-700">Add Links (optional):</label>
@@ -56,10 +56,11 @@
 </div>
 
 <script type="module">
+// --- MODULE IMPORTS ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, collection, doc, addDoc, deleteDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-// NEW: Import localForage for IndexedDB management
+// IndexedDB wrapper for local file storage
 import localforage from "https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"; 
 
 // Firebase config
@@ -75,13 +76,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-let NOTES_REF = null;
+let NOTES_REF = null; // Collection reference set after user auth
 
 // Configure localForage (IndexedDB wrapper)
 localforage.config({
   name: 'EducatorHubFiles',
   storeName: 'attached_notes_files'
 });
+
+// DOM Elements
+const notesContainer = document.getElementById("notesContainer");
+const saveNoteBtn = document.getElementById("saveNoteBtn");
+
+// --- CORE FUNCTIONS ---
 
 // Navbar Sign Out
 document.getElementById("signout-btn").addEventListener('click', () => signOut(auth));
@@ -96,30 +103,26 @@ newNoteHeader.addEventListener('click', () => {
   toggleIcon.classList.toggle('fa-chevron-down');
 });
 
-// DOM Elements
-const notesContainer = document.getElementById("notesContainer");
-const saveNoteBtn = document.getElementById("saveNoteBtn");
-
-// NEW: Function to retrieve file from IndexedDB and open it externally
+/**
+ * Retrieves a file from IndexedDB and opens it in a new tab using a temporary object URL.
+ * This is the mechanism for "external" file opening without cloud storage.
+ */
 window.openLocalFile = async (fileId) => {
   try {
     const file = await localforage.getItem(fileId);
     if (file) {
-      // 1. Create a temporary, client-side URL
       const url = URL.createObjectURL(file);
-      
-      // 2. Open the URL in a new tab
       const win = window.open(url, '_blank');
       
-      // 3. Revoke the object URL after the new window loads to free up memory
       if (win) {
+        // Revoke the object URL after the new window loads to free up memory
         win.onload = () => URL.revokeObjectURL(url);
       } else {
         URL.revokeObjectURL(url); 
-        alert("Please allow pop-ups or check your browser settings to open the file.");
+        alert("Please allow pop-ups to open the file in a new tab.");
       }
     } else {
-      alert("File not found on this device. Attachments are saved locally and do not sync across devices.");
+      alert("File not found on this device. Attachments are saved locally and do not sync.");
     }
   } catch (err) {
     console.error("Error retrieving file from local storage:", err);
@@ -133,21 +136,22 @@ function renderNote(docId, note) {
   const div = document.createElement("div");
   div.className = "note-box";
 
-  // Create links for files. If localFileId exists, use the custom external opener.
+  // Check for locally saved files
   const filesHtml = note.files?.length ? `<h4 class="font-semibold text-gray-700">Files:</h4>
     <ul class="list-disc ml-6 mb-3 text-sm">
       ${note.files.map(f => {
         if (f.localFileId) {
-          // Use onclick to trigger IndexedDB lookup and open
+          // Use onclick handler for locally stored files
           return `<li><a href="#" 
                      class="text-indigo-600 hover:text-indigo-800 underline transition" 
-                     onclick="openLocalFile('${f.localFileId}')">${f.name}</a></li>`;
+                     onclick="openLocalFile('${f.localFileId}'); return false;">${f.name}</a></li>`;
         }
-        // Fallback for non-local files/old data (if applicable)
+        // Fallback for links stored as externalUrl (e.g., old format)
         return `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${f.externalUrl}" target="_blank" rel="noopener noreferrer">${f.name}</a></li>`;
       }).join('')}
     </ul>` : '';
 
+  // Ensure external links always open in new tab
   const linksHtml = note.links?.length ? `<h4 class="font-semibold text-gray-700">Links:</h4>
     <ul class="list-disc ml-6 mb-3 text-sm">
       ${note.links.map(l => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${l}" target="_blank" rel="noopener noreferrer">${l}</a></li>`).join('')}
@@ -187,8 +191,7 @@ window.editNote = (id) => alert("Edit functionality coming soon!");
 window.deleteNote = async (id) => {
   if (!NOTES_REF) return;
   if (confirm("Delete this note?")) {
-    // NOTE: You should also implement logic here to find the localFileIds 
-    // from the note data and delete the corresponding files from IndexedDB.
+    // Implement IndexedDB file cleanup here if needed
     await deleteDoc(doc(NOTES_REF, id));
   }
 };
@@ -201,7 +204,7 @@ saveNoteBtn.onclick = async () => {
   const filesInput = document.getElementById("noteFiles");
 
   if (!title || !text) return alert("Please enter a title and note text.");
-  if (!auth.currentUser) return alert("User not logged in."); // Safety check
+  if (!auth.currentUser || !NOTES_REF) return alert("Authentication error. Please sign in again.");
 
   saveNoteBtn.disabled = true;
   saveNoteBtn.textContent = 'Saving...';
@@ -211,28 +214,26 @@ saveNoteBtn.onclick = async () => {
 
   // Process files: Save to IndexedDB and get local IDs
   const filePromises = filesToUpload.map(async (file) => {
-    // Generate a unique ID for the file in IndexedDB
+    // Generate a unique ID for the file using UID and timestamp
     const fileId = `${uid}_${Date.now()}_${file.name.replace(/[^\w\.]/g, '_')}`;
     
-    // Save the actual File object to IndexedDB
+    // Save the actual File object (blob) to IndexedDB
     await localforage.setItem(fileId, file);
     
-    // We only save the ID and the name to Firestore
+    // Return only the metadata to be saved in Firestore
     return {
       name: file.name,
-      localFileId: fileId // Store the unique ID here
+      localFileId: fileId 
     };
   });
 
-  // Wait for all local file saves to complete
   const files = await Promise.all(filePromises);
-
   const links = linkString ? linkString.split(",").map(l => l.trim()).filter(l => l) : [];
 
   // Save the note document with the local file IDs
   await addDoc(NOTES_REF, { title, text, files, links, timestamp: new Date().toISOString() });
 
-  // Clear fields
+  // Clear fields and reset UI
   document.getElementById("noteTitle").value = "";
   document.getElementById("noteText").value = "";
   document.getElementById("noteLinks").value = "";
@@ -244,16 +245,26 @@ saveNoteBtn.onclick = async () => {
   toggleIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
 };
 
-// Auth + Load Notes
+// Auth + Load Notes: This must be the reliable entry point
 onAuthStateChanged(auth, (user) => {
   if (!user) return window.location.href = "index.html";
+  
   const uid = user.uid;
+  // Initialize the NOTES_REF based on the authenticated user's ID
   NOTES_REF = collection(db, "users", uid, "daily_notes");
 
+  // Start listening for notes updates
   onSnapshot(NOTES_REF, snapshot => {
     notesContainer.innerHTML = "";
-    if (snapshot.empty) notesContainer.innerHTML = `<p class="text-gray-500 italic text-center">No notes yet.</p>`;
-    snapshot.forEach(docSnap => notesContainer.appendChild(renderNote(docSnap.id, docSnap.data())));
+    if (snapshot.empty) {
+      notesContainer.innerHTML = `<p class="text-gray-500 italic text-center">No notes yet.</p>`;
+    } else {
+      snapshot.forEach(docSnap => notesContainer.appendChild(renderNote(docSnap.id, docSnap.data())));
+    }
+  }, (error) => {
+    // Added error handling for data retrieval
+    console.error("Error fetching notes:", error);
+    notesContainer.innerHTML = `<p class="text-red-500 italic text-center">Error loading notes. Check console for details.</p>`;
   });
 });
 </script>
