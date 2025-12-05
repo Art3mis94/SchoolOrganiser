@@ -9,81 +9,62 @@
 <style>
   body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
   .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
-  .note-box { @apply bg-white p-4 rounded-lg shadow-md border border-gray-200 mb-3; }
-  .collapsible-content { transition: max-height 0.3s ease-out; overflow: hidden; }
-  .sidebar { @apply bg-indigo-50 p-4 rounded-xl space-y-2 w-64 min-w-[250px]; }
-  .link-item { @apply flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition cursor-pointer; }
-  .file-item { @apply flex items-center gap-2 text-green-600 hover:text-green-800 transition; }
+  .note-item { @apply p-3 rounded-lg cursor-pointer hover:bg-indigo-100 transition; }
+  .note-item.active { @apply bg-indigo-200 font-semibold; }
+  .panel { height: calc(100vh - 64px); overflow-y: auto; }
+  .file-item, .link-item { @apply flex justify-between items-center bg-gray-100 p-2 rounded-lg mb-2; }
+  .file-item button, .link-item button { @apply bg-red-500 text-white px-2 py-1 rounded-lg hover:bg-red-600; }
 </style>
 </head>
 <body>
 
 <!-- Navbar -->
 <nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-6xl mx-auto flex flex-wrap justify-center gap-4">
-    <a href="dashboard.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-    <a href="curriculum_topics.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
-    <a href="notes.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Notes 📝</a>
-    <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
-    <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
+  <div class="container max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-4">
+    <div class="flex flex-wrap gap-4">
+      <a href="dashboard.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
+      <a href="curriculum_topics.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
+      <a href="notes.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Notes 📝</a>
+      <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
+      <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
+    </div>
     <button id="signout-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
   </div>
 </nav>
 
-<div class="container max-w-6xl mx-auto flex mt-6 gap-6">
-
-  <!-- Sidebar for Notes List -->
-  <div class="sidebar">
-    <h2 class="text-xl font-bold text-indigo-800 mb-4">Your Notes</h2>
-    <div id="notesList" class="space-y-2">
-      <p class="text-gray-500 italic text-center">Loading notes...</p>
-    </div>
-  </div>
-
-  <!-- Main Panel -->
-  <div class="flex-1 bg-white rounded-3xl shadow-2xl p-6">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">Create a New Note 📝</h1>
-
-    <input id="noteTitle" type="text" placeholder="Note Title..." class="w-full p-3 border rounded-lg mb-3">
-
-    <textarea id="noteText" placeholder="Write your note..." class="w-full p-3 border rounded-lg mb-3" rows="4"></textarea>
-
-    <!-- File Input -->
-    <label class="font-semibold block mb-1 text-gray-700">Attach Files (Max 20MB each)</label>
-    <input id="noteFiles" type="file" multiple class="w-full p-2 bg-white border rounded-lg mb-4">
-
-    <!-- Links Input -->
-    <label class="font-semibold block mb-1 text-gray-700">Add a Link</label>
-    <div class="flex gap-2 mb-4">
-      <input id="linkInput" type="text" placeholder="https://example.com" class="w-full p-2 border rounded-lg">
-      <button id="addLinkBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition">Add Link</button>
-    </div>
-    <ul id="linksList" class="mb-4"></ul>
-
-    <button id="saveNoteBtn" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition shadow-lg">
-      Save Note
+<div class="flex max-w-6xl mx-auto mt-6 gap-4">
+  <!-- Left panel: notes list -->
+  <div class="w-1/3 panel bg-white rounded-2xl shadow-lg p-4 flex flex-col">
+    <button id="addNoteBtn" class="w-full mb-4 bg-indigo-600 text-white p-3 rounded-lg hover:bg-indigo-700 transition shadow-lg">
+      + Add New Note
     </button>
+    <div id="notesList" class="flex-1 overflow-y-auto space-y-2">
+      <p class="text-gray-500 text-center">Loading notes...</p>
+    </div>
   </div>
 
+  <!-- Right panel: note preview/edit -->
+  <div class="w-2/3 panel bg-white rounded-2xl shadow-lg p-6 flex flex-col" id="notePreview">
+    <p class="text-gray-500 text-center">Select a note to view/edit</p>
+  </div>
 </div>
 
 <script type="module">
+// ------------------- Firebase Setup -------------------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-// --- Firebase Config ---
 const firebaseConfig = {
-  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
-  authDomain: "school-organiser-5f512.firebaseapp.com",
-  projectId: "school-organiser-5f512",
-  storageBucket: "school-organiser-5f512.appspot.com",
-  messagingSenderId: "567803400438",
-  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
-// --- Initialization ---
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -91,112 +72,173 @@ const storage = getStorage(app);
 
 let currentUserId = null;
 let NOTES_REF = null;
-let tempLinks = [];
+let selectedNoteId = null;
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
-// DOM
+// DOM elements
 const notesList = document.getElementById("notesList");
-const saveNoteBtn = document.getElementById("saveNoteBtn");
-const noteTitleInput = document.getElementById("noteTitle");
-const noteTextInput = document.getElementById("noteText");
-const noteFilesInput = document.getElementById("noteFiles");
-const linkInput = document.getElementById("linkInput");
-const addLinkBtn = document.getElementById("addLinkBtn");
-const linksList = document.getElementById("linksList");
+const notePreview = document.getElementById("notePreview");
+const addNoteBtn = document.getElementById("addNoteBtn");
 
-// --- Auth ---
-onAuthStateChanged(auth, async user => {
-  if (!user) return window.location.href = "index.html";
+// ------------------- Auth -------------------
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    window.location.href = "index.html";
+    return;
+  }
   currentUserId = user.uid;
   NOTES_REF = collection(db, "users", currentUserId, "daily_notes");
-
-  // Migrate old notes automatically
-  const oldNotesRef = collection(db, "daily_notes_old", currentUserId, "notes");
-  const oldSnapshot = await getDocs(oldNotesRef);
-  for (const docSnap of oldSnapshot.docs) {
-    const data = docSnap.data();
-    await setDoc(doc(NOTES_REF, docSnap.id), data);
-    await doc(db, "daily_notes_old", currentUserId, "notes", docSnap.id); // optional: delete old after migration
-  }
-
   loadNotes();
 });
 
-// --- Links Management ---
-addLinkBtn.addEventListener("click", () => {
-  const link = linkInput.value.trim();
-  if (!link) return;
-  const url = link.startsWith("http") ? link : `https://${link}`;
-  tempLinks.push(url);
-  renderLinks();
-  linkInput.value = "";
-});
-
-function renderLinks() {
-  linksList.innerHTML = tempLinks.map((l, i) => `<li class="link-item">${l} <i class="fa fa-trash cursor-pointer" onclick="removeLink(${i})"></i></li>`).join("");
-}
-window.removeLink = (i) => { tempLinks.splice(i,1); renderLinks(); }
-
-// --- Upload Files ---
-async function uploadFiles(noteId) {
-  const files = Array.from(noteFilesInput.files);
-  const uploaded = [];
-  for (const f of files) {
-    if (f.size > 20*1024*1024) { alert(`File ${f.name} exceeds 20MB`); continue; }
-    const storageRef = ref(storage, `users/${currentUserId}/daily_notes/${noteId}/${f.name}`);
-    await uploadBytes(storageRef, f);
-    const url = await getDownloadURL(storageRef);
-    uploaded.push({ name: f.name, url });
-  }
-  return uploaded;
-}
-
-// --- Save Note ---
-saveNoteBtn.addEventListener("click", async () => {
-  if (!noteTitleInput.value.trim() || !noteTextInput.value.trim()) return alert("Title and text required");
-  const noteId = doc(NOTES_REF).id;
-  const files = await uploadFiles(noteId);
-  await setDoc(doc(NOTES_REF, noteId), {
-    title: noteTitleInput.value,
-    text: noteTextInput.value,
-    files,
-    links: tempLinks,
-    createdAt: new Date()
-  });
-  // reset inputs
-  noteTitleInput.value = "";
-  noteTextInput.value = "";
-  noteFilesInput.value = "";
-  tempLinks = [];
-  renderLinks();
-});
-
-// --- Load Notes ---
+// ------------------- Notes List -------------------
 function loadNotes() {
   onSnapshot(NOTES_REF, snapshot => {
     notesList.innerHTML = "";
+    if (snapshot.empty) {
+      notesList.innerHTML = '<p class="text-gray-500 text-center">No notes yet.</p>';
+      return;
+    }
     snapshot.forEach(docSnap => {
-      const note = docSnap.data();
-      const div = document.createElement("div");
-      div.className = "note-box cursor-pointer";
-      div.innerHTML = `
-        <h3 class="font-semibold">${note.title}</h3>
-        <div class="text-sm mt-1 collapsible-content hidden">
-          <p class="whitespace-pre-wrap">${note.text}</p>
-          ${note.links?.length ? `<h4 class="font-semibold mt-2">Links:</h4><ul>${note.links.map(l => `<li><a href="${l}" target="_blank" rel="noopener noreferrer">${l}</a></li>`).join("")}</ul>` : ""}
-          ${note.files?.length ? `<h4 class="font-semibold mt-2">Files:</h4><ul>${note.files.map(f => `<li><a href="${f.url}" target="_blank" rel="noopener noreferrer">${f.name}</a></li>`).join("")}</ul>` : ""}
-        </div>
-      `;
-      div.querySelector("h3").addEventListener("click", () => {
-        const content = div.querySelector(".collapsible-content");
-        content.classList.toggle("hidden");
-      });
-      notesList.appendChild(div);
+      const noteData = docSnap.data();
+      const noteItem = document.createElement("div");
+      noteItem.className = "note-item";
+      noteItem.textContent = noteData.title || "(No Title)";
+      noteItem.onclick = () => selectNote(docSnap.id, noteData);
+      if (docSnap.id === selectedNoteId) noteItem.classList.add("active");
+      notesList.appendChild(noteItem);
     });
   });
 }
 
-// --- Sign Out ---
-document.getElementById("signout-btn").addEventListener("click", () => signOut(auth));
+// ------------------- Select Note -------------------
+function selectNote(noteId, noteData) {
+  selectedNoteId = noteId;
+  // Update active class
+  document.querySelectorAll(".note-item").forEach(item => item.classList.remove("active"));
+  const activeItem = Array.from(document.querySelectorAll(".note-item")).find(i => i.textContent === noteData.title);
+  if (activeItem) activeItem.classList.add("active");
+  renderNotePreview(noteId, noteData);
+}
+
+// ------------------- Render Note Preview -------------------
+function renderNotePreview(noteId, noteData) {
+  notePreview.innerHTML = `
+    <input id="editTitle" class="w-full mb-4 p-3 border rounded-lg" placeholder="Title" value="${noteData.title || ''}">
+    <textarea id="editText" class="w-full mb-4 p-3 border rounded-lg h-40" placeholder="Note content">${noteData.text || ''}</textarea>
+    <div class="mb-4">
+      <label class="font-semibold block mb-1">Files:</label>
+      <input id="editFiles" type="file" multiple class="mb-2">
+      <div id="filesList" class="mb-2">
+        ${(noteData.files || []).map(f => `
+          <div class="file-item">
+            <a href="${f.url}" target="_blank" rel="noopener noreferrer" class="truncate">${f.name}</a>
+            <button onclick="deleteFile('${noteId}','${f.name}')">Delete</button>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="mb-4">
+      <label class="font-semibold block mb-1">Links:</label>
+      <div id="linksList" class="mb-2">
+        ${(noteData.links || []).map((l,i) => `
+          <div class="link-item">
+            <a href="${l}" target="_blank" rel="noopener noreferrer" class="truncate">${l}</a>
+            <button onclick="deleteLink('${noteId}', ${i})">Delete</button>
+          </div>`).join('')}
+      </div>
+      <input id="newLinkInput" class="w-full p-2 border rounded-lg mb-2" placeholder="Add a new link">
+      <button id="addLinkBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Add Link</button>
+    </div>
+    <div class="flex gap-2">
+      <button id="saveNoteChanges" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Save Changes</button>
+      <button id="deleteNoteBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">Delete Note</button>
+    </div>
+  `;
+
+  // Add Link handler
+  document.getElementById("addLinkBtn").onclick = async () => {
+    const newLink = document.getElementById("newLinkInput").value.trim();
+    if (!newLink) return;
+    const noteRef = doc(NOTES_REF, noteId);
+    const noteSnap = await getDoc(noteRef);
+    const links = noteSnap.data().links || [];
+    links.push(newLink.startsWith("http") ? newLink : "https://" + newLink);
+    await setDoc(noteRef, { links }, { merge: true });
+    selectNote(noteId, { ...noteSnap.data(), links });
+  };
+
+  // Save changes
+  document.getElementById("saveNoteChanges").onclick = async () => {
+    const title = document.getElementById("editTitle").value.trim();
+    const text = document.getElementById("editText").value.trim();
+    const noteRef = doc(NOTES_REF, noteId);
+    const filesInput = document.getElementById("editFiles");
+    let uploadedFiles = noteData.files || [];
+
+    if (filesInput.files.length > 0) {
+      for (const file of filesInput.files) {
+        if (file.size > MAX_FILE_SIZE) {
+          alert(`${file.name} is larger than 20MB`);
+          return;
+        }
+        const fileRef = ref(storage, `users/${currentUserId}/daily_notes/${noteId}/${file.name}`);
+        await uploadBytes(fileRef, file);
+        const url = await getDownloadURL(fileRef);
+        uploadedFiles.push({ name: file.name, url });
+      }
+    }
+
+    await setDoc(noteRef, { title, text, files: uploadedFiles }, { merge: true });
+    alert("Note saved!");
+    loadNotes();
+  };
+
+  // Delete note
+  document.getElementById("deleteNoteBtn").onclick = async () => {
+    if (!confirm("Delete this note?")) return;
+    // Delete files
+    for (const f of noteData.files || []) {
+      const fileRef = ref(storage, `users/${currentUserId}/daily_notes/${noteId}/${f.name}`);
+      await deleteObject(fileRef).catch(()=>{});
+    }
+    await deleteDoc(doc(NOTES_REF, noteId));
+    notePreview.innerHTML = '<p class="text-gray-500 text-center">Select a note to view/edit</p>';
+    selectedNoteId = null;
+  };
+}
+
+// Delete file
+window.deleteFile = async (noteId, fileName) => {
+  if (!confirm("Delete this file?")) return;
+  const fileRef = ref(storage, `users/${currentUserId}/daily_notes/${noteId}/${fileName}`);
+  await deleteObject(fileRef).catch(()=>{});
+  const noteRef = doc(NOTES_REF, noteId);
+  const noteSnap = await getDoc(noteRef);
+  const files = (noteSnap.data().files || []).filter(f => f.name !== fileName);
+  await setDoc(noteRef, { files }, { merge: true });
+  selectNote(noteId, { ...noteSnap.data(), files });
+};
+
+// Delete link
+window.deleteLink = async (noteId, index) => {
+  const noteRef = doc(NOTES_REF, noteId);
+  const noteSnap = await getDoc(noteRef);
+  const links = noteSnap.data().links || [];
+  links.splice(index, 1);
+  await setDoc(noteRef, { links }, { merge: true });
+  selectNote(noteId, { ...noteSnap.data(), links });
+};
+
+// Add new note
+addNoteBtn.onclick = async () => {
+  const newDocRef = doc(NOTES_REF);
+  await setDoc(newDocRef, { title: "New Note", text: "", files: [], links: [] });
+  selectNote(newDocRef.id, { title: "New Note", text: "", files: [], links: [] });
+  loadNotes();
+};
+
+// Sign out
+document.getElementById("signout-btn").onclick = () => signOut(auth);
 
 </script>
 </body>
