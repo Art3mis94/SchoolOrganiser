@@ -3,409 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Educator Hub - Tools</title>
+<title>Tools - Educator Hub</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
-/* ============================ */
-/* GLOBAL & COMPONENT STYLES    */
-/* ============================ */
-body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-
-.nav-active {
-    background-color: #fff; color: #4338ca; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);
-}
-
-.tab-active {
-    background-color: #fff; border-bottom: 2px solid #4f46e5; font-weight: 700; color: #4338ca;
-}
-
-.collapsible-header {
-    display: flex; justify-content: space-between; align-items: center; cursor: pointer;
-    padding: 1rem; border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem;
-}
-
 .drag-zone {
-    border: 2px dashed #9ca3af; background-color: #f9fafb; text-align: center;
-    padding: 20px; margin-top: 10px; border-radius: 8px; transition: all 0.2s;
+    border: 2px dashed #9ca3af;
+    text-align: center;
+    padding: 20px;
+    border-radius: 8px;
+    cursor: pointer;
 }
 .drag-over { border-color: #4f46e5; background-color: #eef2ff; }
-
-button { transition: all 0.2s; }
-
-.topic-status-tag { padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-
-.toggle-btn { color: #4b5563; transition: transform 0.2s; }
-.toggle-btn:hover { color: #4f46e5; }
-.toggle-btn span:last-child { transition: transform 0.2s; }
-.toggle-btn.collapsed span:last-child { transform: rotate(0); }
-.toggle-btn:not(.collapsed) span:last-child { transform: rotate(90deg); }
+.task-item { @apply flex justify-between items-center p-4 bg-white border rounded-lg shadow-sm; }
+.completed-task { @apply bg-green-50 border-green-200 line-through text-gray-500; }
 </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100">
 
-<!-- Navbar -->
-<nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
-    <a href="dashboard.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-    <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
-    <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
-    <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
-    <a href="resources.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Tools 🛠️</a>
-  </div>
-</nav>
-
-<!-- Main Content -->
 <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
-<h1 class="text-3xl font-bold text-center text-gray-800">Resources & Management Tools 🛠️</h1>
 
-<p id="userIdDisplay" class="text-xs text-gray-400 mt-4 text-center">User ID: N/A</p>
+<h1 class="text-3xl font-bold text-center text-gray-800">Tools - Lesson Resources</h1>
 
-<div class="flex border-b border-gray-300">
-    <button id="tabTools" onclick="showTab('tools')" class="tab-active py-2 px-4 text-gray-600 hover:text-indigo-700 transition">Management Tools</button>
-    <button id="tabFiles" onclick="showTab('files')" class="py-2 px-4 text-gray-600 hover:text-indigo-700 transition">View Resources & Files</button>
-</div>
+<!-- Lesson Resource Import -->
+<form id="lessonResourceImportForm" class="space-y-4">
+    <select id="importTopicSelect" required class="w-full p-3 border rounded-lg bg-white">
+        <option value="">-- Select Topic --</option>
+    </select>
 
-<!-- Tools Tab -->
-<div id="contentTools" class="space-y-6">
+    <select id="importLessonSelect" required class="w-full p-3 border rounded-lg bg-white" disabled>
+        <option value="">-- Select Lesson --</option>
+    </select>
 
-  <!-- Lesson Import -->
-  <div id="sectionLessonImport" class="bg-green-50 border-l-4 border-green-500 rounded-xl shadow-lg">
-    <div class="collapsible-header bg-green-100" onclick="toggleCollapse('contentLessonImport','iconLessonImport')">
-      <h2 class="text-xl font-bold text-green-700 flex items-center gap-3"><i class="fa-solid fa-file-import"></i> Bulk Import: Lesson Resources</h2>
-      <i id="iconLessonImport" class="fa-solid fa-caret-down text-green-700"></i>
+    <textarea id="importResourcesText" placeholder="Paste link(s) one per line" class="w-full p-3 border rounded-lg"></textarea>
+
+    <div id="fileLessonDropZone" class="drag-zone">
+        <p><i class="fa-solid fa-file-circle-plus mr-2"></i> Drag & Drop a file here</p>
+        <input type="file" id="lessonFile" class="hidden">
     </div>
-    <div id="contentLessonImport" class="p-6 pt-0 space-y-4">
-      <form id="lessonResourceImportForm" class="space-y-4">
-        <select id="importTopicSelect" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" disabled>
-          <option value="">-- Select Parent Topic --</option>
-        </select>
-        <select id="importLessonSelect" required class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white" disabled>
-          <option value="">-- Select Target Lesson --</option>
-        </select>
-        <textarea id="importResourcesText" placeholder="Paste links or text resources here (one per line)" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-y min-h-[100px]"></textarea>
-        <div id="fileLessonDropZone" class="drag-zone">
-          <p class="text-gray-500"><i class="fa-solid fa-file-circle-plus mr-2"></i> Drag and Drop File Attachment Here (Max 5MB)</p>
-          <input type="file" id="lessonFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" class="hidden">
-        </div>
-        <button type="submit" id="submitLessonImportBtn" class="w-full p-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition shadow-md">
-          <i class="fa-solid fa-cloud-arrow-up mr-2"></i> Import Resource(s)
-        </button>
-      </form>
-      <p id="importLessonMessage" class="mt-4 text-center font-semibold hidden"></p>
-    </div>
-  </div>
 
-  <!-- General Import -->
-  <div id="sectionGeneralImport" class="bg-indigo-50 border-l-4 border-indigo-500 rounded-xl shadow-lg">
-    <div class="collapsible-header bg-indigo-100" onclick="toggleCollapse('contentGeneralImport','iconGeneralImport')">
-      <h2 class="text-xl font-bold text-indigo-700 flex items-center gap-3"><i class="fa-solid fa-bookmark"></i> Quick Save: General Resources</h2>
-      <i id="iconGeneralImport" class="fa-solid fa-caret-right text-indigo-700"></i>
-    </div>
-    <div id="contentGeneralImport" class="p-6 pt-0 space-y-4 hidden">
-      <form id="generalResourceImportForm" class="space-y-4">
-        <textarea id="generalResourcesText" placeholder="Paste a general resource or link here" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y min-h-[80px]"></textarea>
-        <div id="fileDropZone" class="drag-zone">
-          <p class="text-gray-500"><i class="fa-solid fa-cloud-arrow-up mr-2"></i> Drag and Drop File Here (Max 5MB)</p>
-          <input type="file" id="generalFile" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" class="hidden">
-        </div>
-        <button type="submit" id="submitGeneralImportBtn" class="w-full p-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition shadow-md">
-          <i class="fa-solid fa-floppy-disk mr-2"></i> Save Resource
-        </button>
-      </form>
-      <p id="importGeneralMessage" class="mt-4 text-center font-semibold hidden"></p>
-    </div>
-  </div>
+    <button type="submit" class="w-full p-3 bg-green-600 text-white rounded-lg"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Add Resource</button>
+</form>
 
-</div>
-
-<!-- Files Tab -->
-<div id="contentFiles" class="hidden space-y-8">
-
-  <div class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl shadow-inner">
-    <h2 class="text-xl font-bold text-indigo-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> General Resources (Text & Files)</h2>
-    <div id="generalResourcesList" class="space-y-3"><p class="text-gray-500 italic p-2 text-center">Loading general resources...</p></div>
-  </div>
-
-  <div class="p-4 bg-gray-50 border rounded-xl shadow-inner">
-    <h2 class="text-xl font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-file-pdf"></i> Lesson Attachments (Curriculum Linked Files)</h2>
-    <div id="uploadedFilesList" class="space-y-3"><p class="text-gray-500 italic p-2 text-center">Lesson attachments will appear here once curriculum data is loaded.</p></div>
-  </div>
-
-</div>
+<div id="lessonAttachmentsList" class="space-y-4 mt-6"></div>
 
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, query, orderBy, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+let curriculumLessons = {}; // Shared in-memory
+let curriculumTopics = [];
+let currentUser = { uid: 'dummy-user' }; // Simulated auth
 
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
-  authDomain: "school-organiser-5f512.firebaseapp.com",
-  projectId: "school-organiser-5f512",
-  storageBucket: "school-organiser-5f512.appspot.com",
-  messagingSenderId: "567803400438",
-  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// --- UI Elements ---
-const userIdDisplay = document.getElementById('userIdDisplay');
 const importTopicSelect = document.getElementById('importTopicSelect');
 const importLessonSelect = document.getElementById('importLessonSelect');
-const submitLessonImportBtn = document.getElementById('submitLessonImportBtn');
-const submitGeneralImportBtn = document.getElementById('submitGeneralImportBtn');
-const generalResourcesList = document.getElementById('generalResourcesList');
-const uploadedFilesList = document.getElementById('uploadedFilesList');
-const fileLessonDropZone = document.getElementById('fileLessonDropZone');
-const fileDropZone = document.getElementById('fileDropZone');
+const lessonAttachmentsList = document.getElementById('lessonAttachmentsList');
+const lessonFileInput = document.getElementById('lessonFile');
+const fileDropZone = document.getElementById('fileLessonDropZone');
 
-// --- State ---
-let currentUser = null;
-let curriculumTopics = [];
-let curriculumLessons = {};
+// Simulate fetching topics & lessons
+function loadCurriculumData() {
+    curriculumTopics = [
+        {id:'topic1', name:'Math'},
+        {id:'topic2', name:'Science'}
+    ];
 
-// --- Utility Functions ---
-window.showTab = (tabId) => {
-  document.getElementById('contentTools').classList.add('hidden');
-  document.getElementById('contentFiles').classList.add('hidden');
-  document.getElementById('tabTools').classList.remove('tab-active');
-  document.getElementById('tabFiles').classList.remove('tab-active');
-  document.getElementById(`content${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.remove('hidden');
-  document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('tab-active');
-};
-
-window.toggleCollapse = (contentId, iconId) => {
-  const content = document.getElementById(contentId);
-  const icon = document.getElementById(iconId);
-  content.classList.toggle('hidden');
-  icon.classList.toggle('fa-caret-down');
-  icon.classList.toggle('fa-caret-right');
-};
-
-// --- Firestore References ---
-const topicsRef = uid => collection(db,'users',uid,'topics');
-const generalResourcesRef = uid => collection(db,'users',uid,'generalResources');
-
-// --- Load Topics & Lessons ---
-async function loadCurriculumSelects() {
-  if (!currentUser) return;
-  curriculumTopics = [];
-  curriculumLessons = {};
-  importTopicSelect.innerHTML = '<option value="">-- Select Parent Topic --</option>';
-  importLessonSelect.innerHTML = '<option value="">-- Select Target Lesson --</option>';
-  importLessonSelect.disabled = true;
-
-  const topicsSnapshot = await getDocs(query(topicsRef(currentUser.uid), orderBy('createdAt')));
-  const lessonPromises = [];
-  topicsSnapshot.forEach(topicDoc => {
-    const topic = {id: topicDoc.id, ...topicDoc.data()};
-    curriculumTopics.push(topic);
-    const option = document.createElement('option');
-    option.value = topic.id;
-    option.textContent = topic.name;
-    importTopicSelect.appendChild(option);
-
-    const lessonsRef = collection(topicDoc.ref,'lessons');
-    lessonPromises.push(getDocs(query(lessonsRef, orderBy('createdAt'))).then(snap=>{
-      curriculumLessons[topic.id] = snap.docs.map(d=>({id:d.id,...d.data()}));
-    }));
-  });
-  await Promise.all(lessonPromises);
-  importTopicSelect.disabled = false;
-  loadAllLessonAttachments();
+    curriculumTopics.forEach(t => {
+        curriculumLessons[t.id] = [
+            {id:'lesson1', title:'Lesson 1', links:[], files:[]},
+            {id:'lesson2', title:'Lesson 2', links:[], files:[]}
+        ];
+        const opt = document.createElement('option');
+        opt.value = t.id; opt.textContent = t.name;
+        importTopicSelect.appendChild(opt);
+    });
 }
+loadCurriculumData();
 
-// --- Populate Lessons Dropdown ---
 importTopicSelect.onchange = () => {
-  const topicId = importTopicSelect.value;
-  importLessonSelect.innerHTML = '<option value="">-- Select Target Lesson --</option>';
-  importLessonSelect.disabled = true;
-  if (topicId && curriculumLessons[topicId]) {
-    curriculumLessons[topicId].forEach(lesson=>{
-      const option = document.createElement('option');
-      option.value = lesson.id;
-      option.textContent = lesson.title;
-      importLessonSelect.appendChild(option);
-    });
-    importLessonSelect.disabled = false;
-  }
-};
+    const topicId = importTopicSelect.value;
+    importLessonSelect.innerHTML = '<option value="">-- Select Lesson --</option>';
+    importLessonSelect.disabled = !topicId;
 
-// --- Drag & Drop ---
-function setupDragAndDrop(dropZone, fileInput) {
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault(); dropZone.classList.remove('drag-over');
-    if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; dropZone.querySelector('p').textContent = `File selected: ${e.dataTransfer.files[0].name}`; }
-  });
-  dropZone.onclick = () => fileInput.click();
-}
-setupDragAndDrop(fileLessonDropZone, document.getElementById('lessonFile'));
-setupDragAndDrop(fileDropZone, document.getElementById('generalFile'));
-
-// --- Listen to General Resources ---
-function listenToGeneralResources() {
-  if (!currentUser) return;
-  onSnapshot(query(generalResourcesRef(currentUser.uid), orderBy('createdAt','desc')), snapshot => {
-    generalResourcesList.innerHTML = '';
-    if (snapshot.empty) generalResourcesList.innerHTML = '<p class="text-gray-500 italic p-2 text-center">No general resources saved yet.</p>';
-    snapshot.docs.forEach(docSnap=>{
-      const res = {id: docSnap.id, ...docSnap.data()};
-      const div = document.createElement('div');
-      div.className = 'flex justify-between items-center p-3 bg-white rounded-lg border shadow-sm';
-      let iconClass = 'fa-file-alt text-gray-600';
-      let link = '#';
-      let text = res.text||'Untitled';
-      if (res.url){ iconClass = res.type==='file'?'fa-file-upload text-purple-600':'fa-link text-blue-600'; link=res.url; text=res.text||res.url; }
-      else if(res.text?.startsWith('http')){ iconClass='fa-link text-blue-600'; link=res.text; }
-      div.innerHTML = `<div class="truncate flex items-center gap-2"><i class="fa-solid ${iconClass}"></i><a href="${link}" target="_blank" class="text-gray-700 hover:text-indigo-600 truncate">${text}</a></div>
-                       <button class="deleteResourceBtn text-red-500 hover:text-red-700 ml-4 flex-shrink-0" data-id="${res.id}"><i class="fa-solid fa-trash"></i></button>`;
-      generalResourcesList.appendChild(div);
-    });
-    generalResourcesList.querySelectorAll('.deleteResourceBtn').forEach(btn=>{
-      btn.onclick = async e=>{
-        if(confirm('Delete this general resource?')) await deleteDoc(doc(generalResourcesRef(currentUser.uid), e.currentTarget.dataset.id));
-      };
-    });
-  });
-}
-
-// --- Listen to Lessons ---
-function listenToAllLessons() {
-  if (!currentUser) return;
-  curriculumTopics.forEach(topic=>{
-    const lessonsCol = collection(db,'users',currentUser.uid,'topics',topic.id,'lessons');
-    onSnapshot(lessonsCol, snap=>{
-      curriculumLessons[topic.id] = snap.docs.map(d=>({id:d.id,...d.data()}));
-      loadAllLessonAttachments();
-    });
-  });
-}
-
-// --- Load All Lesson Attachments ---
-function loadAllLessonAttachments() {
-  uploadedFilesList.innerHTML = '';
-  let count=0;
-  curriculumTopics.forEach(topic=>{
-    const lessons = curriculumLessons[topic.id]||[];
-    lessons.forEach(lesson=>{
-      const files = lesson.files||[];
-      const links = lesson.links||[];
-      files.forEach(f=>{
-        count++;
-        const div = document.createElement('div');
-        div.className = 'p-3 bg-white rounded-lg border shadow-sm flex justify-between items-center';
-        div.innerHTML = `
-          <div class="truncate flex items-center gap-2">
-            <i class="fa-solid fa-file-pdf text-orange-600"></i>
-            <a href="${f.url}" target="_blank" class="text-gray-700 hover:text-indigo-600 truncate">${f.name}</a>
-          </div>
-          <span class="text-xs text-gray-500 ml-4 flex-shrink-0">Linked to: ${topic.name} / ${lesson.title}</span>
-        `;
-        uploadedFilesList.appendChild(div);
-      });
-      links.forEach(link=>{
-        count++;
-        const div = document.createElement('div');
-        div.className = 'p-3 bg-white rounded-lg border shadow-sm flex justify-between items-center';
-        div.innerHTML = `
-          <div class="truncate flex items-center gap-2">
-            <i class="fa-solid fa-link text-blue-600"></i>
-            <a href="${link}" target="_blank" class="text-gray-700 hover:text-indigo-600 truncate">${link}</a>
-          </div>
-          <span class="text-xs text-gray-500 ml-4 flex-shrink-0">Linked to: ${topic.name} / ${lesson.title}</span>
-        `;
-        uploadedFilesList.appendChild(div);
-      });
-    });
-  });
-  if(count===0) uploadedFilesList.innerHTML = '<p class="text-gray-500 italic p-2 text-center">No files or links are currently attached to lessons.</p>';
-}
-
-// --- General Resource Form Submit ---
-document.getElementById('generalResourceImportForm').onsubmit = async e=>{
-  e.preventDefault();
-  if(!currentUser) return;
-  const text = document.getElementById('generalResourcesText').value.trim();
-  const file = document.getElementById('generalFile').files[0];
-  const msg = document.getElementById('importGeneralMessage');
-  msg.classList.add('hidden');
-  if(!text && !file){ msg.textContent='Provide text/link or file'; msg.classList.remove('hidden'); return; }
-  try{
-    if(text){
-      const lines=text.split('\n').filter(l=>l.trim()!=='');
-      for(const line of lines){
-        await addDoc(generalResourcesRef(currentUser.uid),{
-          text: line,
-          type: line.startsWith('http')?'link':'text',
-          createdAt: new Date()
+    if (topicId) {
+        curriculumLessons[topicId].forEach(lesson => {
+            const opt = document.createElement('option');
+            opt.value = lesson.id; opt.textContent = lesson.title;
+            importLessonSelect.appendChild(opt);
         });
-      }
     }
-    if(file){
-      await addDoc(generalResourcesRef(currentUser.uid),{
-        text: file.name,
-        url: `simulated-storage-link/${file.name}`,
-        type: 'file',
-        createdAt: new Date()
-      });
-      document.getElementById('generalFile').value='';
-      fileDropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Drag and Drop File Here (Max 5MB)`;
-    }
-    document.getElementById('generalResourcesText').value='';
-    msg.textContent='Resources saved successfully!'; msg.classList.remove('hidden'); msg.classList.add('text-green-600');
-  } catch(err){ console.error(err); msg.textContent='Save failed!'; msg.classList.remove('hidden'); msg.classList.add('text-red-600'); }
 };
 
-// --- Lesson Resource Form Submit ---
-document.getElementById('lessonResourceImportForm').onsubmit = async e=>{
-  e.preventDefault();
-  if(!currentUser) return;
-  const topicId=importTopicSelect.value;
-  const lessonId=importLessonSelect.value;
-  const text=document.getElementById('importResourcesText').value.trim();
-  const file=document.getElementById('lessonFile').files[0];
-  const msg=document.getElementById('importLessonMessage');
-  msg.classList.add('hidden');
-  if(!topicId || !lessonId){ msg.textContent='Select topic & lesson'; msg.classList.remove('hidden'); msg.classList.add('text-red-600'); return; }
-  if(!text && !file){ msg.textContent='Provide text/link or file'; msg.classList.remove('hidden'); msg.classList.add('text-red-600'); return; }
-  try{
-    const lessonRef=doc(db,'users',currentUser.uid,'topics',topicId,'lessons',lessonId);
-    const lessonData=curriculumLessons[topicId].find(l=>l.id===lessonId);
-    const newLinks=text?text.split('\n').filter(l=>l.trim()!=='' && l.startsWith('http')):[]; 
-    const newFiles=file?[{name:file.name,url:`simulated-storage-link/${file.name}` }]:[];
-    await updateDoc(lessonRef,{
-      links:[...(lessonData.links||[]),...newLinks],
-      files:[...(lessonData.files||[]),...newFiles]
-    });
-    lessonData.links=[...(lessonData.links||[]),...newLinks];
-    lessonData.files=[...(lessonData.files||[]),...newFiles];
-    document.getElementById('importResourcesText').value='';
-    if(file){ document.getElementById('lessonFile').value=''; fileLessonDropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-file-circle-plus mr-2"></i> Drag and Drop File Attachment Here (Max 5MB)`; }
-    msg.textContent='Resources added successfully!'; msg.classList.remove('hidden'); msg.classList.add('text-green-600');
-  }catch(err){ console.error(err); msg.textContent='Import failed!'; msg.classList.remove('hidden'); msg.classList.add('text-red-600'); }
-};
+function renderAllLessonAttachments() {
+    lessonAttachmentsList.innerHTML = '';
+    const topicId = importTopicSelect.value;
+    const lessonId = importLessonSelect.value;
+    if (!topicId || !lessonId) return;
+    const lesson = curriculumLessons[topicId].find(l => l.id === lessonId);
 
-// --- Authentication & Initialization ---
-onAuthStateChanged(auth,user=>{
-  if(user){
-    currentUser=user;
-    userIdDisplay.textContent=`User ID: ${user.uid}`;
-    loadCurriculumSelects().then(()=>{
-      listenToGeneralResources();
-      listenToAllLessons();
+    lesson.links.forEach(link => {
+        const div = document.createElement('div');
+        div.className = 'task-item';
+        div.innerHTML = `<i class="fa-solid fa-link text-blue-600 mr-2"></i>
+        <a href="${link}" target="_blank">${link}</a>`;
+        lessonAttachmentsList.appendChild(div);
     });
-  }else window.location.href='index.html';
+
+    lesson.files.forEach(file => {
+        const div = document.createElement('div');
+        div.className = 'task-item';
+        div.innerHTML = `<i class="fa-solid fa-file-upload text-purple-600 mr-2"></i>
+        <a href="${file.url}" target="_blank">${file.name}</a>`;
+        lessonAttachmentsList.appendChild(div);
+    });
+}
+
+// Drag & Drop
+fileDropZone.addEventListener('dragover', e => { e.preventDefault(); fileDropZone.classList.add('drag-over'); });
+fileDropZone.addEventListener('dragleave', e => fileDropZone.classList.remove('drag-over'));
+fileDropZone.addEventListener('drop', e => {
+    e.preventDefault(); fileDropZone.classList.remove('drag-over');
+    lessonFileInput.files = e.dataTransfer.files;
+    fileDropZone.querySelector('p').textContent = `File selected: ${lessonFileInput.files[0].name}`;
 });
-</script>
+fileDropZone.onclick = () => lessonFileInput.click();
+lessonFileInput.onchange = () => {
+    fileDropZone.querySelector('p').textContent = `File selected: ${lessonFileInput.files[0].name}`;
+};
 
+// Form Submit
+document.getElementById('lessonResourceImportForm').onsubmit = e => {
+    e.preventDefault();
+    const topicId = importTopicSelect.value;
+    const lessonId = importLessonSelect.value;
+    if (!topicId || !lessonId) return alert('Select Topic & Lesson');
+
+    const lesson = curriculumLessons[topicId].find(l => l.id === lessonId);
+
+    // Add links
+    const text = document.getElementById('importResourcesText').value.trim();
+    if (text) {
+        const lines = text.split('\n').filter(l=>l.trim()!=='');
+        lesson.links.push(...lines);
+    }
+
+    // Add file (in-memory)
+    if (lessonFileInput.files[0]) {
+        lesson.files.push({
+            name: lessonFileInput.files[0].name,
+            url: URL.createObjectURL(lessonFileInput.files[0])
+        });
+        lessonFileInput.value = '';
+        fileDropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-file-circle-plus mr-2"></i> Drag & Drop a file here`;
+    }
+
+    document.getElementById('importResourcesText').value = '';
+    renderAllLessonAttachments();
+    alert('Resource added!');
+};
+</script>
 </body>
 </html>
