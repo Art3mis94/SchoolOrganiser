@@ -3,163 +3,326 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tools - Educator Hub</title>
+<title>Educator Hub - Tools</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <style>
-.drag-zone {
-    border: 2px dashed #9ca3af;
-    text-align: center;
-    padding: 20px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-.drag-over { border-color: #4f46e5; background-color: #eef2ff; }
-.task-item { @apply flex justify-between items-center p-4 bg-white border rounded-lg shadow-sm; }
-.completed-task { @apply bg-green-50 border-green-200 line-through text-gray-500; }
+/* ====================================== */
+/* APPLICATION-WIDE COMPONENT STYLES      */
+/* ====================================== */
+.nav-active { background-color:#fff; color:#4338ca; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);}
+.tab-active { background-color:#fff; border-bottom:2px solid #4f46e5; font-weight:700; color:#4338ca;}
+.collapsible-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding:1rem; border-radius:0.75rem;}
+.drag-zone { border:2px dashed #9ca3af; background-color:#f9fafb; text-align:center; padding:20px; margin-top:10px; border-radius:8px; transition:all 0.2s; cursor:pointer;}
+.drag-over { border-color:#4f46e5; background-color:#eef2ff;}
+.topic-status-tag { padding:0.25rem 0.6rem; border-radius:9999px; font-size:0.75rem; font-weight:600; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.05);}
+.toggle-btn { color:#4b5563; transition:transform 0.2s; }
+.toggle-btn:hover { color:#4f46e5; }
+.toggle-btn span:last-child { transition:transform 0.2s; }
+.toggle-btn.collapsed span:last-child { transform:rotate(0); }
+.toggle-btn:not(.collapsed) span:last-child { transform:rotate(90deg);}
+button { transition:all 0.2s;}
+.topic button { transition:all 0.2s; box-shadow:0 1px 2px rgba(0,0,0,0.05);}
+.task-item { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#fff; border:1px solid #e5e7eb; border-radius:0.5rem; margin-bottom:4px; }
 </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 min-h-screen">
+
+<!-- NAVIGATION -->
+<nav class="bg-indigo-700 p-4 shadow-2xl">
+    <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
+        <a href="dashboard.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
+        <a href="curriculum_topics.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
+        <a href="notes.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
+        <a href="todo.html" class="px-4 py-2 text-white font-semibold rounded-lg hover:bg-indigo-600 transition">To-Do List ✅</a>
+        <a href="resources.html" class="px-4 py-2 nav-active font-bold rounded-lg transition">Tools 🛠️</a>
+    </div>
+</nav>
 
 <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8 space-y-6">
 
-<h1 class="text-3xl font-bold text-center text-gray-800">Tools - Lesson Resources</h1>
+<h1 class="text-3xl font-bold text-center text-gray-800">Resources & Management Tools 🛠️</h1>
 
-<!-- Lesson Resource Import -->
-<form id="lessonResourceImportForm" class="space-y-4">
-    <select id="importTopicSelect" required class="w-full p-3 border rounded-lg bg-white">
-        <option value="">-- Select Topic --</option>
-    </select>
+<div id="loadingIndicator" class="text-center text-gray-500 p-8">
+    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading Curriculum & Resources...
+</div>
+<div id="errorDisplay" class="hidden text-center text-red-600 p-4 bg-red-100 border border-red-300 rounded-lg font-medium"></div>
+<p id="userIdDisplay" class="text-xs text-gray-400 mt-4 text-center">User ID: N/A</p>
 
-    <select id="importLessonSelect" required class="w-full p-3 border rounded-lg bg-white" disabled>
-        <option value="">-- Select Lesson --</option>
-    </select>
+<!-- TABS -->
+<div class="flex border-b border-gray-300">
+    <button id="tabTools" onclick="showTab('tools')" class="tab-active py-2 px-4 text-gray-600 hover:text-indigo-700 transition">Management Tools</button>
+    <button id="tabFiles" onclick="showTab('files')" class="py-2 px-4 text-gray-600 hover:text-indigo-700 transition">View Resources & Files</button>
+</div>
 
-    <textarea id="importResourcesText" placeholder="Paste link(s) one per line" class="w-full p-3 border rounded-lg"></textarea>
+<!-- TOOLS TAB -->
+<div id="contentTools" class="space-y-6">
 
-    <div id="fileLessonDropZone" class="drag-zone">
-        <p><i class="fa-solid fa-file-circle-plus mr-2"></i> Drag & Drop a file here</p>
-        <input type="file" id="lessonFile" class="hidden">
+<!-- LESSON IMPORT -->
+<div id="sectionLessonImport" class="bg-green-50 border-l-4 border-green-500 rounded-xl shadow-lg">
+    <div class="collapsible-header bg-green-100" onclick="toggleCollapse('contentLessonImport','iconLessonImport')">
+        <h2 class="text-xl font-bold text-green-700 flex items-center gap-3"><i class="fa-solid fa-file-import"></i> Bulk Import: Lesson Resources</h2>
+        <i id="iconLessonImport" class="fa-solid fa-caret-down text-green-700"></i>
     </div>
+    <div id="contentLessonImport" class="p-6 pt-0 space-y-4">
+        <form id="lessonResourceImportForm" class="space-y-4">
+            <select id="importTopicSelect" required class="w-full p-3 border rounded-lg" disabled>
+                <option value="">-- Select Parent Topic --</option>
+            </select>
 
-    <button type="submit" class="w-full p-3 bg-green-600 text-white rounded-lg"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Add Resource</button>
-</form>
+            <select id="importLessonSelect" required class="w-full p-3 border rounded-lg" disabled>
+                <option value="">-- Select Target Lesson --</option>
+            </select>
 
-<div id="lessonAttachmentsList" class="space-y-4 mt-6"></div>
+            <textarea id="importResourcesText" placeholder="Paste link(s) one per line" class="w-full p-3 border rounded-lg resize-y min-h-[100px]"></textarea>
+
+            <div id="fileLessonDropZone" class="drag-zone">
+                <p><i class="fa-solid fa-file-circle-plus mr-2"></i> Drag & Drop a file here</p>
+                <input type="file" id="lessonFile" class="hidden">
+            </div>
+
+            <button type="submit" class="w-full p-3 bg-green-600 text-white rounded-lg"><i class="fa-solid fa-cloud-arrow-up mr-2"></i> Add Resource</button>
+        </form>
+        <div id="lessonAttachmentsList" class="space-y-2 mt-4"></div>
+    </div>
+</div>
+
+<!-- GENERAL RESOURCE IMPORT -->
+<div id="sectionGeneralImport" class="bg-indigo-50 border-l-4 border-indigo-500 rounded-xl shadow-lg">
+    <div class="collapsible-header bg-indigo-100" onclick="toggleCollapse('contentGeneralImport','iconGeneralImport')">
+        <h2 class="text-xl font-bold text-indigo-700 flex items-center gap-3"><i class="fa-solid fa-bookmark"></i> Quick Save: General Resources</h2>
+        <i id="iconGeneralImport" class="fa-solid fa-caret-right text-indigo-700"></i>
+    </div>
+    <div id="contentGeneralImport" class="p-6 pt-0 space-y-4 hidden">
+        <form id="generalResourceImportForm" class="space-y-4">
+            <textarea id="generalResourcesText" placeholder="Paste a general resource or link here" class="w-full p-3 border rounded-lg resize-y min-h-[80px]"></textarea>
+
+            <div id="fileDropZone" class="drag-zone">
+                <p><i class="fa-solid fa-cloud-arrow-up mr-2"></i> Drag and Drop File Here</p>
+                <input type="file" id="generalFile" class="hidden">
+            </div>
+
+            <button type="submit" class="w-full p-3 bg-indigo-600 text-white rounded-lg"><i class="fa-solid fa-floppy-disk mr-2"></i> Save Resource</button>
+        </form>
+        <div id="generalResourcesList" class="space-y-2 mt-4">
+            <p class="text-gray-500 italic p-2 text-center">Loading general resources...</p>
+        </div>
+    </div>
+</div>
+
+<!-- BACKUP SECTION -->
+<div id="sectionBackup" class="bg-yellow-50 border-l-4 border-yellow-500 rounded-xl shadow-lg">
+    <div class="collapsible-header bg-yellow-100" onclick="toggleCollapse('contentBackup','iconBackup')">
+        <h2 class="text-xl font-bold text-yellow-700 flex items-center gap-3"><i class="fa-solid fa-database"></i> Cloud Data Management</h2>
+        <i id="iconBackup" class="fa-solid fa-caret-right text-yellow-700"></i>
+    </div>
+    <div id="contentBackup" class="p-6 pt-0 space-y-4 hidden">
+        <div class="flex gap-4">
+            <button id="backupGeneralDataBtn" class="flex-1 p-3 bg-yellow-600 text-white rounded-lg">Download General Resources (.json)</button>
+            <button id="restoreGeneralDataBtn" class="flex-1 p-3 bg-yellow-500 text-white rounded-lg">Restore General Resources</button>
+        </div>
+    </div>
+</div>
 
 </div>
 
-<script type="module">
-let curriculumLessons = {}; // Shared in-memory
+<!-- FILES TAB -->
+<div id="contentFiles" class="hidden space-y-8">
+
+<div class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl shadow-inner">
+    <h2 class="text-xl font-bold text-indigo-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-folder-open"></i> General Resources</h2>
+    <div id="viewGeneralResourcesList" class="space-y-3">
+        <p class="text-gray-500 italic p-2 text-center">Loading...</p>
+    </div>
+</div>
+
+<div class="p-4 bg-gray-50 border rounded-xl shadow-inner">
+    <h2 class="text-xl font-bold text-gray-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-file-pdf"></i> Lesson Attachments</h2>
+    <div id="viewLessonAttachmentsList" class="space-y-3">
+        <p class="text-gray-500 italic p-2 text-center">Loading...</p>
+    </div>
+</div>
+
+</div>
+
+</div>
+
+<script>
+// STATE
+let curriculumLessons = {};
 let curriculumTopics = [];
-let currentUser = { uid: 'dummy-user' }; // Simulated auth
+let generalResources = [];
 
-const importTopicSelect = document.getElementById('importTopicSelect');
-const importLessonSelect = document.getElementById('importLessonSelect');
-const lessonAttachmentsList = document.getElementById('lessonAttachmentsList');
-const lessonFileInput = document.getElementById('lessonFile');
-const fileDropZone = document.getElementById('fileLessonDropZone');
-
-// Simulate fetching topics & lessons
-function loadCurriculumData() {
-    curriculumTopics = [
-        {id:'topic1', name:'Math'},
-        {id:'topic2', name:'Science'}
-    ];
-
-    curriculumTopics.forEach(t => {
-        curriculumLessons[t.id] = [
-            {id:'lesson1', title:'Lesson 1', links:[], files:[]},
-            {id:'lesson2', title:'Lesson 2', links:[], files:[]}
-        ];
-        const opt = document.createElement('option');
-        opt.value = t.id; opt.textContent = t.name;
-        importTopicSelect.appendChild(opt);
-    });
+// UTILS
+function showTab(tabId){
+    document.getElementById('contentTools').classList.add('hidden');
+    document.getElementById('contentFiles').classList.add('hidden');
+    document.getElementById('tabTools').classList.remove('tab-active');
+    document.getElementById('tabFiles').classList.remove('tab-active');
+    document.getElementById(`content${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.remove('hidden');
+    document.getElementById(`tab${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`).classList.add('tab-active');
 }
-loadCurriculumData();
+function toggleCollapse(contentId, iconId){
+    const content = document.getElementById(contentId);
+    const icon = document.getElementById(iconId);
+    if(content.classList.contains('hidden')) { content.classList.remove('hidden'); icon.classList.replace('fa-caret-right','fa-caret-down'); }
+    else { content.classList.add('hidden'); icon.classList.replace('fa-caret-down','fa-caret-right'); }
+}
 
-importTopicSelect.onchange = () => {
-    const topicId = importTopicSelect.value;
-    importLessonSelect.innerHTML = '<option value="">-- Select Lesson --</option>';
-    importLessonSelect.disabled = !topicId;
+// INIT DATA
+function initCurriculum() {
+    curriculumTopics = [{id:'topic1',name:'Math'},{id:'topic2',name:'Science'}];
+    curriculumTopics.forEach(t=>{
+        curriculumLessons[t.id] = [{id:'lesson1',title:'Lesson 1',links:[],files:[]},{id:'lesson2',title:'Lesson 2',links:[],files:[]}];
+        const opt = document.createElement('option'); opt.value=t.id; opt.textContent=t.name;
+        document.getElementById('importTopicSelect').appendChild(opt);
+    });
+    document.getElementById('importTopicSelect').disabled=false;
+}
+initCurriculum();
 
-    if (topicId) {
-        curriculumLessons[topicId].forEach(lesson => {
-            const opt = document.createElement('option');
-            opt.value = lesson.id; opt.textContent = lesson.title;
-            importLessonSelect.appendChild(opt);
+// Lesson dropdown
+document.getElementById('importTopicSelect').onchange = ()=>{
+    const topicId = document.getElementById('importTopicSelect').value;
+    const lessonSelect = document.getElementById('importLessonSelect');
+    lessonSelect.innerHTML='<option value="">-- Select Lesson --</option>';
+    lessonSelect.disabled = !topicId;
+    if(topicId){
+        curriculumLessons[topicId].forEach(l=>{
+            const opt = document.createElement('option'); opt.value=l.id; opt.textContent=l.title; lessonSelect.appendChild(opt);
         });
     }
 };
 
-function renderAllLessonAttachments() {
-    lessonAttachmentsList.innerHTML = '';
-    const topicId = importTopicSelect.value;
-    const lessonId = importLessonSelect.value;
-    if (!topicId || !lessonId) return;
-    const lesson = curriculumLessons[topicId].find(l => l.id === lessonId);
-
-    lesson.links.forEach(link => {
-        const div = document.createElement('div');
-        div.className = 'task-item';
-        div.innerHTML = `<i class="fa-solid fa-link text-blue-600 mr-2"></i>
-        <a href="${link}" target="_blank">${link}</a>`;
-        lessonAttachmentsList.appendChild(div);
+// DRAG & DROP
+function setupDragAndDrop(dropZone,input){
+    dropZone.addEventListener('dragover',e=>{e.preventDefault(); dropZone.classList.add('drag-over');});
+    dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop',e=>{
+        e.preventDefault(); dropZone.classList.remove('drag-over'); input.files=e.dataTransfer.files;
+        dropZone.querySelector('p').textContent=`File selected: ${input.files[0].name}`;
     });
+    dropZone.onclick = ()=>input.click();
+    input.onchange = ()=>dropZone.querySelector('p').textContent=`File selected: ${input.files[0].name}`;
+}
+setupDragAndDrop(document.getElementById('fileLessonDropZone'),document.getElementById('lessonFile'));
+setupDragAndDrop(document.getElementById('fileDropZone'),document.getElementById('generalFile'));
 
-    lesson.files.forEach(file => {
-        const div = document.createElement('div');
-        div.className = 'task-item';
-        div.innerHTML = `<i class="fa-solid fa-file-upload text-purple-600 mr-2"></i>
-        <a href="${file.url}" target="_blank">${file.name}</a>`;
-        lessonAttachmentsList.appendChild(div);
-    });
+// RENDER LESSON ATTACHMENTS
+function renderLessonAttachments() {
+    const topicId = document.getElementById('importTopicSelect').value;
+    const lessonId = document.getElementById('importLessonSelect').value;
+    const container = document.getElementById('lessonAttachmentsList'); container.innerHTML='';
+    if(!topicId || !lessonId) return;
+    const lesson = curriculumLessons[topicId].find(l=>l.id===lessonId);
+    lesson.links.forEach(link=>{ const div=document.createElement('div'); div.className='task-item'; div.innerHTML=`<i class="fa-solid fa-link text-blue-600 mr-2"></i><a href="${link}" target="_blank">${link}</a>`; container.appendChild(div); });
+    lesson.files.forEach(file=>{ const div=document.createElement('div'); div.className='task-item'; div.innerHTML=`<i class="fa-solid fa-file-upload text-purple-600 mr-2"></i><a href="${file.url}" target="_blank">${file.name}</a>`; container.appendChild(div); });
 }
 
-// Drag & Drop
-fileDropZone.addEventListener('dragover', e => { e.preventDefault(); fileDropZone.classList.add('drag-over'); });
-fileDropZone.addEventListener('dragleave', e => fileDropZone.classList.remove('drag-over'));
-fileDropZone.addEventListener('drop', e => {
-    e.preventDefault(); fileDropZone.classList.remove('drag-over');
-    lessonFileInput.files = e.dataTransfer.files;
-    fileDropZone.querySelector('p').textContent = `File selected: ${lessonFileInput.files[0].name}`;
-});
-fileDropZone.onclick = () => lessonFileInput.click();
-lessonFileInput.onchange = () => {
-    fileDropZone.querySelector('p').textContent = `File selected: ${lessonFileInput.files[0].name}`;
-};
-
-// Form Submit
-document.getElementById('lessonResourceImportForm').onsubmit = e => {
+// LESSON RESOURCE FORM
+document.getElementById('lessonResourceImportForm').onsubmit=e=>{
     e.preventDefault();
-    const topicId = importTopicSelect.value;
-    const lessonId = importLessonSelect.value;
-    if (!topicId || !lessonId) return alert('Select Topic & Lesson');
-
-    const lesson = curriculumLessons[topicId].find(l => l.id === lessonId);
-
-    // Add links
-    const text = document.getElementById('importResourcesText').value.trim();
-    if (text) {
-        const lines = text.split('\n').filter(l=>l.trim()!=='');
-        lesson.links.push(...lines);
-    }
-
-    // Add file (in-memory)
-    if (lessonFileInput.files[0]) {
-        lesson.files.push({
-            name: lessonFileInput.files[0].name,
-            url: URL.createObjectURL(lessonFileInput.files[0])
-        });
-        lessonFileInput.value = '';
-        fileDropZone.querySelector('p').innerHTML = `<i class="fa-solid fa-file-circle-plus mr-2"></i> Drag & Drop a file here`;
-    }
-
-    document.getElementById('importResourcesText').value = '';
-    renderAllLessonAttachments();
+    const topicId=document.getElementById('importTopicSelect').value;
+    const lessonId=document.getElementById('importLessonSelect').value;
+    if(!topicId||!lessonId) return alert('Select Topic & Lesson');
+    const lesson = curriculumLessons[topicId].find(l=>l.id===lessonId);
+    // LINKS
+    const text=document.getElementById('importResourcesText').value.trim();
+    if(text){ lesson.links.push(...text.split('\n').filter(l=>l.trim()!=='')); }
+    // FILES
+    const fileInput=document.getElementById('lessonFile');
+    if(fileInput.files[0]){ lesson.files.push({name:fileInput.files[0].name,url:URL.createObjectURL(fileInput.files[0])}); fileInput.value=''; document.getElementById('fileLessonDropZone').querySelector('p').innerHTML=`<i class="fa-solid fa-file-circle-plus mr-2"></i> Drag & Drop a file here`; }
+    document.getElementById('importResourcesText').value='';
+    renderLessonAttachments();
     alert('Resource added!');
 };
+
+// GENERAL RESOURCE FORM
+document.getElementById('generalResourceImportForm').onsubmit=e=>{
+    e.preventDefault();
+    const text=document.getElementById('generalResourcesText').value.trim();
+    if(text) generalResources.push(...text.split('\n').filter(l=>l.trim()!=='')); 
+    const fileInput=document.getElementById('generalFile');
+    if(fileInput.files[0]){ generalResources.push({name:fileInput.files[0].name,url:URL.createObjectURL(fileInput.files[0])}); fileInput.value=''; document.getElementById('fileDropZone').querySelector('p').innerHTML=`<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Drag and Drop File Here`; }
+    document.getElementById('generalResourcesText').value='';
+    renderGeneralResources();
+};
+function renderGeneralResources(){
+    const container=document.getElementById('viewGeneralResourcesList'); container.innerHTML='';
+    if(generalResources.length===0){ container.innerHTML='<p class="text-gray-500 italic p-2 text-center">No general resources</p>'; return;}
+    generalResources.forEach(r=>{
+        const div=document.createElement('div'); div.className='task-item';
+        if(typeof r==='string'){ div.innerHTML=`<i class="fa-solid fa-link text-blue-600 mr-2"></i>${r}`; }
+        else{ div.innerHTML=`<i class="fa-solid fa-file-upload text-purple-600 mr-2"></i><a href="${r.url}" target="_blank">${r.name}</a>`; }
+        container.appendChild(div);
+    });
+}
+
+// INITIAL RENDER
+renderGeneralResources();
+
+// VIEW LESSON ATTACHMENTS TAB
+function renderViewLessonAttachments() {
+    const container = document.getElementById('viewLessonAttachmentsList');
+    container.innerHTML = '';
+    let hasFiles = false;
+    curriculumTopics.forEach(topic => {
+        curriculumLessons[topic.id].forEach(lesson => {
+            lesson.files.forEach(file => {
+                hasFiles = true;
+                const div = document.createElement('div');
+                div.className = 'task-item';
+                div.innerHTML = `<i class="fa-solid fa-file-upload text-purple-600 mr-2"></i>${topic.name} > ${lesson.title}: <a href="${file.url}" target="_blank">${file.name}</a>`;
+                container.appendChild(div);
+            });
+        });
+    });
+    if(!hasFiles) container.innerHTML = '<p class="text-gray-500 italic p-2 text-center">No lesson attachments uploaded</p>';
+}
+renderViewLessonAttachments();
+
+// BACKUP BUTTONS
+document.getElementById('backupGeneralDataBtn').onclick = () => {
+    const dataStr = JSON.stringify(generalResources, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `general_resources_backup_${new Date().toISOString()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+};
+
+document.getElementById('restoreGeneralDataBtn').onclick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = evt => {
+            try {
+                const data = JSON.parse(evt.target.result);
+                if(Array.isArray(data)) {
+                    generalResources = data;
+                    renderGeneralResources();
+                    alert('General resources restored successfully!');
+                } else { throw new Error('Invalid JSON'); }
+            } catch(err) {
+                alert('Failed to restore data: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+};
+
+// UPDATE LESSON ATTACHMENTS LIST WHEN LESSON DROPDOWN CHANGES
+document.getElementById('importLessonSelect').onchange = renderLessonAttachments;
+
+// OPTIONAL: USER ID DISPLAY SIMULATION
+document.getElementById('userIdDisplay').textContent = 'User ID: user_12345';
+
 </script>
 </body>
 </html>
