@@ -10,6 +10,7 @@
   body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
   .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
   .note-box { @apply bg-white p-5 rounded-xl shadow-md border border-gray-200; }
+  /* Ensure content shows transition for smoother toggle */
   .collapsible-content { transition: max-height 0.3s ease-out; overflow: hidden; }
 </style>
 </head>
@@ -45,7 +46,7 @@
       <input id="noteTitle" type="text" placeholder="Note Title..." class="w-full p-3 border rounded-lg mb-3">
       <textarea id="noteText" placeholder="Write your note..." class="w-full p-3 border rounded-lg mb-3" rows="4"></textarea>
 
-      <!-- Note: Files will now be uploaded to Firebase Storage -->
+      <!-- File input with 15MB limit note -->
       <label class="font-semibold block mb-1 text-gray-700">Attach Files (Max 15MB each):</label>
       <input id="noteFiles" type="file" multiple class="w-full p-2 bg-white border rounded-lg mb-4">
 
@@ -65,23 +66,29 @@
 </div>
 
 <script type="module">
+// --- Firebase CDNs ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, doc, onSnapshot, updateDoc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
 // --- Configuration and Constants ---
-const MAX_FILE_SIZE_BYTES = 15728640; // 15 MB (15 * 1024 * 1024)
+// 15 MB in bytes
+const MAX_FILE_SIZE_BYTES = 15728640; 
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-let app;
-let auth;
-let db;
-let storage;
-let NOTES_REF = null;
-let currentUserId = null;
+// Safely parse the Firebase config string from the environment
+let firebaseConfig = {};
+try {
+    const configString = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
+    firebaseConfig = JSON.parse(configString);
+} catch (e) {
+    console.error("Error parsing __firebase_config:", e);
+    // firebaseConfig remains an empty object
+}
+
+let auth, db, storage, NOTES_REF, currentUserId;
 
 // --- DOM Elements ---
 const notesContainer = document.getElementById("notesContainer");
@@ -89,21 +96,26 @@ const saveNoteBtn = document.getElementById("saveNoteBtn");
 const loadingIndicator = document.getElementById("loadingIndicator");
 const newNoteContent = document.getElementById("newNoteContent");
 const toggleIcon = document.getElementById("toggleIcon");
+const newNoteHeader = document.getElementById("newNoteHeader");
+
 
 // --- Initialization and Authentication ---
 async function initializeAndAuthenticate() {
+  // Check if the configuration object is populated
   if (Object.keys(firebaseConfig).length === 0) {
-    console.error("Firebase configuration is missing.");
+    console.error("Firebase configuration object is empty. Check environment variables.");
     notesContainer.innerHTML = '<p class="text-red-600 text-center">Firebase configuration not loaded. Cannot load notes.</p>';
     return;
   }
 
+  // Initialize Firebase services
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
   storage = getStorage(app);
 
   try {
+      // Authenticate using custom token or anonymously
       if (initialAuthToken) {
           await signInWithCustomToken(auth, initialAuthToken);
       } else {
@@ -113,10 +125,11 @@ async function initializeAndAuthenticate() {
       console.error("Firebase Auth Error:", error);
   }
 
+  // Set up authentication state listener
   onAuthStateChanged(auth, (user) => {
     if (user) {
       currentUserId = user.uid;
-      // Define collection path
+      // Set the path to the user's private notes collection
       NOTES_REF = collection(db, "artifacts", appId, "users", currentUserId, "daily_notes");
       startNotesListener();
     } else {
@@ -134,45 +147,52 @@ function startNotesListener() {
   onSnapshot(NOTES_REF, snapshot => {
     notesContainer.innerHTML = "";
     if (snapshot.empty) {
-      notesContainer.innerHTML = `<p class="text-gray-500 italic text-center">No notes yet.</p>`;
+      notesContainer.innerHTML = `<p class="text-gray-500 italic text-center">No notes yet. Start by creating one above!</p>`;
     }
     snapshot.forEach(docSnap => {
       notesContainer.appendChild(renderNote(docSnap.id, docSnap.data()));
     });
   }, error => {
       console.error("Firestore Snapshot Error:", error);
-      // Fallback for security rule issues on read
-      notesContainer.innerHTML = `<p class="text-red-600 text-center">Error loading notes. Check console for database read permissions.</p>`;
+      notesContainer.innerHTML = `<p class="text-red-600 text-center">Error loading notes. Check console for details.</p>`;
   });
 }
 
 // --- File Management ---
+/**
+ * Uploads a file to Firebase Storage under the user's note path.
+ * @returns {Promise<{name: string, url: string}>} Object containing the file name and its permanent download URL.
+ */
 async function uploadFile(file, noteId) {
+    // Define the storage path: users/{userId}/daily_notes/{noteId}/{fileName}
     const fileRef = ref(storage, `users/${currentUserId}/daily_notes/${noteId}/${file.name}`);
     
-    // Upload the file
-    const uploadResult = await uploadBytes(fileRef, file);
+    await uploadBytes(fileRef, file);
     
     // Get the permanent download URL
-    const downloadURL = await getDownloadURL(uploadResult.ref);
+    const downloadURL = await getDownloadURL(fileRef);
     
     return { name: file.name, url: downloadURL };
 }
 
+/**
+ * Deletes a file from Firebase Storage.
+ */
 async function deleteFileFromStorage(fileName, noteId) {
     try {
         const fileRef = ref(storage, `users/${currentUserId}/daily_notes/${noteId}/${fileName}`);
         await deleteObject(fileRef);
         console.log(`Successfully deleted file: ${fileName}`);
     } catch (error) {
-        // If the file is already deleted, this is fine.
-        console.warn(`Warning: Could not delete file ${fileName}. It may be missing.`, error.code);
+        // If the file is already deleted (e.g., storage/object-not-found), ignore the error.
+        console.warn(`Warning: Could not delete file ${fileName}.`, error.code);
     }
 }
 
 
-// --- DOM Interactions (same as before) ---
+// --- DOM Interactions and Logic ---
 
+// Render a single note element
 function renderNote(docId, note) {
   const div = document.createElement("div");
   div.className = "note-box";
@@ -190,13 +210,14 @@ function renderNote(docId, note) {
       ${note.links?.length ? `<h4 class="font-semibold text-gray-700">Links:</h4>
         <ul class="list-disc ml-6 mb-3 text-sm">
           ${note.links.map(l => {
+              // Ensure link is treated as external
               const url = l.startsWith('http') ? l : `https://${l}`;
               return `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${url}" target="_blank" rel="noopener noreferrer">${l}</a></li>`;
           }).join('')}
         </ul>` : ''}
 
-      <!-- Files Section (uses permanent URLs from Firestore) -->
-      ${files.length ? `<h4 class="font-semibold text-gray-700">Files:</h4>
+      <!-- Files Section (uses permanent URLs from Storage) -->
+      ${files.length ? `<h4 class="font-semibold text-gray-700">Files (Permanent Links):</h4>
         <ul class="list-disc ml-6 mb-3 text-sm">
           ${files.map(f => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${f.url}" target="_blank" rel="noopener noreferrer">${f.name}</a></li>`).join('')}
         </ul>` : ''}
@@ -220,6 +241,7 @@ function renderNote(docId, note) {
   return div;
 }
 
+// Expose functions to global scope for use in inline HTML click handlers
 window.editNote = async (id) => {
   if (!currentUserId) return;
   const docRef = doc(db, "artifacts", appId, "users", currentUserId, "daily_notes", id);
@@ -236,22 +258,20 @@ window.editNote = async (id) => {
 window.deleteNote = async (id) => {
   if (!currentUserId) return;
   
-  // Custom confirmation instead of window.confirm
-  if (!window.confirm("Are you sure you want to delete this note and all attached files?")) return;
+  if (!window.confirm("Are you sure you want to delete this note and all attached files from Storage?")) return;
   
   const noteRef = doc(db, "artifacts", appId, "users", currentUserId, "daily_notes", id);
   
   try {
-      // 1. Get the note data to find file names
       const docSnap = await getDoc(noteRef);
       const noteData = docSnap.data();
       const filesToDelete = noteData?.files || [];
       
-      // 2. Delete all files from Firebase Storage
+      // Delete all associated files from Storage
       const deletePromises = filesToDelete.map(f => deleteFileFromStorage(f.name, id));
       await Promise.all(deletePromises);
 
-      // 3. Delete the note from Firestore
+      // Delete the note from Firestore
       await deleteDoc(noteRef);
   } catch (error) {
       console.error("Error deleting note or associated files:", error);
@@ -260,7 +280,7 @@ window.deleteNote = async (id) => {
 }
 
 
-// Save Note (with Client-Side File Size Validation)
+// Save Note (Main logic with 15MB size validation)
 saveNoteBtn.onclick = async () => {
   if (!currentUserId || !NOTES_REF) return alert("User not authenticated.");
 
@@ -270,20 +290,20 @@ saveNoteBtn.onclick = async () => {
   const filesInput = document.getElementById("noteFiles");
   const files = Array.from(filesInput.files);
   
-  // --- START OF NEW 15MB SIZE CHECK ---
+  // --- 15MB Client-Side Size Check ---
   let fileTooLarge = false;
   for (const file of files) {
       if (file.size > MAX_FILE_SIZE_BYTES) {
           fileTooLarge = true;
           alert(`The file "${file.name}" is too large. Maximum size allowed is 15MB.`);
-          break; // Stop checking and uploading
+          break; 
       }
   }
 
   if (fileTooLarge) {
-      return; // Exit function if any file fails the size check
+      return; // Stop if any file fails the size check
   }
-  // --- END OF NEW 15MB SIZE CHECK ---
+  // -----------------------------------
 
   if (!title || !text) return alert("Please enter title and text.");
 
@@ -292,15 +312,15 @@ saveNoteBtn.onclick = async () => {
   loadingIndicator.classList.remove('hidden');
 
   try {
-    // 1. Create a temporary document in Firestore to get an ID for file pathing
+    // 1. Get a unique ID before saving, to use in the file path
     const tempDocRef = doc(NOTES_REF);
     const noteId = tempDocRef.id;
 
-    // 2. Upload all files sequentially or in parallel
+    // 2. Upload all files to Storage
     const fileUploadPromises = files.map(file => uploadFile(file, noteId));
     const uploadedFileObjects = await Promise.all(fileUploadPromises); 
     
-    // 3. Prepare external links
+    // 3. Prepare external links (ensuring https:// protocol)
     const links = linkString 
         ? linkString.split(",").map(l => {
             const trimmed = l.trim();
@@ -311,16 +331,16 @@ saveNoteBtn.onclick = async () => {
           }).filter(l => l)
         : [];
 
-    // 4. Save the final note data
+    // 4. Save the final note data (including permanent file URLs)
     await setDoc(tempDocRef, {
       title,
       text,
       links,
-      files: uploadedFileObjects,
+      files: uploadedFileObjects, // Permanent {name, url} objects
       createdAt: new Date(),
     });
 
-    // Reset form
+    // Reset form and UI
     document.getElementById("noteTitle").value = "";
     document.getElementById("noteText").value = "";
     document.getElementById("noteFiles").value = "";
@@ -331,7 +351,7 @@ saveNoteBtn.onclick = async () => {
 
   } catch (error) {
     console.error("Error saving note or uploading files:", error);
-    alert(`An error occurred while saving. Please check the console for details.`);
+    alert(`An error occurred while saving: ${error.message}`);
   } finally {
     saveNoteBtn.disabled = false;
     saveNoteBtn.textContent = "Save Note";
@@ -339,15 +359,13 @@ saveNoteBtn.onclick = async () => {
   }
 };
 
-// --- Collapse handling ---
-const newNoteHeader = document.getElementById("newNoteHeader");
+// --- Initial Setup ---
 newNoteHeader.addEventListener('click', () => {
   newNoteContent.classList.toggle('hidden');
   toggleIcon.classList.toggle('fa-chevron-up');
   toggleIcon.classList.toggle('fa-chevron-down');
 });
 
-// Sign out button
 document.getElementById("signout-btn").onclick = () => signOut(auth);
 
 // Start the application
