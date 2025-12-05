@@ -8,54 +8,59 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
   body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-  .note-box { @apply bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition; }
-  .collapsible-content { transition: max-height 0.35s ease; overflow: hidden; }
+  .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
+  .note-box { @apply bg-white p-5 rounded-xl shadow-md border border-gray-200; }
+  .collapsible-content { transition: max-height 0.3s ease-out; overflow: hidden; }
 </style>
 </head>
-<body class="min-h-screen">
+<body>
 
-<nav class="bg-indigo-700 text-white p-4 shadow-lg">
-  <div class="max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
-    <a href="dashboard.html" class="px-5 py-2 rounded-lg hover:bg-indigo-600 transition">Home</a>
-    <a href="curriculum_topics.html" class="px-5 py-2 rounded-lg hover:bg-indigo-600 transition">Topics</a>
-    <a href="notes.html" class="px-5 py-2 bg-white text-indigo-700 font-bold rounded-lg">Notes</a>
-    <a href="todo.html" class="px-5 py-2 rounded-lg hover:bg-indigo-600 transition">To-Do</a>
-    <a href="resources.html" class="px-5 py-2 rounded-lg hover:bg-indigo-600 transition">Tools</a>
-    <button id="signout-btn" class="px-5 py-2 bg-red-600 rounded-lg hover:bg-red-700 transition">Sign Out</button>
+<nav class="bg-indigo-700 p-4 shadow-2xl">
+  <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
+    <a href="dashboard.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
+    <a href="curriculum_topics.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
+    <a href="notes.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Notes 📝</a>
+    <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
+    <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
+    <button id="signout-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
   </div>
 </nav>
 
-<div class="max-w-4xl mx-auto p-6 mt-8">
-  <h1 class="text-4xl font-bold text-center text-gray-800 mb-8">Daily Notes</h1>
+<div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
+  <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Daily Notes 📝</h1>
 
-  <!-- Create Note -->
-  <div class="bg-indigo-50 rounded-xl p-6 mb-8">
-    <div id="newNoteHeader" class="flex justify-between items-center cursor-pointer">
-      <h2 class="text-2xl font-bold text-indigo-800">Create New Note</h2>
-      <i id="toggleIcon" class="fa-solid fa-chevron-down text-xl"></i>
+  <div class="bg-indigo-50 p-5 rounded-xl mb-6">
+    <div id="newNoteHeader" class="flex justify-between items-center cursor-pointer text-indigo-800 hover:text-indigo-900 transition">
+      <h2 class="text-xl font-bold">Create a New Note</h2>
+      <i id="toggleIcon" class="fa-solid fa-chevron-down"></i>
     </div>
-    <div id="newNoteContent" class="mt-6 space-y-4 hidden">
-      <input id="noteTitle" type="text" placeholder="Note Title" class="w-full p-3 border rounded-lg">
-      <textarea id="noteText" placeholder="Your note..." rows="5" class="w-full p-3 border rounded-lg"></textarea>
-      <input id="noteFiles" type="file" multiple class="w-full p-3 border rounded-lg bg-white">
-      <input id="noteLinks" type="text" placeholder="Links (comma-separated)" class="w-full p-3 border rounded-lg mt-3">
-      <button id="saveNoteBtn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700 transition">
+    <div id="newNoteContent" class="collapsible-content mt-4 hidden">
+      <input id="noteTitle" type="text" placeholder="Note Title..." class="w-full p-3 border rounded-lg mb-3">
+      <textarea id="noteText" placeholder="Write your note..." class="w-full p-3 border rounded-lg mb-3" rows="4"></textarea>
+
+      <label class="font-semibold block mb-1 text-gray-700">Attach Files (external, not uploaded):</label>
+      <input id="noteFiles" type="file" multiple class="w-full p-2 bg-white border rounded-lg mb-4">
+
+      <label class="font-semibold block mb-1 text-gray-700">Add Links (optional):</label>
+      <input id="noteLinks" type="text" placeholder="Comma-separated URLs..." class="w-full p-3 border rounded-lg mb-4">
+
+      <button id="saveNoteBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-lg">
         Save Note
       </button>
     </div>
   </div>
 
-  <div id="notesContainer" class="space-y-6">
-    <p class="text-center text-gray-500 italic">Loading your notes...</p>
+  <div id="notesContainer" class="space-y-4">
+    <p class="text-gray-500 italic text-center">Loading notes...</p>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, deleteDoc, onSnapshot, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
   authDomain: "school-organiser-5f512.firebaseapp.com",
@@ -68,146 +73,176 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 let NOTES_REF = null;
+let currentFilesMap = {}; // store external files per note in-memory (using temporary object URLs)
 
-// Toggle create form
-document.getElementById("newNoteHeader").onclick = () => {
-  const content = document.getElementById("newNoteContent");
-  const icon = document.getElementById("toggleIcon");
-  content.classList.toggle("hidden");
-  icon.classList.toggle("fa-chevron-down");
-  icon.classList.toggle("fa-chevron-up");
-};
+// Collapse handling
+const newNoteHeader = document.getElementById("newNoteHeader");
+const newNoteContent = document.getElementById("newNoteContent");
+const toggleIcon = document.getElementById("toggleIcon");
+newNoteHeader.addEventListener('click', () => {
+  newNoteContent.classList.toggle('hidden');
+  toggleIcon.classList.toggle('fa-chevron-up');
+  toggleIcon.classList.toggle('fa-chevron-down');
+});
 
-// Render single note
-function renderNote(id, data) {
+// DOM Elements
+const notesContainer = document.getElementById("notesContainer");
+const saveNoteBtn = document.getElementById("saveNoteBtn");
+
+// Render a single note
+function renderNote(docId, note) {
   const div = document.createElement("div");
   div.className = "note-box";
 
-  const filesHTML = (data.files || []).map(f => `
-    <li>
-      <a href="${f.url}" target="_blank" download="${f.name}" rel="noopener noreferrer"
-         class="text-indigo-600 hover:underline font-medium">
-        ${f.name}
-      </a>
-    </li>`).join('');
-
-  const linksHTML = (data.links || []).map(l => `
-    <li>
-      <a href="${l}" target="_blank" rel="noopener noreferrer"
-         class="text-indigo-600 hover:underline">
-        ${l}
-      </a>
-    </li>`).join('');
+  // files for this note - retrieved from in-memory map
+  const files = currentFilesMap[docId] || note.files || [];
 
   div.innerHTML = `
     <div class="flex justify-between items-center cursor-pointer collapsible">
-      <h3 class="text-xl font-semibold text-gray-800">${data.title || "Untitled"}</h3>
-      <i class="fa-solid fa-chevron-down text-gray-600"></i>
+      <h3 class="text-xl font-semibold">${note.title}</h3>
+      <i class="fa-solid fa-chevron-down"></i>
     </div>
-    <div class="content mt-4 hidden space-y-4">
-      <p class="text-gray-700 whitespace-pre-wrap">${data.text || ""}</p>
-      ${data.links?.length ? `<div><strong>Links:</strong><ul class="list-disc ml-8 mt-2">${linksHTML}</ul></div>` : ''}
-      ${data.files?.length ? `<div><strong>Files:</strong><ul class="list-disc ml-8 mt-2">${filesHTML}</ul></div>` : ''}
-      <div class="flex gap-3 pt-4 border-t">
-        <button onclick="editNote('${id}')" class="bg-yellow-500 text-white px-5 py-2 rounded-lg hover:bg-yellow-600">Edit</button>
-        <button onclick="deleteNote('${id}', ${JSON.stringify(data.files || [])})" class="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700">Delete</button>
+    <div class="content mt-3 collapsible-content hidden">
+      <p class="mb-3 whitespace-pre-wrap">${note.text}</p>
+      ${note.links?.length ? `<h4 class="font-semibold text-gray-700">Links:</h4>
+        <ul class="list-disc ml-6 mb-3 text-sm">
+          ${note.links.map(l => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${l}" target="_blank" rel="noopener noreferrer">${l}</a></li>`).join('')}
+        </ul>` : ''}
+      ${files.length ? `<h4 class="font-semibold text-gray-700">Files:</h4>
+        <ul class="list-disc ml-6 mb-3 text-sm">
+          ${files.map(f => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${f.url}" target="_blank" rel="noopener noreferrer">${f.name}</a></li>`).join('')}
+        </ul>` : ''}
+      <div class="flex gap-2 mt-4">
+        <button class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600 transition" onclick="editNote('${docId}')">Edit</button>
+        <button class="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition" onclick="deleteNote('${docId}')">Delete</button>
       </div>
     </div>
   `;
 
-  div.querySelector(".collapsible").onclick = () => {
-    div.querySelector(".content").classList.toggle("hidden");
-    div.querySelector("i").classList.toggle("fa-chevron-down");
-    div.querySelector("i").classList.toggle("fa-chevron-up");
-  };
+  // collapsible toggle
+  div.querySelector(".collapsible").addEventListener("click", () => {
+    const content = div.querySelector(".content");
+    const icon = div.querySelector(".collapsible i");
+    content.classList.toggle("hidden");
+    icon.classList.toggle('fa-chevron-up');
+    icon.classList.toggle('fa-chevron-down');
+  });
 
   return div;
 }
 
-// Edit note
+// Edit note (window scope for onclick)
 window.editNote = async (id) => {
-  const newTitle = prompt("Edit title:", "");
-  const newText = prompt("Edit text:", "");
+  if (!NOTES_REF) return;
+  const docRef = doc(db, "users", auth.currentUser.uid, "daily_notes", id); // Use explicit path with db
+  const docSnap = await getDoc(docRef); // Changed to getDoc
+  if (!docSnap.exists()) return;
+
+  // For simplicity, prompt edit text
+  const newTitle = prompt("Edit Note Title:", docSnap.data().title);
+  const newText = prompt("Edit Note Text:", docSnap.data().text);
   if (newTitle !== null && newText !== null) {
-    await updateDoc(doc(db, NOTES_REF.path, id), { title: newTitle, text: newText, updatedAt: serverTimestamp() });
+    await updateDoc(docRef, { title: newTitle, text: newText });
   }
-};
+}
 
-// Delete note + files from Storage
-window.deleteNote = async (id, files) => {
-  if (!confirm("Delete this note permanently?")) return;
-  for (const f of files) {
-    try { await deleteObject(ref(storage, f.path)); } catch(e) {}
+// Delete note (window scope for onclick)
+window.deleteNote = async (id) => {
+  if (!NOTES_REF) return;
+  if (confirm("Delete this note?")) {
+    const docRef = doc(db, "users", auth.currentUser.uid, "daily_notes", id); // Use explicit path with db
+    await deleteDoc(docRef);
+    
+    // Revoke Object URLs to free memory
+    if (currentFilesMap[id]) {
+        currentFilesMap[id].forEach(f => URL.revokeObjectURL(f.url));
+        delete currentFilesMap[id];
+    }
   }
-  await deleteDoc(doc(db, NOTES_REF.path, id));
-};
+}
 
-// Save note with file upload
-document.getElementById("saveNoteBtn").onclick = async () => {
+// Save Note
+saveNoteBtn.onclick = async () => {
+  if (!NOTES_REF) return alert("User not authenticated. Please sign in.");
+  
   const title = document.getElementById("noteTitle").value.trim();
   const text = document.getElementById("noteText").value.trim();
-  const links = document.getElementById("noteLinks").value.split(",").map(l => l.trim()).filter(Boolean);
-  const files = document.getElementById("noteFiles").files;
+  const linkString = document.getElementById("noteLinks").value.trim();
+  const filesInput = document.getElementById("noteFiles");
+  const files = Array.from(filesInput.files);
 
-  if (!title || !text) return alert("Title and text required");
+  if (!title || !text) return alert("Please enter title and text.");
 
-  const btn = document.getElementById("saveNoteBtn");
-  btn.disabled = true;
-  btn.textContent = "Uploading...";
+  saveNoteBtn.disabled = true;
+  saveNoteBtn.textContent = 'Processing...';
 
-  const uploadedFiles = [];
-  for (const file of files) {
-    const path = `notes/${Date.now()}_${file.name}`;
-    const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
-    uploadedFiles.push({ name: file.name, url, path });
-  }
+  // Prepare external file objects with temporary URLs
+  // This is the correct way to allow opening local files 'externally' in the browser
+  const fileObjects = files.map(f => ({
+    name: f.name,
+    url: URL.createObjectURL(f) // external, in-memory URL
+  }));
 
-  await addDoc(NOTES_REF, {
+  const links = linkString ? linkString.split(",").map(l => l.trim()).filter(l => l) : [];
+
+  const docRef = await addDoc(NOTES_REF, {
     title,
     text,
     links,
-    files: uploadedFiles,
-    createdAt: serverTimestamp()
+    // Only save names to firebase, the URLs are temporary and stored in-memory
+    files: fileObjects.map(f => ({ name: f.name })) 
   });
+
+  // Store actual file URLs in memory (currentFilesMap) for external opening later
+  currentFilesMap[docRef.id] = fileObjects;
 
   // Reset form
   document.getElementById("noteTitle").value = "";
   document.getElementById("noteText").value = "";
-  document.getElementById("noteLinks").value = "";
   document.getElementById("noteFiles").value = "";
-  document.getElementById("newNoteContent").classList.add("hidden");
-  document.getElementById("toggleIcon").classList.replace("fa-chevron-up", "fa-chevron-down");
+  document.getElementById("noteLinks").value = "";
 
-  btn.disabled = false;
-  btn.textContent = "Save Note";
+  saveNoteBtn.disabled = false;
+  saveNoteBtn.textContent = "Save Note";
+  newNoteContent.classList.add('hidden');
+  toggleIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
 };
 
-// Auth & real-time listener
-onAuthStateChanged(auth, user => {
-  if (!user) return location.href = "index.html";
+// Auth + Load Notes
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    // If not logged in, redirect
+    return window.location.href = "index.html";
+  }
+  
+  const uid = user.uid;
+  NOTES_REF = collection(db, "users", uid, "daily_notes");
 
-  NOTES_REF = collection(db, "users", user.uid, "daily_notes");
-
+  // Load existing notes and set up real-time listener
   onSnapshot(NOTES_REF, snapshot => {
-    const container = document.getElementById("notesContainer");
-    container.innerHTML = snapshot.empty
-      ? `<p class="text-center text-gray-500 italic text-lg">No notes yet. Create one!</p>`
-      : "";
-
-    snapshot.docs
-      .sort((a, b) => (b.data().createdAt?.toMillis() || 0) - (a.data().createdAt?.toMillis() || 0))
-      .forEach(doc => {
-        container.appendChild(renderNote(doc.id, doc.data()));
-      });
+    notesContainer.innerHTML = "";
+    if (snapshot.empty) notesContainer.innerHTML = `<p class="text-gray-500 italic text-center">No notes yet.</p>`;
+    
+    // Process the snapshot
+    snapshot.forEach(docSnap => {
+      const noteData = docSnap.data();
+      
+      // If the note has file names but no URL in currentFilesMap, 
+      // it means the page was refreshed or loaded later.
+      // Since object URLs are temporary, we can't restore them. 
+      // We render with the names but the links won't open until the user adds the files again.
+      // This is the expected limitation when not uploading files to cloud storage.
+      
+      notesContainer.appendChild(renderNote(docSnap.id, noteData));
+    });
   });
 });
 
+// Sign out button
 document.getElementById("signout-btn").onclick = () => signOut(auth);
+
 </script>
 </body>
 </html>
