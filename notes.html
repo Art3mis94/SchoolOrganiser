@@ -1,377 +1,517 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Educator Hub - Notes</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-  body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+  body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#f3f4f6; }
   .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
   .note-box { @apply bg-white p-5 rounded-xl shadow-md border border-gray-200; }
-  /* Ensure content shows transition for smoother toggle */
-  .collapsible-content { transition: max-height 0.3s ease-out; overflow: hidden; }
+  .collapsible-content { transition: max-height 0.24s ease-out, opacity 0.24s; overflow: hidden; }
+  .modal-backdrop { background-color: rgba(17,24,39,0.6); }
+  .small-muted { font-size:0.85rem; color:#6b7280; }
 </style>
 </head>
 <body>
 
-<!-- Navbar -->
+<!-- NAV -->
 <nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
+  <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4 items-center">
     <a href="dashboard.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
     <a href="curriculum_topics.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
     <a href="notes.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Notes 📝</a>
     <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
     <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-    <button id="signout-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
+    <button id="signout-btn" class="ml-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
   </div>
 </nav>
 
+<!-- CONTAINER -->
 <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
-  <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Daily Notes 📝</h1>
-  
-  <!-- Loading Indicator -->
-  <div id="loadingIndicator" class="hidden text-center p-4 bg-yellow-100 text-yellow-800 rounded-lg mb-4 font-semibold">
-    <i class="fas fa-spinner fa-spin mr-2"></i> Uploading files and saving note...
-  </div>
 
-  <!-- Add Note (Collapsible) -->
+  <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Daily Notes 📝</h1>
+
+  <!-- Loading / Status -->
+  <div id="statusBar" class="text-center mb-4 hidden"></div>
+
+  <!-- Create (collapsible) -->
   <div class="bg-indigo-50 p-5 rounded-xl mb-6">
-    <div id="newNoteHeader" class="flex justify-between items-center cursor-pointer text-indigo-800 hover:text-indigo-900 transition">
+    <div id="newNoteHeader" class="flex justify-between items-center cursor-pointer text-indigo-800">
       <h2 class="text-xl font-bold">Create a New Note</h2>
       <i id="toggleIcon" class="fa-solid fa-chevron-down"></i>
     </div>
+
     <div id="newNoteContent" class="collapsible-content mt-4 hidden">
-      <input id="noteTitle" type="text" placeholder="Note Title..." class="w-full p-3 border rounded-lg mb-3">
-      <textarea id="noteText" placeholder="Write your note..." class="w-full p-3 border rounded-lg mb-3" rows="4"></textarea>
+      <input id="noteTitle" type="text" placeholder="Note Title..." class="w-full p-3 border rounded-lg mb-3" />
+      <textarea id="noteText" placeholder="Write your note..." class="w-full p-3 border rounded-lg mb-3" rows="5"></textarea>
 
-      <!-- File input with 15MB limit note -->
-      <label class="font-semibold block mb-1 text-gray-700">Attach Files (Max 15MB each):</label>
-      <input id="noteFiles" type="file" multiple class="w-full p-2 bg-white border rounded-lg mb-4">
+      <label class="font-semibold block mb-1 text-gray-700">Attach Files (optional)</label>
+      <input id="noteFiles" type="file" multiple class="w-full mb-3" />
 
-      <label class="font-semibold block mb-1 text-gray-700">Add Links (optional):</label>
-      <input id="noteLinks" type="text" placeholder="Comma-separated URLs (e.g. https://google.com)..." class="w-full p-3 border rounded-lg mb-4">
+      <label class="font-semibold block mb-1 text-gray-700">Add Links (optional)</label>
+      <input id="noteLinks" type="text" placeholder="Comma-separated URLs (https://...)" class="w-full p-3 border rounded-lg mb-4" />
 
-      <button id="saveNoteBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 transition shadow-lg">
-        Save Note
-      </button>
+      <div class="flex gap-3">
+        <button id="saveNoteBtn" class="flex-1 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700">Save Note</button>
+        <button id="clearNoteBtn" class="py-3 px-4 bg-gray-100 rounded-lg hover:bg-gray-200">Clear</button>
+      </div>
+
+      <p class="small-muted mt-2">Files are uploaded to Firebase Storage. Max file size: <strong>20 MB</strong> each.</p>
     </div>
   </div>
 
-  <!-- Notes List -->
+  <!-- Notes list -->
   <div id="notesContainer" class="space-y-4">
     <p class="text-gray-500 italic text-center">Loading notes...</p>
   </div>
 </div>
 
-<script type="module">
-// --- Firebase CDNs ---
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, doc, onSnapshot, updateDoc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-
-// --- Configuration and Constants ---
-// 15 MB in bytes
-const MAX_FILE_SIZE_BYTES = 15728640; 
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-// Safely parse the Firebase config string from the environment
-let firebaseConfig = {};
-try {
-    const configString = typeof __firebase_config !== 'undefined' ? __firebase_config : '{}';
-    firebaseConfig = JSON.parse(configString);
-} catch (e) {
-    console.error("Error parsing __firebase_config:", e);
-    // firebaseConfig remains an empty object
-}
-
-let auth, db, storage, NOTES_REF, currentUserId;
-
-// --- DOM Elements ---
-const notesContainer = document.getElementById("notesContainer");
-const saveNoteBtn = document.getElementById("saveNoteBtn");
-const loadingIndicator = document.getElementById("loadingIndicator");
-const newNoteContent = document.getElementById("newNoteContent");
-const toggleIcon = document.getElementById("toggleIcon");
-const newNoteHeader = document.getElementById("newNoteHeader");
-
-
-// --- Initialization and Authentication ---
-async function initializeAndAuthenticate() {
-  // Check if the configuration object is populated
-  if (Object.keys(firebaseConfig).length === 0) {
-    console.error("Firebase configuration object is empty. Check environment variables.");
-    notesContainer.innerHTML = '<p class="text-red-600 text-center">Firebase configuration not loaded. Cannot load notes.</p>';
-    return;
-  }
-
-  // Initialize Firebase services
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-
-  try {
-      // Authenticate using custom token or anonymously
-      if (initialAuthToken) {
-          await signInWithCustomToken(auth, initialAuthToken);
-      } else {
-          await signInAnonymously(auth);
-      }
-  } catch(error) {
-      console.error("Firebase Auth Error:", error);
-  }
-
-  // Set up authentication state listener
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currentUserId = user.uid;
-      // Set the path to the user's private notes collection
-      NOTES_REF = collection(db, "artifacts", appId, "users", currentUserId, "daily_notes");
-      startNotesListener();
-    } else {
-      console.log("User signed out or failed to sign in.");
-      currentUserId = null;
-      notesContainer.innerHTML = '<p class="text-gray-500 italic text-center">Please sign in to view notes.</p>';
-    }
-  });
-}
-
-// --- Real-time Notes Listener ---
-function startNotesListener() {
-  if (!NOTES_REF) return;
-  
-  onSnapshot(NOTES_REF, snapshot => {
-    notesContainer.innerHTML = "";
-    if (snapshot.empty) {
-      notesContainer.innerHTML = `<p class="text-gray-500 italic text-center">No notes yet. Start by creating one above!</p>`;
-    }
-    snapshot.forEach(docSnap => {
-      notesContainer.appendChild(renderNote(docSnap.id, docSnap.data()));
-    });
-  }, error => {
-      console.error("Firestore Snapshot Error:", error);
-      notesContainer.innerHTML = `<p class="text-red-600 text-center">Error loading notes. Check console for details.</p>`;
-  });
-}
-
-// --- File Management ---
-/**
- * Uploads a file to Firebase Storage under the user's note path.
- * @returns {Promise<{name: string, url: string}>} Object containing the file name and its permanent download URL.
- */
-async function uploadFile(file, noteId) {
-    // Define the storage path: users/{userId}/daily_notes/{noteId}/{fileName}
-    const fileRef = ref(storage, `users/${currentUserId}/daily_notes/${noteId}/${file.name}`);
-    
-    await uploadBytes(fileRef, file);
-    
-    // Get the permanent download URL
-    const downloadURL = await getDownloadURL(fileRef);
-    
-    return { name: file.name, url: downloadURL };
-}
-
-/**
- * Deletes a file from Firebase Storage.
- */
-async function deleteFileFromStorage(fileName, noteId) {
-    try {
-        const fileRef = ref(storage, `users/${currentUserId}/daily_notes/${noteId}/${fileName}`);
-        await deleteObject(fileRef);
-        console.log(`Successfully deleted file: ${fileName}`);
-    } catch (error) {
-        // If the file is already deleted (e.g., storage/object-not-found), ignore the error.
-        console.warn(`Warning: Could not delete file ${fileName}.`, error.code);
-    }
-}
-
-
-// --- DOM Interactions and Logic ---
-
-// Render a single note element
-function renderNote(docId, note) {
-  const div = document.createElement("div");
-  div.className = "note-box";
-  const files = note.files || []; 
-
-  div.innerHTML = `
-    <div class="flex justify-between items-center cursor-pointer collapsible">
-      <h3 class="text-xl font-semibold">${note.title}</h3>
-      <i class="fa-solid fa-chevron-down"></i>
+<!-- Edit Modal -->
+<div id="editModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-bold text-indigo-700">Edit Note</h3>
+      <button id="closeEditModal" class="text-gray-500 hover:text-gray-800 text-2xl"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <div class="content mt-3 collapsible-content hidden">
-      <p class="mb-3 whitespace-pre-wrap">${note.text}</p>
-      
-      <!-- Permanent Links Section -->
-      ${note.links?.length ? `<h4 class="font-semibold text-gray-700">Links:</h4>
-        <ul class="list-disc ml-6 mb-3 text-sm">
-          ${note.links.map(l => {
-              // Ensure link is treated as external
-              const url = l.startsWith('http') ? l : `https://${l}`;
-              return `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${url}" target="_blank" rel="noopener noreferrer">${l}</a></li>`;
-          }).join('')}
-        </ul>` : ''}
 
-      <!-- Files Section (uses permanent URLs from Storage) -->
-      ${files.length ? `<h4 class="font-semibold text-gray-700">Files (Permanent Links):</h4>
-        <ul class="list-disc ml-6 mb-3 text-sm">
-          ${files.map(f => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${f.url}" target="_blank" rel="noopener noreferrer">${f.name}</a></li>`).join('')}
-        </ul>` : ''}
+    <div class="space-y-4">
+      <input id="editTitle" type="text" class="w-full p-3 border rounded-md" />
+      <textarea id="editText" rows="5" class="w-full p-3 border rounded-md"></textarea>
 
-      <div class="flex gap-2 mt-4">
-        <button class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600 transition" onclick="editNote('${docId}')">Edit</button>
-        <button class="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition" onclick="deleteNote('${docId}')">Delete</button>
+      <div>
+        <label class="font-semibold">Existing Attachments</label>
+        <div id="existingFiles" class="space-y-2 mt-2"></div>
+      </div>
+
+      <div>
+        <label class="font-semibold">Add More Files</label>
+        <input id="editFiles" type="file" multiple class="w-full mt-2" />
+      </div>
+
+      <div>
+        <label class="font-semibold">Links (comma-separated)</label>
+        <input id="editLinks" type="text" class="w-full p-2 border rounded-md" />
+      </div>
+
+      <div class="flex gap-3 justify-end">
+        <button id="saveEditBtn" class="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Save</button>
+        <button id="cancelEditBtn" class="py-2 px-4 bg-gray-100 rounded-md hover:bg-gray-200">Cancel</button>
       </div>
     </div>
-  `;
+  </div>
+</div>
 
-  // collapsible toggle
-  div.querySelector(".collapsible").addEventListener("click", () => {
-    const content = div.querySelector(".content");
-    const icon = div.querySelector(".collapsible i");
-    content.classList.toggle("hidden");
-    icon.classList.toggle('fa-chevron-up');
-    icon.classList.toggle('fa-chevron-down');
-  });
+<!-- Firebase + Logic -->
+<script type="module">
+/* Notes page with direct Firebase Storage uploads.
+   - Per-file limit: 20 MB
+   - Firestore path: artifacts / school-organiser-5f512 / users / <uid> / daily_notes
+*/
 
-  return div;
-}
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import {
+  getFirestore, collection, doc, setDoc, addDoc, deleteDoc, onSnapshot, getDoc, updateDoc, query, orderBy
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-// Expose functions to global scope for use in inline HTML click handlers
-window.editNote = async (id) => {
-  if (!currentUserId) return;
-  const docRef = doc(db, "artifacts", appId, "users", currentUserId, "daily_notes", id);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return;
+const APP_ID = "school-organiser-5f512";
+const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
 
-  const newTitle = prompt("Edit Note Title:", docSnap.data().title);
-  const newText = prompt("Edit Note Text:", docSnap.data().text);
-  if (newTitle !== null && newText !== null) {
-    await updateDoc(docRef, { title: newTitle, text: newText });
-  }
-}
-
-window.deleteNote = async (id) => {
-  if (!currentUserId) return;
-  
-  if (!window.confirm("Are you sure you want to delete this note and all attached files from Storage?")) return;
-  
-  const noteRef = doc(db, "artifacts", appId, "users", currentUserId, "daily_notes", id);
-  
-  try {
-      const docSnap = await getDoc(noteRef);
-      const noteData = docSnap.data();
-      const filesToDelete = noteData?.files || [];
-      
-      // Delete all associated files from Storage
-      const deletePromises = filesToDelete.map(f => deleteFileFromStorage(f.name, id));
-      await Promise.all(deletePromises);
-
-      // Delete the note from Firestore
-      await deleteDoc(noteRef);
-  } catch (error) {
-      console.error("Error deleting note or associated files:", error);
-      alert("An error occurred during deletion. Please check the console.");
-  }
-}
-
-
-// Save Note (Main logic with 15MB size validation)
-saveNoteBtn.onclick = async () => {
-  if (!currentUserId || !NOTES_REF) return alert("User not authenticated.");
-
-  const title = document.getElementById("noteTitle").value.trim();
-  const text = document.getElementById("noteText").value.trim();
-  const linkString = document.getElementById("noteLinks").value.trim();
-  const filesInput = document.getElementById("noteFiles");
-  const files = Array.from(filesInput.files);
-  
-  // --- 15MB Client-Side Size Check ---
-  let fileTooLarge = false;
-  for (const file of files) {
-      if (file.size > MAX_FILE_SIZE_BYTES) {
-          fileTooLarge = true;
-          alert(`The file "${file.name}" is too large. Maximum size allowed is 15MB.`);
-          break; 
-      }
-  }
-
-  if (fileTooLarge) {
-      return; // Stop if any file fails the size check
-  }
-  // -----------------------------------
-
-  if (!title || !text) return alert("Please enter title and text.");
-
-  saveNoteBtn.disabled = true;
-  saveNoteBtn.textContent = 'Processing...';
-  loadingIndicator.classList.remove('hidden');
-
-  try {
-    // 1. Get a unique ID before saving, to use in the file path
-    const tempDocRef = doc(NOTES_REF);
-    const noteId = tempDocRef.id;
-
-    // 2. Upload all files to Storage
-    const fileUploadPromises = files.map(file => uploadFile(file, noteId));
-    const uploadedFileObjects = await Promise.all(fileUploadPromises); 
-    
-    // 3. Prepare external links (ensuring https:// protocol)
-    const links = linkString 
-        ? linkString.split(",").map(l => {
-            const trimmed = l.trim();
-            if (trimmed && !/^https?:\/\//i.test(trimmed)) {
-                return `https://${trimmed}`;
-            }
-            return trimmed;
-          }).filter(l => l)
-        : [];
-
-    // 4. Save the final note data (including permanent file URLs)
-    await setDoc(tempDocRef, {
-      title,
-      text,
-      links,
-      files: uploadedFileObjects, // Permanent {name, url} objects
-      createdAt: new Date(),
-    });
-
-    // Reset form and UI
-    document.getElementById("noteTitle").value = "";
-    document.getElementById("noteText").value = "";
-    document.getElementById("noteFiles").value = "";
-    document.getElementById("noteLinks").value = "";
-    
-    newNoteContent.classList.add('hidden');
-    toggleIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
-
-  } catch (error) {
-    console.error("Error saving note or uploading files:", error);
-    alert(`An error occurred while saving: ${error.message}`);
-  } finally {
-    saveNoteBtn.disabled = false;
-    saveNoteBtn.textContent = "Save Note";
-    loadingIndicator.classList.add('hidden');
-  }
+// --- Firebase config (same as your other pages) ---
+const firebaseConfig = {
+  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
+  authDomain: "school-organiser-5f512.firebaseapp.com",
+  projectId: "school-organiser-5f512",
+  storageBucket: "school-organiser-5f512.appspot.com",
+  messagingSenderId: "567803400438",
+  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
 };
 
-// --- Initial Setup ---
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+// DOM refs
+const newNoteHeader = document.getElementById('newNoteHeader');
+const newNoteContent = document.getElementById('newNoteContent');
+const toggleIcon = document.getElementById('toggleIcon');
+const saveNoteBtn = document.getElementById('saveNoteBtn');
+const clearNoteBtn = document.getElementById('clearNoteBtn');
+const noteTitle = document.getElementById('noteTitle');
+const noteText = document.getElementById('noteText');
+const noteFiles = document.getElementById('noteFiles');
+const noteLinks = document.getElementById('noteLinks');
+const notesContainer = document.getElementById('notesContainer');
+const statusBar = document.getElementById('statusBar');
+
+const editModal = document.getElementById('editModal');
+const closeEditModal = document.getElementById('closeEditModal');
+const editTitle = document.getElementById('editTitle');
+const editText = document.getElementById('editText');
+const editFiles = document.getElementById('editFiles');
+const editLinks = document.getElementById('editLinks');
+const existingFilesEl = document.getElementById('existingFiles');
+const saveEditBtn = document.getElementById('saveEditBtn');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+let currentUser = null;
+let NOTES_REF = null;
+let editingNoteId = null;
+
+// collapse handler
 newNoteHeader.addEventListener('click', () => {
   newNoteContent.classList.toggle('hidden');
   toggleIcon.classList.toggle('fa-chevron-up');
   toggleIcon.classList.toggle('fa-chevron-down');
 });
 
-document.getElementById("signout-btn").onclick = () => signOut(auth);
+// Sign out
+document.getElementById('signout-btn').onclick = () => signOut(auth).then(()=>location.href='index.html').catch(e=>console.error(e));
 
-// Start the application
-initializeAndAuthenticate();
+// utility: set status
+function setStatus(text = '', isError = false, autoHideMs = 3000) {
+  if (!text) { statusBar.classList.add('hidden'); statusBar.textContent = ''; return; }
+  statusBar.classList.remove('hidden');
+  statusBar.textContent = text;
+  statusBar.classList.toggle('text-red-600', isError);
+  statusBar.classList.toggle('text-green-700', !isError);
+  if (autoHideMs) setTimeout(()=> { statusBar.classList.add('hidden'); }, autoHideMs);
+}
 
+// format links to ensure http(s)
+function normalizeLinksFromString(s) {
+  if (!s) return [];
+  return s.split(',').map(x => x.trim()).filter(Boolean).map(u => {
+    return (/^https?:\/\//i.test(u)) ? u : `https://${u}`;
+  });
+}
+
+// storage helper: upload a File object to path and return {name,url}
+async function uploadFileToStorage(file, noteId) {
+  if (file.size > MAX_FILE_BYTES) throw new Error(`${file.name} is larger than 20 MB`);
+  const path = `artifacts/${APP_ID}/users/${currentUser.uid}/daily_notes/${noteId}/${file.name}`;
+  const fileRef = ref(storage, path);
+  await uploadBytes(fileRef, file);
+  const url = await getDownloadURL(fileRef);
+  return { name: file.name, url };
+}
+
+// delete file from storage by name
+async function deleteFileFromStorage(name, noteId) {
+  const path = `artifacts/${APP_ID}/users/${currentUser.uid}/daily_notes/${noteId}/${name}`;
+  const fileRef = ref(storage, path);
+  try {
+    await deleteObject(fileRef);
+  } catch (err) {
+    // ignore not-found
+    if (err && err.code !== 'storage/object-not-found') console.warn('Delete file error', err);
+  }
+}
+
+// Auth + setup
+onAuthStateChanged(auth, user => {
+  if (!user) {
+    location.href = 'index.html';
+    return;
+  }
+  currentUser = user;
+  NOTES_REF = collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'daily_notes');
+  startNotesListener();
+});
+
+// listen notes
+function startNotesListener() {
+  const q = query(NOTES_REF, orderBy('createdAt', 'desc'));
+  onSnapshot(q, snapshot => {
+    notesContainer.innerHTML = '';
+    if (snapshot.empty) {
+      notesContainer.innerHTML = `<p class="text-gray-500 italic text-center">No notes yet. Create one above.</p>`;
+      return;
+    }
+    snapshot.forEach(docSnap => {
+      const data = { id: docSnap.id, ...docSnap.data() };
+      notesContainer.appendChild(renderNoteElement(data));
+    });
+  }, err => {
+    console.error('notes listener error', err);
+    notesContainer.innerHTML = `<p class="text-red-600 text-center">Failed to load notes. Check console.</p>`;
+  });
+}
+
+// render single note
+function renderNoteElement(note) {
+  const div = document.createElement('div');
+  div.className = 'note-box';
+
+  const filesHtml = (note.files || []).map(f => 
+    `<li><a class="text-indigo-600 hover:text-indigo-800 underline" href="${f.url}" target="_blank" rel="noopener noreferrer">${f.name}</a></li>`
+  ).join('');
+
+  const linksHtml = (note.links || []).map(l =>
+    `<li><a class="text-indigo-600 hover:text-indigo-800 underline" href="${l}" target="_blank" rel="noopener noreferrer">${l}</a></li>`
+  ).join('');
+
+  div.innerHTML = `
+    <div class="flex justify-between items-start cursor-pointer collapsible">
+      <div>
+        <h3 class="text-lg font-semibold">${escapeHtml(note.title)}</h3>
+        <p class="small-muted">${note.createdAt ? new Date(note.createdAt.seconds ? note.createdAt.seconds*1000 : note.createdAt).toLocaleString() : ''}</p>
+      </div>
+      <div class="flex gap-2">
+        <button class="editBtn text-blue-600" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        <button class="deleteBtn text-red-600" title="Delete"><i class="fa-solid fa-trash"></i></button>
+      </div>
+    </div>
+    <div class="content mt-3 collapsible-content hidden">
+      <p class="mb-3 whitespace-pre-wrap">${escapeHtml(note.text || '')}</p>
+      ${linksHtml ? `<h4 class="font-semibold text-gray-700">Links</h4><ul class="list-disc ml-6 mb-3 text-sm">${linksHtml}</ul>` : ''}
+      ${filesHtml ? `<h4 class="font-semibold text-gray-700">Attachments</h4><ul class="list-disc ml-6 mb-3 text-sm">${filesHtml}</ul>` : ''}
+    </div>
+  `;
+
+  // toggle
+  div.querySelector('.collapsible').addEventListener('click', (e) => {
+    // don't toggle when pressing edit/delete buttons
+    if (e.target.closest('.editBtn') || e.target.closest('.deleteBtn')) return;
+    const content = div.querySelector('.content');
+    content.classList.toggle('hidden');
+  });
+
+  // edit
+  div.querySelector('.editBtn').onclick = (e) => {
+    e.stopPropagation();
+    openEditModal(note);
+  };
+
+  // delete
+  div.querySelector('.deleteBtn').onclick = async (e) => {
+    e.stopPropagation();
+    if (!confirm('Delete this note and all its attachments?')) return;
+    try {
+      // delete files from storage first
+      const files = note.files || [];
+      await Promise.all(files.map(f => deleteFileFromStorage(f.name, note.id)));
+      await deleteDoc(doc(NOTES_REF, note.id));
+      setStatus('Note deleted', false, 2500);
+    } catch (err) {
+      console.error('delete note error', err);
+      setStatus('Failed to delete note (see console)', true, 4000);
+    }
+  };
+
+  return div;
+}
+
+// escape HTML to avoid injection
+function escapeHtml(s='') {
+  return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+// create note
+saveNoteBtn.onclick = async () => {
+  if (!currentUser) return setStatus('Not authenticated', true);
+  const title = noteTitle.value.trim();
+  const text = noteText.value.trim();
+  const rawLinks = noteLinks.value.trim();
+  const files = Array.from(noteFiles.files || []);
+
+  if (!title || !text) { setStatus('Title and text required', true); return; }
+
+  // check file sizes
+  for (const f of files) {
+    if (f.size > MAX_FILE_BYTES) {
+      setStatus(`"${f.name}" exceeds 20 MB limit`, true, 5000);
+      return;
+    }
+  }
+
+  // create doc ref w/ id so we can upload files into that folder
+  const docRef = doc(NOTES_REF);
+  const noteId = docRef.id;
+
+  saveNoteBtn.disabled = true;
+  setStatus('Uploading files (if any) & saving note...', false, 0);
+
+  try {
+    // upload files
+    const uploadedFiles = [];
+    for (const f of files) {
+      const uploaded = await uploadFileToStorage(f, noteId);
+      uploadedFiles.push(uploaded);
+    }
+
+    const links = normalizeLinksFromString(rawLinks);
+
+    await setDoc(docRef, {
+      title,
+      text,
+      files: uploadedFiles,
+      links,
+      createdAt: new Date()
+    });
+
+    // reset UI
+    noteTitle.value = '';
+    noteText.value = '';
+    noteFiles.value = '';
+    noteLinks.value = '';
+    newNoteContent.classList.add('hidden');
+    toggleIcon.classList.replace('fa-chevron-up','fa-chevron-down');
+    setStatus('Note saved', false, 2500);
+  } catch (err) {
+    console.error('save note error', err);
+    setStatus('Error saving note (see console)', true, 5000);
+  } finally {
+    saveNoteBtn.disabled = false;
+  }
+};
+
+// Clear create form
+clearNoteBtn.onclick = () => {
+  noteTitle.value = '';
+  noteText.value = '';
+  noteFiles.value = '';
+  noteLinks.value = '';
+};
+
+// ---- Edit modal functions ----
+function openEditModal(note) {
+  editingNoteId = note.id;
+  editTitle.value = note.title || '';
+  editText.value = note.text || '';
+  editLinks.value = (note.links || []).join(', ');
+  existingFilesEl.innerHTML = '';
+  (note.files || []).forEach((f, idx) => {
+    const row = document.createElement('div');
+    row.className = 'flex items-center justify-between gap-3 p-2 bg-gray-50 rounded-md';
+    row.innerHTML = `<div class="truncate"><a href="${f.url}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">${f.name}</a></div>
+      <div class="flex gap-2">
+        <button data-name="${f.name}" class="removeExistingFileBtn text-red-600 px-2 py-1 rounded-md hover:bg-red-50">Remove</button>
+      </div>`;
+    existingFilesEl.appendChild(row);
+  });
+
+  // attach remove handlers
+  existingFilesEl.querySelectorAll('.removeExistingFileBtn').forEach(btn => {
+    btn.onclick = async (e) => {
+      const name = e.currentTarget.dataset.name;
+      if (!confirm(`Remove attachment "${name}" from this note (and delete from Storage)?`)) return;
+      try {
+        await deleteFileFromStorage(name, editingNoteId);
+        // update Firestore doc by removing that file entry
+        const docRef = doc(NOTES_REF, editingNoteId);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) return;
+        const noteData = docSnap.data();
+        const newFiles = (noteData.files || []).filter(f => f.name !== name);
+        await updateDoc(docRef, { files: newFiles });
+        // refresh existingFilesEl by re-opening modal (or re-fetching doc)
+        const updated = await getDoc(docRef);
+        openEditModal({ id: editingNoteId, ...updated.data() });
+        setStatus('Attachment removed', false, 2000);
+      } catch (err) {
+        console.error('remove existing file err', err);
+        setStatus('Failed to remove file (see console)', true, 4000);
+      }
+    };
+  });
+
+  // show modal
+  editModal.classList.remove('hidden');
+  editModal.style.display = 'flex';
+}
+
+// close handlers
+closeEditModal.onclick = closeEdit;
+cancelEditBtn.onclick = closeEdit;
+function closeEdit() {
+  editingNoteId = null;
+  editFiles.value = '';
+  editModal.classList.add('hidden');
+  editModal.style.display = 'none';
+}
+
+// save edits
+saveEditBtn.onclick = async () => {
+  if (!editingNoteId) return;
+  const title = editTitle.value.trim();
+  const text = editText.value.trim();
+  const rawLinks = editLinks.value.trim();
+  const addedFiles = Array.from(editFiles.files || []);
+
+  if (!title || !text) { setStatus('Title and text required', true); return; }
+
+  // size check
+  for (const f of addedFiles) {
+    if (f.size > MAX_FILE_BYTES) {
+      setStatus(`"${f.name}" exceeds 20 MB limit`, true, 5000);
+      return;
+    }
+  }
+
+  saveEditBtn.disabled = true;
+  setStatus('Saving changes & uploading new files...', false, 0);
+
+  try {
+    const docRef = doc(NOTES_REF, editingNoteId);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) throw new Error('Note not found');
+
+    const noteData = docSnap.data();
+    const existingFiles = noteData.files || [];
+
+    // upload new files
+    const uploaded = [];
+    for (const f of addedFiles) {
+      const u = await uploadFileToStorage(f, editingNoteId);
+      uploaded.push(u);
+    }
+
+    const links = normalizeLinksFromString(rawLinks);
+
+    await updateDoc(docRef, {
+      title,
+      text,
+      links,
+      files: [...existingFiles, ...uploaded]
+    });
+
+    closeEdit();
+    setStatus('Note updated', false, 2500);
+  } catch (err) {
+    console.error('save edit err', err);
+    setStatus('Failed to update note (see console)', true, 5000);
+  } finally {
+    saveEditBtn.disabled = false;
+  }
+};
+
+// helper: upload file with storage path
+async function uploadFileToStorage(file, noteId) {
+  const path = `artifacts/${APP_ID}/users/${currentUser.uid}/daily_notes/${noteId}/${file.name}`;
+  const storageRef = ref(storage, path);
+  await uploadBytes(storageRef, file);
+  const url = await getDownloadURL(storageRef);
+  return { name: file.name, url };
+}
+
+// small helper - normalize link input for create as well
+function normalizeLinksFromString(s) {
+  if (!s) return [];
+  return s.split(',').map(x => x.trim()).filter(Boolean).map(u => (/^https?:\/\//i.test(u) ? u : `https://${u}`));
+}
+
+// Escape function used above is defined in outer scope - add a safe shim if not present
+if (typeof escapeHtml !== 'function') {
+  window.escapeHtml = (s='') => String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+// done
 </script>
 </body>
 </html>
-
