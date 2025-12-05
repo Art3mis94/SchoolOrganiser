@@ -8,8 +8,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-.note-box { @apply bg-white p-4 rounded-xl shadow-md border border-gray-200; }
-.collapsible-content { transition: max-height 0.3s ease-out; overflow: hidden; }
+.note-box { @apply bg-white p-4 rounded-xl shadow-md border border-gray-200 flex justify-between items-center; cursor: pointer; }
+.note-box:hover { @apply bg-indigo-50; }
 .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
 </style>
 </head>
@@ -35,7 +35,7 @@ body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
     <div id="notesList" class="space-y-3"></div>
   </div>
 
-  <!-- Note Preview / Editor -->
+  <!-- Note Editor -->
   <div class="w-2/3 bg-white p-6 rounded-3xl shadow-2xl hidden" id="noteEditorContainer">
     <h2 class="text-2xl font-bold mb-4" id="editorTitle">New Note</h2>
     <input id="noteTitle" type="text" placeholder="Note Title..." class="w-full p-3 border rounded-lg mb-3">
@@ -58,6 +58,7 @@ body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
 
     <div class="flex gap-3 mt-4">
       <button id="saveNoteBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700">Save Note</button>
+      <button id="deleteNoteBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700">Delete Note</button>
       <button id="cancelEditBtn" class="bg-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
     </div>
   </div>
@@ -68,9 +69,9 @@ body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-// ===== REPLACE WITH YOUR REAL CONFIG =====
+// ===== Firebase Config =====
 const firebaseConfig = {
   apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
   authDomain: "school-organiser-5f512.firebaseapp.com",
@@ -79,7 +80,6 @@ const firebaseConfig = {
   messagingSenderId: "567803400438",
   appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
 };
-// =========================================
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -88,9 +88,8 @@ const storage = getStorage(app);
 
 let currentUser = null;
 let editingNoteId = null;
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
-// DOM
 const notesList = document.getElementById("notesList");
 const addNoteBtn = document.getElementById("addNoteBtn");
 const noteEditorContainer = document.getElementById("noteEditorContainer");
@@ -103,14 +102,15 @@ const noteFiles = document.getElementById("noteFiles");
 const filesList = document.getElementById("filesList");
 const saveNoteBtn = document.getElementById("saveNoteBtn");
 const cancelEditBtn = document.getElementById("cancelEditBtn");
+const deleteNoteBtn = document.getElementById("deleteNoteBtn");
 const signoutBtn = document.getElementById("signout-btn");
 
 let currentLinks = [];
 let currentFiles = [];
 
-// ===== Authentication =====
+// ===== Auth =====
 onAuthStateChanged(auth, user => {
-  if (!user) return window.location.href = "index.html";
+  if (!user) return window.location.href="index.html";
   currentUser = user;
   listenNotes();
 });
@@ -129,15 +129,15 @@ function listenNotes() {
     snapshot.forEach(docSnap => {
       const data = docSnap.data();
       const noteDiv = document.createElement("div");
-      noteDiv.className = "note-box cursor-pointer";
-      noteDiv.innerHTML = `<strong>${data.title}</strong>`;
+      noteDiv.className = "note-box";
+      noteDiv.innerHTML = `<span>${data.title}</span> <i class="fas fa-edit text-gray-500"></i>`;
       noteDiv.onclick = () => openNote(docSnap.id, data);
       notesList.appendChild(noteDiv);
     });
   });
 }
 
-// ===== Open Note for Edit =====
+// ===== Open Note =====
 function openNote(id, data) {
   editingNoteId = id;
   noteEditorContainer.classList.remove("hidden");
@@ -145,116 +145,122 @@ function openNote(id, data) {
   noteText.value = data.text;
   currentLinks = data.links || [];
   currentFiles = data.files || [];
-
   renderLinks();
   renderFiles();
 }
 
-// ===== Render Links =====
+// ===== Render Links & Files =====
 function renderLinks() {
   linksList.innerHTML = "";
-  currentLinks.forEach((l, i) => {
-    const li = document.createElement("li");
-    li.innerHTML = `<a href="${l}" target="_blank" rel="noopener noreferrer">${l}</a> <span class="text-red-600 cursor-pointer" onclick="removeLink(${i})">[x]</span>`;
+  currentLinks.forEach((l,i)=>{
+    const li=document.createElement("li");
+    li.innerHTML=`<a href="${l}" target="_blank">${l}</a> <span class="text-red-600 cursor-pointer" onclick="removeLink(${i})">[x]</span>`;
     linksList.appendChild(li);
   });
 }
+window.removeLink=(i)=>{ currentLinks.splice(i,1); renderLinks(); }
 
-window.removeLink = (i) => {
-  currentLinks.splice(i,1);
-  renderLinks();
-};
-
-// ===== Add Link =====
-addLinkBtn.onclick = () => {
-  const val = linkInput.value.trim();
-  if (!val) return;
-  const url = val.startsWith("http") ? val : "https://" + val;
-  currentLinks.push(url);
-  renderLinks();
-  linkInput.value = "";
-};
-
-// ===== Render Files =====
 function renderFiles() {
   filesList.innerHTML = "";
-  currentFiles.forEach((f, i) => {
-    const li = document.createElement("li");
-    li.innerHTML = `<a href="${f.url}" target="_blank" rel="noopener noreferrer">${f.name}</a> <span class="text-red-600 cursor-pointer" onclick="removeFile(${i})">[x]</span>`;
+  currentFiles.forEach((f,i)=>{
+    const li=document.createElement("li");
+    li.innerHTML=`<a href="${f.url}" target="_blank">${f.name}</a> <span class="text-red-600 cursor-pointer" onclick="removeFile(${i})">[x]</span>`;
     filesList.appendChild(li);
   });
 }
+window.removeFile=(i)=>{ currentFiles.splice(i,1); renderFiles(); }
 
-window.removeFile = (i) => {
-  currentFiles.splice(i,1);
-  renderFiles();
-};
+// ===== Add Link =====
+addLinkBtn.onclick = ()=>{
+  const val=linkInput.value.trim();
+  if(!val) return;
+  const url=val.startsWith("http")?val:"https://"+val;
+  currentLinks.push(url);
+  renderLinks();
+  linkInput.value="";
+}
 
-// ===== Add Note Button =====
-addNoteBtn.onclick = () => {
-  editingNoteId = null;
+// ===== Add New Note =====
+addNoteBtn.onclick = ()=>{
+  editingNoteId=null;
   noteEditorContainer.classList.remove("hidden");
-  noteTitle.value = "";
-  noteText.value = "";
-  currentLinks = [];
-  currentFiles = [];
+  noteTitle.value="";
+  noteText.value="";
+  currentLinks=[];
+  currentFiles=[];
   renderLinks();
   renderFiles();
-};
+}
 
-// ===== Cancel Edit =====
-cancelEditBtn.onclick = () => {
+// ===== Cancel =====
+cancelEditBtn.onclick = ()=>{
   noteEditorContainer.classList.add("hidden");
-  editingNoteId = null;
-};
+  editingNoteId=null;
+}
 
 // ===== Save Note =====
-saveNoteBtn.onclick = async () => {
-  if (!noteTitle.value.trim() || !noteText.value.trim()) return alert("Title and text required.");
-  saveNoteBtn.disabled = true;
+saveNoteBtn.onclick=async()=>{
+  if(!noteTitle.value.trim()||!noteText.value.trim()) return alert("Title & text required");
+  saveNoteBtn.disabled=true;
 
-  // Handle file uploads
-  const filesArray = Array.from(noteFiles.files);
-  const uploadedFiles = [];
-
-  for (const file of filesArray) {
-    if (file.size > MAX_FILE_SIZE) {
-      alert(`${file.name} exceeds 20MB limit.`);
-      saveNoteBtn.disabled = false;
+  const filesArray=Array.from(noteFiles.files);
+  const uploadedFiles=[];
+  for(const file of filesArray){
+    if(file.size>MAX_FILE_SIZE){
+      alert(`${file.name} exceeds 20MB`);
+      saveNoteBtn.disabled=false;
       return;
     }
-    const fileRef = ref(storage, `users/${currentUser.uid}/daily_notes/${file.name}`);
+    const noteIdTemp = editingNoteId || doc(notesRef()).id;
+    const fileRef = ref(storage, `users/${currentUser.uid}/daily_notes/${noteIdTemp}/${file.name}`);
     await uploadBytes(fileRef, file);
     const url = await getDownloadURL(fileRef);
-    uploadedFiles.push({ name: file.name, url });
+    uploadedFiles.push({name:file.name,url});
   }
 
-  const noteData = {
+  const noteData={
     title: noteTitle.value.trim(),
     text: noteText.value.trim(),
     links: currentLinks,
-    files: [...currentFiles, ...uploadedFiles],
-    updatedAt: new Date()
+    files:[...currentFiles,...uploadedFiles],
+    updatedAt:new Date()
   };
 
-  if (editingNoteId) {
-    const noteDoc = doc(notesRef(), editingNoteId);
-    await updateDoc(noteDoc, noteData);
+  if(editingNoteId){
+    const noteDoc=doc(notesRef(),editingNoteId);
+    await updateDoc(noteDoc,noteData);
   } else {
-    await addDoc(notesRef(), noteData);
+    await addDoc(notesRef(),noteData);
   }
 
   noteEditorContainer.classList.add("hidden");
-  saveNoteBtn.disabled = false;
-  noteTitle.value = "";
-  noteText.value = "";
-  linkInput.value = "";
-  noteFiles.value = "";
-  currentLinks = [];
-  currentFiles = [];
+  saveNoteBtn.disabled=false;
+  noteTitle.value="";
+  noteText.value="";
+  noteFiles.value="";
+  currentLinks=[];
+  currentFiles=[];
   renderLinks();
   renderFiles();
-};
+}
+
+// ===== Delete Note =====
+deleteNoteBtn.onclick=async()=>{
+  if(!editingNoteId) return;
+  if(!confirm("Delete this note and all attached files?")) return;
+  const noteDocRef = doc(notesRef(), editingNoteId);
+  const docSnap = await getDoc(noteDocRef);
+  if(docSnap.exists()){
+    const data = docSnap.data();
+    for(const f of data.files||[]){
+      const fileRef = ref(storage, `users/${currentUser.uid}/daily_notes/${editingNoteId}/${f.name}`);
+      await deleteObject(fileRef).catch(()=>{});
+    }
+    await deleteDoc(noteDocRef);
+    noteEditorContainer.classList.add("hidden");
+    editingNoteId=null;
+  }
+}
 
 </script>
 </body>
