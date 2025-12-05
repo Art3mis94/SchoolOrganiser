@@ -60,8 +60,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot, collectionGroup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
 // Firebase config
@@ -95,11 +95,16 @@ newNoteHeader.addEventListener('click', () => {
 const notesContainer = document.getElementById("notesContainer");
 const saveNoteBtn = document.getElementById("saveNoteBtn");
 
+// Sign out
+document.getElementById("signout-btn").addEventListener("click", () => {
+  signOut(auth);
+});
+
 // Upload files
-async function uploadFiles(uid, dateId, files) {
+async function uploadFiles(uid, noteId, files) {
   const urls = [];
   for (const file of files) {
-    const storageRef = ref(storage, `notes/${uid}/${dateId}/${file.name}`);
+    const storageRef = ref(storage, `notes/${uid}/${noteId}/${file.name}`);
     saveNoteBtn.textContent = `Uploading ${file.name}...`;
     await uploadBytes(storageRef, file);
     const url = await getDownloadURL(storageRef);
@@ -128,7 +133,6 @@ function renderNote(docId, note) {
           ${note.files.map(f => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${f.url}" target="_blank">${f.name}</a></li>`).join('')}
         </ul>` : ''}
       <div class="flex gap-2 mt-4">
-        <button class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600 transition" onclick="editNote('${docId}')">Edit</button>
         <button class="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition" onclick="deleteNote('${docId}')">Delete</button>
       </div>
     </div>
@@ -142,9 +146,6 @@ function renderNote(docId, note) {
   });
   return div;
 }
-
-// Placeholder for edit
-window.editNote = (id) => alert("Edit functionality will be implemented later");
 
 // Delete note
 window.deleteNote = async (id) => {
@@ -163,10 +164,10 @@ saveNoteBtn.onclick = async () => {
 
   saveNoteBtn.disabled = true;
   saveNoteBtn.textContent = 'Processing...';
-  const dateId = Date.now().toString();
+  const noteId = Date.now().toString();
 
   let uploadedFiles = [];
-  if (files.length > 0) uploadedFiles = await uploadFiles(auth.currentUser.uid, dateId, files);
+  if (files.length > 0) uploadedFiles = await uploadFiles(auth.currentUser.uid, noteId, files);
   const links = linkString ? linkString.split(",").map(l => l.trim()).filter(l => l) : [];
 
   await addDoc(NOTES_REF, { title, text, files: uploadedFiles, links, timestamp: new Date().toISOString() });
