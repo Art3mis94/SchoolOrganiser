@@ -1,128 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Educator Hub - Notes (Option C)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Educator Hub - Notes</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-  body { font-family: 'Inter', sans-serif; background:#f3f4f6; }
-  .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
-  .note-item:hover { transform: translateX(4px); }
-  .disabled { opacity: .6; pointer-events: none; }
+  body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+  .sidebar { width: 300px; max-width: 100%; }
+  .note-item { cursor: pointer; padding: 0.75rem; border-bottom: 1px solid #e5e7eb; }
+  .note-item:hover { background-color: #e0e7ff; }
+  .selected { background-color: #c7d2fe; }
+  .file-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+  .link-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
 </style>
 </head>
-<body class="min-h-screen">
+<body class="flex h-screen">
 
-<!-- NAVBAR -->
-<nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-6xl mx-auto flex items-center justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <a href="dashboard.html" class="px-3 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-      <a href="curriculum_topics.html" class="px-3 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
-      <a href="notes.html" class="px-3 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Notes 📝</a>
-      <a href="todo.html" class="px-3 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
-      <a href="resources.html" class="px-3 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-    </div>
-    <div class="flex items-center gap-3">
-      <button id="newNoteBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-        <i class="fa-solid fa-plus mr-2"></i> New Note
-      </button>
-      <button id="signoutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
-    </div>
+<!-- Sidebar -->
+<div class="sidebar bg-white shadow-lg flex flex-col">
+  <div class="p-4 font-bold text-lg border-b">Your Notes</div>
+  <div id="notesList" class="flex-1 overflow-y-auto">
+    <p class="text-gray-500 text-center mt-4">Loading notes...</p>
   </div>
-</nav>
-
-<!-- MAIN -->
-<div class="container max-w-6xl mx-auto p-6 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-  <!-- LEFT: Notes List -->
-  <aside class="lg:col-span-1 bg-white rounded-2xl shadow-lg p-4 h-[70vh] overflow-y-auto">
-    <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-bold text-indigo-700">Your Notes</h2>
-      <input id="searchInput" type="search" placeholder="Search..." class="px-2 py-1 border rounded-lg" />
-    </div>
-
-    <div id="notesList" class="space-y-3">
-      <p class="text-gray-500 italic text-center">Loading notes...</p>
-    </div>
-  </aside>
-
-  <!-- RIGHT: Viewer / Editor -->
-  <main class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-6 h-[70vh] overflow-y-auto">
-    <div id="emptyView" class="h-full flex flex-col items-center justify-center text-center text-gray-500">
-      <i class="fa-solid fa-sticky-note text-6xl text-indigo-200 mb-4"></i>
-      <p class="text-xl font-semibold">Select a note or create a new one</p>
-      <p class="text-sm mt-2">Your notes sync automatically with the cloud.</p>
-    </div>
-
-    <div id="noteView" class="hidden">
-      <!-- Display mode -->
-      <div id="displayMode" class="">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h3 id="viewTitle" class="text-2xl font-bold text-indigo-800"></h3>
-            <p id="viewDate" class="text-xs text-gray-400 mt-1"></p>
-          </div>
-          <div class="flex gap-2">
-            <button id="editBtn" class="px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600">Edit</button>
-            <button id="deleteBtn" class="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
-          </div>
-        </div>
-
-        <div class="mt-4">
-          <p id="viewText" class="whitespace-pre-wrap text-gray-800"></p>
-
-          <div id="viewLinks" class="mt-4 space-y-1"></div>
-          <div id="viewFiles" class="mt-4 space-y-1"></div>
-        </div>
-      </div>
-
-      <!-- Edit mode -->
-      <div id="editMode" class="hidden">
-        <div class="flex items-center justify-between gap-4">
-          <h3 class="text-xl font-bold text-indigo-700">Edit Note</h3>
-          <div class="flex gap-2">
-            <button id="saveBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save</button>
-            <button id="cancelBtn" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
-          </div>
-        </div>
-
-        <div class="mt-4 space-y-3">
-          <input id="editTitle" class="w-full p-3 border rounded-md" placeholder="Title" />
-          <textarea id="editText" rows="8" class="w-full p-3 border rounded-md" placeholder="Write your note..."></textarea>
-
-          <!-- Links area -->
-          <div>
-            <label class="font-semibold text-gray-700">Links</label>
-            <div class="flex gap-2 mt-2">
-              <input id="linkInput" type="url" placeholder="Paste link and click Add" class="flex-1 p-2 border rounded-md" />
-              <button id="addLinkBtn" class="px-3 py-2 bg-indigo-600 text-white rounded-md">Add Link</button>
-            </div>
-            <div id="linksList" class="mt-2 space-y-2"></div>
-          </div>
-
-          <!-- Files area -->
-          <div>
-            <label class="font-semibold text-gray-700">Files (multiple)</label>
-            <input id="fileInput" type="file" multiple class="mt-2" />
-            <div id="filesList" class="mt-3 space-y-2"></div>
-            <p class="text-xs text-gray-400 mt-2">Each file must be ≤ 20 MB. Files are uploaded to Firebase Storage and saved to the note.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
+  <div class="p-4 border-t">
+    <button id="newNoteBtn" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">+ New Note</button>
+  </div>
 </div>
 
-<!-- Toast / status -->
-<div id="toast" class="fixed bottom-6 right-6 hidden bg-black text-white px-4 py-2 rounded-md shadow-lg"></div>
+<!-- Main Content / Preview Panel -->
+<div class="flex-1 p-6 overflow-y-auto" id="notePreviewContainer">
+  <p class="text-gray-500 text-center mt-4">Select a note to preview</p>
+</div>
 
-<!-- FIREBASE + LOGIC -->
+<!-- New Note Modal -->
+<div id="newNoteModal" class="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-start pt-20 hidden">
+  <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg">
+    <h2 class="text-2xl font-bold mb-4">Create New Note</h2>
+    <input id="noteTitleInput" type="text" placeholder="Title" class="w-full p-3 border rounded-lg mb-3">
+    <textarea id="noteTextInput" rows="4" placeholder="Write your note..." class="w-full p-3 border rounded-lg mb-3"></textarea>
+
+    <label class="font-semibold mb-1">Add Files (max 20MB each):</label>
+    <input id="noteFilesInput" type="file" multiple class="w-full p-2 border rounded-lg mb-3">
+
+    <label class="font-semibold mb-1">Add Links:</label>
+    <div class="flex gap-2 mb-2">
+      <input id="noteLinkInput" type="text" placeholder="Enter URL" class="flex-1 p-2 border rounded-lg">
+      <button id="addLinkBtn" class="bg-indigo-600 text-white px-4 rounded-lg hover:bg-indigo-700 transition">Add</button>
+    </div>
+    <div id="linkList" class="mb-3"></div>
+
+    <div class="flex justify-end gap-2 mt-4">
+      <button id="cancelNoteBtn" class="px-4 py-2 rounded-lg border hover:bg-gray-100">Cancel</button>
+      <button id="saveNoteBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Save Note</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
-/* ========== CONFIG ========== */
-/* Replace with your firebase config (or inject as you prefer) */
+// Firebase imports
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, setDoc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+// ---------- CONFIG ----------
 const firebaseConfig = {
   apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
   authDomain: "school-organiser-5f512.firebaseapp.com",
@@ -131,515 +74,183 @@ const firebaseConfig = {
   messagingSenderId: "567803400438",
   appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
 };
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import {
-  getFirestore, collection, doc, onSnapshot, addDoc, setDoc,
-  updateDoc, deleteDoc, query, orderBy
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
-
-/* ========== Constants ========== */
-const MAX_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
-
-/* ========== Init ========== */
+// ---------- INIT ----------
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-/* ========== UI Refs ========== */
-const notesList = document.getElementById('notesList');
-const searchInput = document.getElementById('searchInput');
-const newNoteBtn = document.getElementById('newNoteBtn');
-const signoutBtn = document.getElementById('signoutBtn');
-
-const emptyView = document.getElementById('emptyView');
-const noteView = document.getElementById('noteView');
-
-const displayMode = document.getElementById('displayMode');
-const editMode = document.getElementById('editMode');
-
-const viewTitle = document.getElementById('viewTitle');
-const viewDate = document.getElementById('viewDate');
-const viewText = document.getElementById('viewText');
-const viewLinks = document.getElementById('viewLinks');
-const viewFiles = document.getElementById('viewFiles');
-
-const editTitle = document.getElementById('editTitle');
-const editText = document.getElementById('editText');
-const linkInput = document.getElementById('linkInput');
-const addLinkBtn = document.getElementById('addLinkBtn');
-const linksList = document.getElementById('linksList');
-
-const fileInput = document.getElementById('fileInput');
-const filesList = document.getElementById('filesList');
-
-const editBtn = document.getElementById('editBtn');
-const deleteBtn = document.getElementById('deleteBtn');
-const saveBtn = document.getElementById('saveBtn');
-const cancelBtn = document.getElementById('cancelBtn');
-
-const toastEl = document.getElementById('toast');
-
-/* ========== State ========== */
-let currentUser = null;
-let notesSnapshotUnsub = null;
-let notes = []; // local cache array of { id, ...data }
+let currentUserId = null;
+let notesRef = null;
+let notesCache = []; // Store notes locally
 let selectedNoteId = null;
-let isEditing = false;
 
-/* Local staged arrays for edit mode */
-let stagedLinks = []; // array of strings
-let stagedFilesToUpload = []; // File objects selected but not yet uploaded
-let stagedExistingFiles = []; // [{name, url}] existing files that remain or to delete
+// ---------- DOM ----------
+const notesList = document.getElementById("notesList");
+const notePreviewContainer = document.getElementById("notePreviewContainer");
+const newNoteModal = document.getElementById("newNoteModal");
+const newNoteBtn = document.getElementById("newNoteBtn");
+const cancelNoteBtn = document.getElementById("cancelNoteBtn");
+const saveNoteBtn = document.getElementById("saveNoteBtn");
 
-/* ========== Helpers ========== */
-function showToast(msg, timeout = 3000) {
-  toastEl.textContent = msg;
-  toastEl.classList.remove('hidden');
-  setTimeout(()=> toastEl.classList.add('hidden'), timeout);
-}
+const noteTitleInput = document.getElementById("noteTitleInput");
+const noteTextInput = document.getElementById("noteTextInput");
+const noteFilesInput = document.getElementById("noteFilesInput");
 
-function formatDate(ts) {
-  try {
-    const d = ts?.toDate ? ts.toDate() : new Date(ts);
-    return d.toLocaleString();
-  } catch(e){
-    return '';
-  }
-}
+const noteLinkInput = document.getElementById("noteLinkInput");
+const addLinkBtn = document.getElementById("addLinkBtn");
+const linkList = document.getElementById("linkList");
 
-/* Creates note list item DOM */
-function createNoteListItem(note) {
-  const div = document.createElement('div');
-  div.className = 'p-3 rounded-lg border border-gray-100 hover:shadow-md note-item cursor-pointer flex justify-between items-start gap-2';
-  const left = document.createElement('div');
-  left.className = 'flex-1 min-w-0';
-  const title = document.createElement('div');
-  title.className = 'font-semibold text-indigo-700 truncate';
-  title.textContent = note.title || 'Untitled';
-  const preview = document.createElement('div');
-  preview.className = 'text-sm text-gray-500 truncate';
-  const textPreview = (note.text || '').slice(0,120);
-  preview.textContent = textPreview + (note.text && note.text.length > 120 ? '…' : '');
-  left.appendChild(title);
-  left.appendChild(preview);
+let tempLinks = [];
 
-  const right = document.createElement('div');
-  right.className = 'text-right text-xs text-gray-400';
-  right.textContent = formatDate(note.createdAt || note.updatedAt || new Date());
+// ---------- AUTH ----------
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return window.location.href = "index.html";
+  currentUserId = user.uid;
+  notesRef = collection(db, "users", currentUserId, "daily_notes");
 
-  div.appendChild(left);
-  div.appendChild(right);
+  // Migrate old notes automatically
+  await migrateOldNotes();
 
-  div.onclick = () => {
-    selectNote(note.id);
-  };
-
-  return div;
-}
-
-/* ========== Rendering ========== */
-
-function renderNotesList(filter = '') {
-  notesList.innerHTML = '';
-  const filtered = notes.filter(n => {
-    const s = (n.title + ' ' + (n.text || '')).toLowerCase();
-    return s.includes(filter.toLowerCase());
-  });
-  if (filtered.length === 0) {
-    notesList.innerHTML = '<p class="text-gray-500 italic text-center">No notes found.</p>';
-    return;
-  }
-  filtered.forEach(n => notesList.appendChild(createNoteListItem(n)));
-}
-
-function showNotePanel(show) {
-  if (show) {
-    emptyView.classList.add('hidden');
-    noteView.classList.remove('hidden');
-  } else {
-    emptyView.classList.remove('hidden');
-    noteView.classList.add('hidden');
-  }
-}
-
-/* Display mode render */
-function renderSelectedNote() {
-  const note = notes.find(n => n.id === selectedNoteId);
-  if (!note) { showNotePanel(false); return; }
-  showNotePanel(true);
-  displayMode.classList.remove('hidden');
-  editMode.classList.add('hidden');
-  isEditing = false;
-  // populate display
-  viewTitle.textContent = note.title || 'Untitled';
-  viewDate.textContent = formatDate(note.createdAt || note.updatedAt || new Date());
-  viewText.textContent = note.text || '';
-
-  // links
-  viewLinks.innerHTML = '';
-  const links = note.links || [];
-  if (links.length) {
-    const heading = document.createElement('h4');
-    heading.className = 'font-semibold text-gray-700';
-    heading.textContent = 'Links';
-    viewLinks.appendChild(heading);
-    links.forEach(l => {
-      const p = document.createElement('p');
-      p.className = 'text-sm';
-      const a = document.createElement('a');
-      a.href = /^https?:\/\//i.test(l) ? l : ('https://' + l);
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.className = 'text-indigo-600 hover:text-indigo-800 underline';
-      a.textContent = l;
-      p.appendChild(a);
-      viewLinks.appendChild(p);
-    });
-  }
-
-  // files
-  viewFiles.innerHTML = '';
-  const files = note.files || [];
-  if (files.length) {
-    const heading = document.createElement('h4');
-    heading.className = 'font-semibold text-gray-700';
-    heading.textContent = 'Files';
-    viewFiles.appendChild(heading);
-    files.forEach(f => {
-      const p = document.createElement('p');
-      p.className = 'text-sm';
-      const a = document.createElement('a');
-      a.href = f.url;
-      a.textContent = f.name;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.className = 'text-indigo-600 hover:text-indigo-800 underline';
-      p.appendChild(a);
-      viewFiles.appendChild(p);
-    });
-  }
-}
-
-/* ========== Selecting / Snapshot ========== */
-
-function selectNote(id) {
-  selectedNoteId = id;
-  renderSelectedNote();
-}
-
-/* ========== Firestore / Storage logic ========== */
-
-function listenToNotesForUser(uid) {
-  // unsubscribe previous
-  if (notesSnapshotUnsub) notesSnapshotUnsub();
-
-  const notesRef = collection(db, 'users', uid, 'daily_notes');
-  const q = query(notesRef, orderBy('createdAt', 'desc'));
-  notesSnapshotUnsub = onSnapshot(q, snapshot => {
-    notes = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderNotesList(searchInput.value || '');
-    // If selected note still exists, refresh display
-    if (selectedNoteId) {
-      const exists = notes.some(n => n.id === selectedNoteId);
-      if (!exists) {
-        selectedNoteId = null;
-        showNotePanel(false);
-      } else {
-        renderSelectedNote();
-      }
-    }
-  }, err => {
-    console.error('Notes listener error:', err);
-    showToast('Failed to load notes (see console)', 4000);
-  });
-}
-
-/* Create a new blank note and open edit mode */
-async function createNewNote() {
-  if (!currentUser) return;
-  const notesRef = collection(db, 'users', currentUser.uid, 'daily_notes');
-  // create a basic doc with timestamps so we have an id for uploads
-  const newDocRef = doc(notesRef); // create random id reference
-  const id = newDocRef.id;
-  const now = new Date();
-  await setDoc(newDocRef, {
-    title: 'New note',
-    text: '',
-    links: [],
-    files: [],
-    createdAt: now,
-    updatedAt: now
-  });
-  // select and go to edit
-  selectedNoteId = id;
-  // Small delay to allow snapshot to reflect; will be handled by listener too
-  setTimeout(() => enterEditMode(), 200);
-}
-
-/* Enter edit mode for selectedNoteId */
-function enterEditMode() {
-  if (!selectedNoteId) return;
-  const note = notes.find(n => n.id === selectedNoteId);
-  if (!note) return;
-  // staged copies
-  stagedLinks = Array.isArray(note.links) ? [...note.links] : [];
-  stagedExistingFiles = Array.isArray(note.files) ? [...note.files] : [];
-  stagedFilesToUpload = [];
-
-  // populate edit UI
-  editTitle.value = note.title || '';
-  editText.value = note.text || '';
-  renderLinksList();
-  renderFilesList();
-
-  // Show edit mode
-  displayMode.classList.add('hidden');
-  editMode.classList.remove('hidden');
-  isEditing = true;
-}
-
-/* Render staged links as removable chips */
-function renderLinksList() {
-  linksList.innerHTML = '';
-  if (stagedLinks.length === 0) {
-    linksList.innerHTML = '<p class="text-sm text-gray-500 italic">No links added yet.</p>';
-    return;
-  }
-  stagedLinks.forEach((l, idx) => {
-    const div = document.createElement('div');
-    div.className = 'flex items-center justify-between gap-2 bg-gray-50 border p-2 rounded-md';
-    const a = document.createElement('a');
-    a.href = /^https?:\/\//i.test(l) ? l : ('https://' + l);
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    a.textContent = l;
-    a.className = 'text-indigo-600 hover:underline truncate';
-    const rm = document.createElement('button');
-    rm.className = 'text-red-500 px-2';
-    rm.textContent = 'Remove';
-    rm.onclick = () => {
-      stagedLinks.splice(idx, 1);
-      renderLinksList();
-    };
-    div.appendChild(a);
-    div.appendChild(rm);
-    linksList.appendChild(div);
-  });
-}
-
-/* Render staged files (existing + newly selected) */
-function renderFilesList() {
-  filesList.innerHTML = '';
-  // existing files
-  if (stagedExistingFiles.length) {
-    const heading = document.createElement('div');
-    heading.className = 'text-sm font-semibold mb-1';
-    heading.textContent = 'Existing files';
-    filesList.appendChild(heading);
-    stagedExistingFiles.forEach((f, idx) => {
-      const row = document.createElement('div');
-      row.className = 'flex items-center justify-between gap-2 p-2 bg-gray-50 rounded-md';
-      const left = document.createElement('div'); left.className = 'truncate';
-      const a = document.createElement('a');
-      a.href = f.url; a.textContent = f.name; a.target = '_blank'; a.rel = 'noopener noreferrer';
-      a.className = 'text-indigo-600 hover:underline';
-      left.appendChild(a);
-      const rm = document.createElement('button');
-      rm.className = 'text-red-500 px-2';
-      rm.textContent = 'Remove';
-      rm.onclick = () => {
-        // Remove existing file (and schedule deletion from storage)
-        // We'll delete it immediately from Storage when user saves or we can delete immediately.
-        // Here we remove from stagedExistingFiles and mark to delete on save
-        stagedExistingFiles.splice(idx, 1);
-        renderFilesList();
-      };
-      row.appendChild(left);
-      row.appendChild(rm);
-      filesList.appendChild(row);
-    });
-  }
-
-  // new files to upload
-  if (stagedFilesToUpload.length) {
-    const heading = document.createElement('div');
-    heading.className = 'text-sm font-semibold mt-3 mb-1';
-    heading.textContent = 'New files to upload';
-    filesList.appendChild(heading);
-    stagedFilesToUpload.forEach((f, idx) => {
-      const row = document.createElement('div');
-      row.className = 'flex items-center justify-between gap-2 p-2 bg-gray-50 rounded-md';
-      const left = document.createElement('div'); left.className = 'truncate';
-      left.textContent = `${f.name} (${Math.round(f.size/1024)} KB)`;
-      const rm = document.createElement('button');
-      rm.className = 'text-red-500 px-2';
-      rm.textContent = 'Remove';
-      rm.onclick = () => {
-        stagedFilesToUpload.splice(idx, 1);
-        renderFilesList();
-      };
-      row.appendChild(left);
-      row.appendChild(rm);
-      filesList.appendChild(row);
-    });
-  }
-}
-
-/* Upload a single file to Storage with path users/{uid}/daily_notes/{noteId}/{filename} */
-async function uploadSingleFile(file, uid, noteId) {
-  const path = `users/${uid}/daily_notes/${noteId}/${file.name.replace(/\s+/g,'_')}`;
-  const storageRef = ref(storage, path);
-  await uploadBytes(storageRef, file);
-  const url = await getDownloadURL(storageRef);
-  return { name: file.name, url };
-}
-
-/* Save edits (append uploaded files to existing files, update links/title/text) */
-async function saveEdits() {
-  if (!currentUser || !selectedNoteId) return showToast('No user or note selected');
-
-  saveBtn.disabled = true;
-  saveBtn.textContent = 'Saving...';
-  try {
-    const noteRef = doc(db, 'users', currentUser.uid, 'daily_notes', selectedNoteId);
-    // 1. Upload new files (if any)
-    const uploadedObjects = [];
-    for (const file of stagedFilesToUpload) {
-      if (file.size > MAX_FILE_BYTES) {
-        throw new Error(`File ${file.name} exceeds ${MAX_FILE_BYTES/(1024*1024)} MB limit`);
-      }
-      const obj = await uploadSingleFile(file, currentUser.uid, selectedNoteId);
-      uploadedObjects.push(obj);
-    }
-
-    // 2. The final file list is stagedExistingFiles + uploadedObjects
-    const finalFiles = [...stagedExistingFiles, ...uploadedObjects];
-
-    // 3. Normalize links (no need to force https in storage; display keeps original)
-    const finalLinks = stagedLinks.map(l => l.trim()).filter(Boolean);
-
-    // 4. Update Firestore doc
-    await updateDoc(noteRef, {
-      title: editTitle.value.trim(),
-      text: editText.value,
-      links: finalLinks,
-      files: finalFiles,
-      updatedAt: new Date()
-    });
-
-    // reset staged
-    stagedFilesToUpload = [];
-    showToast('Saved');
-    // leave edit mode
-    isEditing = false;
-    // display mode render will update from listener
-    editMode.classList.add('hidden');
-    displayMode.classList.remove('hidden');
-  } catch (err) {
-    console.error('Save error', err);
-    showToast('Save failed: ' + (err.message || err), 5000);
-  } finally {
-    saveBtn.disabled = false;
-    saveBtn.textContent = 'Save';
-  }
-}
-
-/* Delete note and its files from Storage */
-async function deleteCurrentNote() {
-  if (!currentUser || !selectedNoteId) return;
-  if (!confirm('Delete this note and its files? This cannot be undone.')) return;
-  try {
-    const noteRef = doc(db, 'users', currentUser.uid, 'daily_notes', selectedNoteId);
-    // fetch doc to get file list
-    const snapshot = await noteRef.get ? await noteRef.get() : null;
-    // Because using modular SDK, getDoc preferred
-    // But to avoid importing getDoc repeatedly, do:
-    // (we'll import getDoc at top if needed). Use getDoc now:
-    const { getDoc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-    const docSnap = await getDoc(noteRef);
-    const data = docSnap.data();
-    const files = data?.files || [];
-    // delete each file in storage
-    for (const f of files) {
-      const path = `users/${currentUser.uid}/daily_notes/${selectedNoteId}/${f.name.replace(/\s+/g,'_')}`;
-      try {
-        const fileRef = ref(storage, path);
-        await deleteObject(fileRef);
-      } catch (e) {
-        console.warn('Could not delete file from storage', e);
-      }
-    }
-    // delete firestore doc
-    await deleteDoc(noteRef);
-    selectedNoteId = null;
-    showToast('Note deleted');
-  } catch (err) {
-    console.error('Delete error', err);
-    showToast('Delete failed: ' + (err.message || ''), 5000);
-  }
-}
-
-/* ========== Event wiring ========== */
-
-newNoteBtn.onclick = () => createNewNote();
-signoutBtn.onclick = () => signOut(auth);
-
-searchInput.oninput = (e) => renderNotesList(e.target.value);
-
-// add link action in edit mode
-addLinkBtn.onclick = () => {
-  const v = (linkInput.value || '').trim();
-  if (!v) return;
-  stagedLinks.push(v);
-  linkInput.value = '';
-  renderLinksList();
-};
-
-// file input change handler
-fileInput.onchange = (e) => {
-  const files = Array.from(e.target.files || []);
-  for (const f of files) {
-    if (f.size > MAX_FILE_BYTES) {
-      showToast(`File "${f.name}" exceeds 20MB and was not added`, 4000);
-      continue;
-    }
-    stagedFilesToUpload.push(f);
-  }
-  renderFilesList();
-};
-
-// edit / cancel / save / delete
-editBtn.onclick = () => enterEditMode();
-cancelBtn.onclick = () => {
-  // simply return to display mode (staged changes discarded)
-  isEditing = false;
-  editMode.classList.add('hidden');
-  displayMode.classList.remove('hidden');
-};
-saveBtn.onclick = () => saveEdits();
-deleteBtn.onclick = () => deleteCurrentNote();
-
-/* ========== Authentication state & listener start ========== */
-onAuthStateChanged(auth, user => {
-  if (!user) {
-    // not signed in -> redirect to login or show message
-    // If you want automatic anonymous sign-in, implement here.
-    window.location.href = 'index.html';
-    return;
-  }
-  currentUser = user;
-  listenToNotesForUser(user.uid);
+  loadNotes();
 });
 
-/* ========== Utility: initial UI state ========== */
-showNotePanel(false);
-renderNotesList();
+// ---------- MIGRATE OLD NOTES ----------
+async function migrateOldNotes() {
+  const oldRef = collection(db, "artifacts", "OLD_APP_ID", "users", currentUserId, "daily_notes");
+  const oldSnap = await onSnapshot(oldRef, async snapshot => {
+    snapshot.forEach(async docSnap => {
+      const exists = await getDoc(doc(notesRef, docSnap.id));
+      if (!exists.exists()) {
+        // Copy note to new collection
+        await setDoc(doc(notesRef, docSnap.id), docSnap.data());
+      }
+    });
+  });
+}
 
-/* ========== End of module ========== */
+// ---------- LOAD NOTES ----------
+function loadNotes() {
+  onSnapshot(notesRef, snapshot => {
+    notesCache = [];
+    notesList.innerHTML = "";
+    if (snapshot.empty) notesList.innerHTML = `<p class="text-gray-500 text-center mt-4">No notes yet</p>`;
+    snapshot.forEach(docSnap => {
+      const note = { id: docSnap.id, ...docSnap.data() };
+      notesCache.push(note);
+      const div = document.createElement("div");
+      div.className = "note-item";
+      div.textContent = note.title;
+      div.onclick = () => selectNote(note.id);
+      notesList.appendChild(div);
+    });
+  });
+}
+
+// ---------- SELECT NOTE ----------
+function selectNote(noteId) {
+  selectedNoteId = noteId;
+  const note = notesCache.find(n => n.id === noteId);
+  if (!note) return;
+
+  // Highlight selected
+  [...notesList.children].forEach(child => child.classList.remove("selected"));
+  const item = [...notesList.children].find(c => c.textContent === note.title);
+  if (item) item.classList.add("selected");
+
+  // Render preview
+  notePreviewContainer.innerHTML = `
+    <h2 class="text-2xl font-bold mb-4">${note.title}</h2>
+    <p class="mb-3 whitespace-pre-wrap">${note.text}</p>
+    ${note.links?.length ? `<h4 class="font-semibold">Links:</h4>
+      <ul class="list-disc ml-6 mb-3">
+        ${note.links.map(l => `<li><a href="${l}" target="_blank" rel="noopener noreferrer">${l}</a></li>`).join("")}
+      </ul>` : ""}
+    ${note.files?.length ? `<h4 class="font-semibold">Files:</h4>
+      <ul class="list-disc ml-6 mb-3">
+        ${note.files.map(f => `<li><a href="${f.url}" target="_blank" rel="noopener noreferrer">${f.name}</a></li>`).join("")}
+      </ul>` : ""}
+  `;
+}
+
+// ---------- NEW NOTE MODAL ----------
+newNoteBtn.onclick = () => {
+  tempLinks = [];
+  linkList.innerHTML = "";
+  noteTitleInput.value = "";
+  noteTextInput.value = "";
+  noteFilesInput.value = "";
+  newNoteModal.classList.remove("hidden");
+};
+
+cancelNoteBtn.onclick = () => newNoteModal.classList.add("hidden");
+
+addLinkBtn.onclick = () => {
+  const val = noteLinkInput.value.trim();
+  if (!val) return;
+  const url = val.startsWith("http") ? val : `https://${val}`;
+  tempLinks.push(url);
+  renderLinkList();
+  noteLinkInput.value = "";
+};
+
+function renderLinkList() {
+  linkList.innerHTML = "";
+  tempLinks.forEach((link, idx) => {
+    const div = document.createElement("div");
+    div.className = "link-item";
+    div.innerHTML = `
+      <span class="text-indigo-600 underline">${link}</span>
+      <button class="text-red-500 font-bold">&times;</button>
+    `;
+    div.querySelector("button").onclick = () => {
+      tempLinks.splice(idx, 1);
+      renderLinkList();
+    };
+    linkList.appendChild(div);
+  });
+}
+
+// ---------- SAVE NOTE ----------
+saveNoteBtn.onclick = async () => {
+  const title = noteTitleInput.value.trim();
+  const text = noteTextInput.value.trim();
+  const files = Array.from(noteFilesInput.files);
+
+  if (!title || !text) return alert("Please enter title and text.");
+
+  // Check file size
+  for (const file of files) {
+    if (file.size > MAX_FILE_SIZE) {
+      return alert(`File ${file.name} exceeds 20MB limit.`);
+    }
+  }
+
+  const noteId = doc(notesRef).id;
+  let uploadedFiles = [];
+
+  if (files.length > 0) {
+    uploadedFiles = await Promise.all(files.map(async file => {
+      const fileRef = ref(storage, `users/${currentUserId}/daily_notes/${noteId}/${file.name}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      return { name: file.name, url };
+    }));
+  }
+
+  await setDoc(doc(notesRef, noteId), {
+    title,
+    text,
+    links: tempLinks,
+    files: uploadedFiles,
+    createdAt: new Date()
+  });
+
+  newNoteModal.classList.add("hidden");
+};
+
 </script>
 </body>
 </html>
