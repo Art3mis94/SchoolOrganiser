@@ -30,7 +30,7 @@
 <div class="container max-w-4xl mx-auto p-8 bg-white rounded-3xl shadow-2xl mt-8">
   <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Daily Notes 📝</h1>
 
-  <!-- Add Note -->
+  <!-- Add Note (Collapsible) -->
   <div class="bg-indigo-50 p-5 rounded-xl mb-6">
     <div id="newNoteHeader" class="flex justify-between items-center cursor-pointer text-indigo-800 hover:text-indigo-900 transition">
       <h2 class="text-xl font-bold">Create a New Note</h2>
@@ -40,7 +40,7 @@
       <input id="noteTitle" type="text" placeholder="Note Title..." class="w-full p-3 border rounded-lg mb-3">
       <textarea id="noteText" placeholder="Write your note..." class="w-full p-3 border rounded-lg mb-3" rows="4"></textarea>
 
-      <label class="font-semibold block mb-1 text-gray-700">Attach Files:</label>
+      <label class="font-semibold block mb-1 text-gray-700">Attach Files (external, not uploaded):</label>
       <input id="noteFiles" type="file" multiple class="w-full p-2 bg-white border rounded-lg mb-4">
 
       <label class="font-semibold block mb-1 text-gray-700">Add Links (optional):</label>
@@ -61,7 +61,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, doc, addDoc, deleteDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Firebase config
 const firebaseConfig = {
@@ -78,7 +78,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 let NOTES_REF = null;
-let localFilesMap = {}; // Map noteId => File[] (local files)
+let currentFilesMap = {}; // store external files per note in-memory
 
 // Collapse handling
 const newNoteHeader = document.getElementById("newNoteHeader");
@@ -94,15 +94,13 @@ newNoteHeader.addEventListener('click', () => {
 const notesContainer = document.getElementById("notesContainer");
 const saveNoteBtn = document.getElementById("saveNoteBtn");
 
-// Sign out
-document.getElementById('signout-btn').addEventListener('click', () => signOut(auth));
-
 // Render a single note
 function renderNote(docId, note) {
   const div = document.createElement("div");
   div.className = "note-box";
 
-  const files = localFilesMap[docId] || [];
+  // files for this note
+  const files = currentFilesMap[docId] || note.files || [];
 
   div.innerHTML = `
     <div class="flex justify-between items-center cursor-pointer collapsible">
@@ -113,11 +111,11 @@ function renderNote(docId, note) {
       <p class="mb-3 whitespace-pre-wrap">${note.text}</p>
       ${note.links?.length ? `<h4 class="font-semibold text-gray-700">Links:</h4>
         <ul class="list-disc ml-6 mb-3 text-sm">
-          ${note.links.map(l => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${l}" target="_blank">${l}</a></li>`).join('')}
+          ${note.links.map(l => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${l}" target="_blank" rel="noopener noreferrer">${l}</a></li>`).join('')}
         </ul>` : ''}
       ${files.length ? `<h4 class="font-semibold text-gray-700">Files:</h4>
         <ul class="list-disc ml-6 mb-3 text-sm">
-          ${files.map(f => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="#">${f.name}</a></li>`).join('')}
+          ${files.map(f => `<li><a class="text-indigo-600 hover:text-indigo-800 underline transition" href="${f.url}" target="_blank" rel="noopener noreferrer">${f.name}</a></li>`).join('')}
         </ul>` : ''}
       <div class="flex gap-2 mt-4">
         <button class="bg-yellow-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600 transition" onclick="editNote('${docId}')">Edit</button>
@@ -126,7 +124,7 @@ function renderNote(docId, note) {
     </div>
   `;
 
-  // Collapsible
+  // collapsible toggle
   div.querySelector(".collapsible").addEventListener("click", () => {
     const content = div.querySelector(".content");
     const icon = div.querySelector(".collapsible i");
@@ -135,75 +133,72 @@ function renderNote(docId, note) {
     icon.classList.toggle('fa-chevron-down');
   });
 
-  // Local file click
-  files.forEach((f, idx) => {
-    div.querySelectorAll("ul li a")[idx].onclick = (e) => {
-      e.preventDefault();
-      const url = URL.createObjectURL(f);
-      window.open(url, "_blank");
-    };
-  });
-
   return div;
+}
+
+// Edit note
+window.editNote = async (id) => {
+  if (!NOTES_REF) return;
+  const docRef = doc(NOTES_REF, id);
+  const docSnap = await docRef.get();
+  // For simplicity, prompt edit text
+  const newTitle = prompt("Edit Note Title:", docSnap.data().title);
+  const newText = prompt("Edit Note Text:", docSnap.data().text);
+  if (newTitle !== null && newText !== null) {
+    await updateDoc(docRef, { title: newTitle, text: newText });
+  }
 }
 
 // Delete note
 window.deleteNote = async (id) => {
   if (!NOTES_REF) return;
-  delete localFilesMap[id]; // Remove local files
-  await deleteDoc(doc(NOTES_REF, id));
-};
-
-// Edit note
-window.editNote = (id) => {
-  const noteDoc = notesData[id];
-  const files = localFilesMap[id] || [];
-  document.getElementById("noteTitle").value = noteDoc.title;
-  document.getElementById("noteText").value = noteDoc.text;
-  document.getElementById("noteLinks").value = noteDoc.links?.join(",") || "";
-  document.getElementById("noteFiles").files = null; // Reset file input
-  editingNoteId = id;
-  newNoteContent.classList.remove('hidden');
-  toggleIcon.classList.replace('fa-chevron-down','fa-chevron-up');
-};
+  if (confirm("Delete this note?")) {
+    await deleteDoc(doc(NOTES_REF, id));
+    delete currentFilesMap[id];
+  }
+}
 
 // Save Note
-let editingNoteId = null;
-let notesData = {}; // Map docId => note object
 saveNoteBtn.onclick = async () => {
   const title = document.getElementById("noteTitle").value.trim();
   const text = document.getElementById("noteText").value.trim();
   const linkString = document.getElementById("noteLinks").value.trim();
-  const filesInput = document.getElementById("noteFiles").files;
+  const filesInput = document.getElementById("noteFiles");
+  const files = Array.from(filesInput.files);
 
   if (!title || !text) return alert("Please enter title and text.");
+
   saveNoteBtn.disabled = true;
   saveNoteBtn.textContent = 'Processing...';
 
-  const links = linkString ? linkString.split(",").map(l => l.trim()).filter(l => l) : [];
-  const noteObj = { title, text, links };
+  // Prepare external file objects
+  const fileObjects = files.map(f => ({
+    name: f.name,
+    url: URL.createObjectURL(f) // external, in-memory
+  }));
 
-  if (editingNoteId) {
-    // Update existing note
-    await updateDoc(doc(NOTES_REF, editingNoteId), noteObj);
-    if (filesInput.length) localFilesMap[editingNoteId] = Array.from(filesInput);
-    editingNoteId = null;
-  } else {
-    // Add new note
-    const docRef = await addDoc(NOTES_REF, noteObj);
-    if (filesInput.length) localFilesMap[docRef.id] = Array.from(filesInput);
-  }
+  const links = linkString ? linkString.split(",").map(l => l.trim()).filter(l => l) : [];
+
+  const docRef = await addDoc(NOTES_REF, {
+    title,
+    text,
+    links,
+    files: fileObjects.map(f => ({ name: f.name })) // save only names to firebase
+  });
+
+  // Store actual file URLs in memory for external opening
+  currentFilesMap[docRef.id] = fileObjects;
 
   // Reset form
   document.getElementById("noteTitle").value = "";
   document.getElementById("noteText").value = "";
-  document.getElementById("noteLinks").value = "";
   document.getElementById("noteFiles").value = "";
+  document.getElementById("noteLinks").value = "";
 
   saveNoteBtn.disabled = false;
   saveNoteBtn.textContent = "Save Note";
   newNoteContent.classList.add('hidden');
-  toggleIcon.classList.replace('fa-chevron-up','fa-chevron-down');
+  toggleIcon.classList.replace('fa-chevron-up', 'fa-chevron-down');
 };
 
 // Auth + Load Notes
@@ -214,17 +209,16 @@ onAuthStateChanged(auth, (user) => {
 
   onSnapshot(NOTES_REF, snapshot => {
     notesContainer.innerHTML = "";
-    notesData = {};
-    if (snapshot.empty) {
-      notesContainer.innerHTML = `<p class="text-gray-500 italic text-center">No notes yet.</p>`;
-      return;
-    }
+    if (snapshot.empty) notesContainer.innerHTML = `<p class="text-gray-500 italic text-center">No notes yet.</p>`;
     snapshot.forEach(docSnap => {
-      notesData[docSnap.id] = docSnap.data();
       notesContainer.appendChild(renderNote(docSnap.id, docSnap.data()));
     });
   });
 });
+
+// Sign out button
+document.getElementById("signout-btn").onclick = () => signOut(auth);
+
 </script>
 </body>
 </html>
