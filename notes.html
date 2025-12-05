@@ -7,78 +7,67 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-.note-box { @apply bg-white p-4 rounded-xl shadow-md border border-gray-200 flex justify-between items-center; cursor: pointer; }
-.note-box:hover { @apply bg-indigo-50; }
-.nav-active { @apply bg-white text-indigo-700 shadow-inner; }
+  body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+  .nav-active { @apply bg-white text-indigo-700 shadow-inner; }
+  .note-box { @apply bg-white p-4 rounded-xl shadow-md border border-gray-200; cursor:pointer; }
+  .sidebar { width: 300px; max-width: 100%; overflow-y:auto; }
+  .content-area { flex:1; padding:1rem; }
+  .link-item { display:flex; gap:0.5rem; margin-bottom:0.5rem; }
+  .link-item button { flex-shrink:0; }
+  .hidden { display:none; }
 </style>
 </head>
-<body>
+<body class="flex h-screen">
 
-<!-- Navbar -->
-<nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-4xl mx-auto flex flex-wrap justify-center gap-4">
-    <a href="dashboard.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-    <a href="curriculum_topics.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Topics 🧠</a>
-    <a href="notes.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Notes 📝</a>
-    <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
-    <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-    <button id="signout-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
-  </div>
-</nav>
+<!-- Sidebar -->
+<div class="sidebar bg-indigo-50 p-4">
+  <h2 class="text-xl font-bold mb-4">Notes 📝</h2>
+  <div id="notesList" class="space-y-2 overflow-y-auto max-h-[calc(100vh-100px)]"></div>
+  <button id="newNoteBtn" class="mt-4 w-full bg-indigo-600 text-white p-2 rounded-lg hover:bg-indigo-700">+ New Note</button>
+</div>
 
-<div class="container max-w-6xl mx-auto p-6 mt-8 flex gap-6">
+<!-- Content Area -->
+<div class="content-area bg-white rounded-l-3xl shadow-xl flex flex-col">
+  <div id="noteEditor" class="p-4 hidden flex flex-col gap-2">
+    <input id="noteTitle" placeholder="Title" class="p-2 border rounded-lg w-full" />
+    <textarea id="noteText" placeholder="Write your note..." class="p-2 border rounded-lg w-full h-32"></textarea>
 
-  <!-- Notes Sidebar -->
-  <div class="w-1/3 space-y-4">
-    <button id="addNoteBtn" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-bold hover:bg-indigo-700 transition">Add New Note</button>
-    <div id="notesList" class="space-y-3"></div>
-  </div>
-
-  <!-- Note Editor -->
-  <div class="w-2/3 bg-white p-6 rounded-3xl shadow-2xl hidden" id="noteEditorContainer">
-    <h2 class="text-2xl font-bold mb-4" id="editorTitle">New Note</h2>
-    <input id="noteTitle" type="text" placeholder="Note Title..." class="w-full p-3 border rounded-lg mb-3">
-    <textarea id="noteText" placeholder="Write your note..." class="w-full p-3 border rounded-lg mb-3" rows="6"></textarea>
-
-    <div class="mb-3">
-      <h3 class="font-semibold mb-1">Links</h3>
-      <div class="flex gap-2 mb-2">
-        <input id="linkInput" type="text" placeholder="Enter link..." class="flex-1 p-2 border rounded-lg">
-        <button id="addLinkBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Add</button>
-      </div>
-      <ul id="linksList" class="list-disc ml-6 text-sm"></ul>
+    <div>
+      <label class="font-semibold">Links:</label>
+      <div id="linksContainer" class="mb-2"></div>
+      <input id="linkInput" placeholder="Enter link" class="p-2 border rounded-lg w-full" />
+      <button id="addLinkBtn" class="mt-1 bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600">Add Link</button>
     </div>
 
-    <div class="mb-3">
-      <h3 class="font-semibold mb-1">Files (Max 20MB each)</h3>
-      <input id="noteFiles" type="file" multiple class="w-full p-2 bg-white border rounded-lg mb-2">
-      <ul id="filesList" class="list-disc ml-6 text-sm"></ul>
+    <div>
+      <label class="font-semibold">Attach Files (Max 20MB each)</label>
+      <input type="file" id="fileInput" multiple class="w-full mt-1" />
+      <div id="fileList" class="mt-2"></div>
     </div>
 
-    <div class="flex gap-3 mt-4">
-      <button id="saveNoteBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700">Save Note</button>
-      <button id="deleteNoteBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700">Delete Note</button>
-      <button id="cancelEditBtn" class="bg-gray-300 px-4 py-2 rounded-lg hover:bg-gray-400">Cancel</button>
+    <div class="flex gap-2 mt-2">
+      <button id="saveNoteBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Save</button>
+      <button id="cancelNoteBtn" class="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500">Cancel</button>
     </div>
+
+    <div id="uploadStatus" class="mt-2 text-sm text-gray-700"></div>
   </div>
-
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-// ===== Firebase Config =====
+// --- CONFIG ---
 const firebaseConfig = {
-  apiKey: "AIzaSyChZSrBTGv0pjjSG-3XVOEI4eTXCQyk9cw",
-  authDomain: "school-organiser-5f512.firebaseapp.com",
-  projectId: "school-organiser-5f512",
-  storageBucket: "school-organiser-5f512.appspot.com",
-  messagingSenderId: "567803400438",
-  appId: "1:567803400438:web:56ea2010e2d2a54fcc5cd7"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -86,182 +75,171 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-let currentUser = null;
+// --- DOM ---
+const notesList = document.getElementById('notesList');
+const newNoteBtn = document.getElementById('newNoteBtn');
+const noteEditor = document.getElementById('noteEditor');
+const noteTitle = document.getElementById('noteTitle');
+const noteText = document.getElementById('noteText');
+const saveNoteBtn = document.getElementById('saveNoteBtn');
+const cancelNoteBtn = document.getElementById('cancelNoteBtn');
+const linkInput = document.getElementById('linkInput');
+const addLinkBtn = document.getElementById('addLinkBtn');
+const linksContainer = document.getElementById('linksContainer');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const uploadStatus = document.getElementById('uploadStatus');
+
+let currentUserId = null;
 let editingNoteId = null;
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
+let linksArray = [];
+let filesArray = [];
+let uploadTasks = [];
 
-const notesList = document.getElementById("notesList");
-const addNoteBtn = document.getElementById("addNoteBtn");
-const noteEditorContainer = document.getElementById("noteEditorContainer");
-const noteTitle = document.getElementById("noteTitle");
-const noteText = document.getElementById("noteText");
-const linkInput = document.getElementById("linkInput");
-const addLinkBtn = document.getElementById("addLinkBtn");
-const linksList = document.getElementById("linksList");
-const noteFiles = document.getElementById("noteFiles");
-const filesList = document.getElementById("filesList");
-const saveNoteBtn = document.getElementById("saveNoteBtn");
-const cancelEditBtn = document.getElementById("cancelEditBtn");
-const deleteNoteBtn = document.getElementById("deleteNoteBtn");
-const signoutBtn = document.getElementById("signout-btn");
+// --- Helpers ---
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
-let currentLinks = [];
-let currentFiles = [];
-
-// ===== Auth =====
-onAuthStateChanged(auth, user => {
-  if (!user) return window.location.href="index.html";
-  currentUser = user;
-  listenNotes();
-});
-
-signoutBtn.onclick = () => signOut(auth);
-
-// ===== Notes Collection =====
-function notesRef() {
-  return collection(db, "users", currentUser.uid, "daily_notes");
-}
-
-// ===== Listen Notes =====
-function listenNotes() {
-  onSnapshot(notesRef(), snapshot => {
-    notesList.innerHTML = "";
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      const noteDiv = document.createElement("div");
-      noteDiv.className = "note-box";
-      noteDiv.innerHTML = `<span>${data.title}</span> <i class="fas fa-edit text-gray-500"></i>`;
-      noteDiv.onclick = () => openNote(docSnap.id, data);
-      notesList.appendChild(noteDiv);
-    });
-  });
-}
-
-// ===== Open Note =====
-function openNote(id, data) {
-  editingNoteId = id;
-  noteEditorContainer.classList.remove("hidden");
-  noteTitle.value = data.title;
-  noteText.value = data.text;
-  currentLinks = data.links || [];
-  currentFiles = data.files || [];
-  renderLinks();
-  renderFiles();
-}
-
-// ===== Render Links & Files =====
 function renderLinks() {
-  linksList.innerHTML = "";
-  currentLinks.forEach((l,i)=>{
-    const li=document.createElement("li");
-    li.innerHTML=`<a href="${l}" target="_blank">${l}</a> <span class="text-red-600 cursor-pointer" onclick="removeLink(${i})">[x]</span>`;
-    linksList.appendChild(li);
+  linksContainer.innerHTML = '';
+  linksArray.forEach((link, idx)=>{
+    const div = document.createElement('div');
+    div.className='link-item';
+    div.innerHTML=`<a href="${link}" target="_blank" class="text-indigo-600 underline">${link}</a>
+                   <button data-idx="${idx}" class="bg-red-500 text-white px-1 rounded">X</button>`;
+    div.querySelector('button').onclick = ()=>{ linksArray.splice(idx,1); renderLinks(); };
+    linksContainer.appendChild(div);
   });
 }
-window.removeLink=(i)=>{ currentLinks.splice(i,1); renderLinks(); }
 
 function renderFiles() {
-  filesList.innerHTML = "";
-  currentFiles.forEach((f,i)=>{
-    const li=document.createElement("li");
-    li.innerHTML=`<a href="${f.url}" target="_blank">${f.name}</a> <span class="text-red-600 cursor-pointer" onclick="removeFile(${i})">[x]</span>`;
-    filesList.appendChild(li);
+  fileList.innerHTML='';
+  filesArray.forEach((f,idx)=>{
+    const div = document.createElement('div');
+    div.textContent = f.name;
+    const btn = document.createElement('button');
+    btn.textContent='Remove';
+    btn.className='ml-2 text-sm bg-red-500 text-white px-1 rounded';
+    btn.onclick=()=>{ filesArray.splice(idx,1); renderFiles(); };
+    div.appendChild(btn);
+    fileList.appendChild(div);
   });
 }
-window.removeFile=(i)=>{ currentFiles.splice(i,1); renderFiles(); }
 
-// ===== Add Link =====
-addLinkBtn.onclick = ()=>{
-  const val=linkInput.value.trim();
-  if(!val) return;
-  const url=val.startsWith("http")?val:"https://"+val;
-  currentLinks.push(url);
-  renderLinks();
-  linkInput.value="";
+// --- Firebase Auth ---
+onAuthStateChanged(auth,user=>{
+  if(!user) window.location.href='index.html';
+  currentUserId=user.uid;
+  loadNotes();
+});
+
+// --- Notes ---
+async function loadNotes(){
+  notesList.innerHTML='';
+  const notesCol = collection(db,'users',currentUserId,'daily_notes');
+  const snapshot = await getDocs(notesCol);
+  snapshot.forEach(docSnap=>{
+    const note=docSnap.data();
+    const id=docSnap.id;
+    const div=document.createElement('div');
+    div.className='note-box';
+    div.textContent=note.title;
+    div.onclick=()=>editNote(id,note);
+    notesList.appendChild(div);
+  });
 }
 
-// ===== Add New Note =====
-addNoteBtn.onclick = ()=>{
-  editingNoteId=null;
-  noteEditorContainer.classList.remove("hidden");
-  noteTitle.value="";
-  noteText.value="";
-  currentLinks=[];
-  currentFiles=[];
-  renderLinks();
-  renderFiles();
-}
-
-// ===== Cancel =====
-cancelEditBtn.onclick = ()=>{
-  noteEditorContainer.classList.add("hidden");
-  editingNoteId=null;
-}
-
-// ===== Save Note =====
-saveNoteBtn.onclick=async()=>{
-  if(!noteTitle.value.trim()||!noteText.value.trim()) return alert("Title & text required");
-  saveNoteBtn.disabled=true;
-
-  const filesArray=Array.from(noteFiles.files);
-  const uploadedFiles=[];
-  for(const file of filesArray){
-    if(file.size>MAX_FILE_SIZE){
-      alert(`${file.name} exceeds 20MB`);
-      saveNoteBtn.disabled=false;
-      return;
-    }
-    const noteIdTemp = editingNoteId || doc(notesRef()).id;
-    const fileRef = ref(storage, `users/${currentUser.uid}/daily_notes/${noteIdTemp}/${file.name}`);
-    await uploadBytes(fileRef, file);
-    const url = await getDownloadURL(fileRef);
-    uploadedFiles.push({name:file.name,url});
-  }
-
-  const noteData={
-    title: noteTitle.value.trim(),
-    text: noteText.value.trim(),
-    links: currentLinks,
-    files:[...currentFiles,...uploadedFiles],
-    updatedAt:new Date()
-  };
-
-  if(editingNoteId){
-    const noteDoc=doc(notesRef(),editingNoteId);
-    await updateDoc(noteDoc,noteData);
+function showEditor(note=null){
+  noteEditor.classList.remove('hidden');
+  if(note){
+    editingNoteId=note.id;
+    noteTitle.value=note.title;
+    noteText.value=note.text;
+    linksArray=note.links || [];
+    filesArray=[]; // files must reattach
   } else {
-    await addDoc(notesRef(),noteData);
+    editingNoteId=null;
+    noteTitle.value='';
+    noteText.value='';
+    linksArray=[];
+    filesArray=[];
   }
-
-  noteEditorContainer.classList.add("hidden");
-  saveNoteBtn.disabled=false;
-  noteTitle.value="";
-  noteText.value="";
-  noteFiles.value="";
-  currentLinks=[];
-  currentFiles=[];
   renderLinks();
   renderFiles();
 }
 
-// ===== Delete Note =====
-deleteNoteBtn.onclick=async()=>{
-  if(!editingNoteId) return;
-  if(!confirm("Delete this note and all attached files?")) return;
-  const noteDocRef = doc(notesRef(), editingNoteId);
-  const docSnap = await getDoc(noteDocRef);
-  if(docSnap.exists()){
-    const data = docSnap.data();
-    for(const f of data.files||[]){
-      const fileRef = ref(storage, `users/${currentUser.uid}/daily_notes/${editingNoteId}/${f.name}`);
-      await deleteObject(fileRef).catch(()=>{});
-    }
-    await deleteDoc(noteDocRef);
-    noteEditorContainer.classList.add("hidden");
-    editingNoteId=null;
+newNoteBtn.onclick=()=>showEditor();
+cancelNoteBtn.onclick=()=>noteEditor.classList.add('hidden');
+addLinkBtn.onclick=()=>{
+  if(linkInput.value.trim()){ linksArray.push(linkInput.value.trim()); linkInput.value=''; renderLinks();}
+};
+
+// Handle file selection
+fileInput.onchange=(e)=>{
+  for(const f of e.target.files){
+    if(f.size>MAX_FILE_SIZE){ alert(f.name+' too big'); continue; }
+    filesArray.push(f);
   }
+  renderFiles();
+};
+
+// Upload file with progress
+function uploadFile(file,noteId){
+  return new Promise((resolve,reject)=>{
+    const fileRef = ref(storage,`users/${currentUserId}/daily_notes/${noteId}/${file.name}`);
+    const task = uploadBytesResumable(fileRef,file);
+    uploadTasks.push(task);
+    task.on('state_changed',
+      snapshot=>uploadStatus.textContent=`Uploading ${file.name}: ${Math.round(snapshot.bytesTransferred/snapshot.totalBytes*100)}%`,
+      err=>reject(err),
+      async ()=>{ const url=await getDownloadURL(task.snapshot.ref); resolve({name:file.name,url}); }
+    );
+  });
 }
 
+// --- Edit Note ---
+function editNote(id,note){
+  note.id=id;
+  showEditor(note);
+}
+
+// --- Delete Note ---
+async function deleteNote(noteId){
+  if(!confirm('Delete this note?')) return;
+  const noteRef = doc(db,'users',currentUserId,'daily_notes',noteId);
+  const noteSnap = await getDocs(collection(db,'users',currentUserId,'daily_notes'));
+  try{ await deleteDoc(noteRef); } catch(e){ console.error(e); }
+  loadNotes();
+}
+
+// --- Save Note ---
+saveNoteBtn.onclick=async()=>{
+  if(!noteTitle.value.trim() || !noteText.value.trim()) return alert('Enter title & text');
+  saveNoteBtn.disabled=true;
+  uploadStatus.textContent='Saving note...';
+
+  const noteRef = editingNoteId ? doc(db,'users',currentUserId,'daily_notes',editingNoteId) : doc(collection(db,'users',currentUserId,'daily_notes'));
+  const noteId = noteRef.id;
+
+  // Upload files
+  let uploadedFiles = [];
+  for(const f of filesArray){
+    try{ uploadedFiles.push(await uploadFile(f,noteId)); }
+    catch(e){ console.error('File upload failed',f.name,e); }
+  }
+
+  await setDoc(noteRef,{
+    title:noteTitle.value,
+    text:noteText.value,
+    links:linksArray,
+    files:uploadedFiles,
+    timestamp:new Date()
+  });
+
+  uploadStatus.textContent='Saved!';
+  saveNoteBtn.disabled=false;
+  noteEditor.classList.add('hidden');
+  loadNotes();
+};
 </script>
 </body>
 </html>
