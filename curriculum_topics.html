@@ -10,9 +10,10 @@
     body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
     .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
     .open { max-height: 5000px; transition: max-height 0.5s ease-in; }
-    .rotate-icon { transform: rotate(180deg); }
-    .year-card { border-radius: 2rem; background: white; border: 1px solid #e5e7eb; margin-bottom: 1.5rem; }
-    .class-card { border-left: 5px solid #10b981; margin-bottom: 1rem; }
+    .rotate-icon { transform: rotate(180deg); transition: 0.3s; }
+    .year-card { border-left: 6px solid #4338ca; }
+    .class-card { border-left: 4px solid #10b981; }
+    .dropzone { border: 2px dashed #4338ca; border-radius: 1rem; padding: 1.5rem; text-align: center; cursor: pointer; background: #f5f3ff; }
   </style>
 </head>
 <body>
@@ -28,25 +29,26 @@
   </div>
 </nav>
 
-<div class="container max-w-5xl mx-auto px-4 mt-10 pb-24">
+<div class="container max-w-5xl mx-auto p-6 mt-6 pb-24">
   <div class="flex justify-between items-end mb-8">
-      <h1 class="text-4xl font-black text-gray-900 uppercase">Curriculum</h1>
-      <button onclick="openModal('yearGroup')" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg">
-          + New Year
-      </button>
+      <h1 class="text-4xl font-black text-indigo-900 uppercase tracking-tighter">Curriculum</h1>
+      <button onclick="openModal('yearGroup')" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg">+ New Year</button>
   </div>
   
-  <div id="yearGroupContainer" class="space-y-4"></div>
+  <div id="yearGroupContainer" class="space-y-6"></div>
 </div>
 
 <div id="universalModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden p-4">
   <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl">
-    <h3 id="modalTitle" class="text-2xl font-black mb-6 uppercase italic">Add Item</h3>
+    <h3 id="modalTitle" class="text-2xl font-black mb-6 uppercase italic text-indigo-700">Add Item</h3>
     <form id="universalForm" class="space-y-4">
       <input type="text" id="mainInput" placeholder="Name" class="w-full p-4 border rounded-2xl outline-none focus:border-indigo-500" required>
       <div id="lessonExtras" class="hidden space-y-4">
-          <textarea id="subInput" placeholder="Objectives" class="w-full p-4 border rounded-2xl"></textarea>
-          <input type="file" id="fileInput" class="text-sm">
+          <textarea id="subInput" placeholder="Learning Outcomes" class="w-full p-4 border rounded-2xl"></textarea>
+          <div class="dropzone" onclick="document.getElementById('fileInput').click()">
+              <p id="fileStatus" class="text-sm font-bold text-indigo-900">Click to upload materials</p>
+              <input type="file" id="fileInput" class="hidden">
+          </div>
       </div>
       <div class="flex gap-2">
         <button type="button" onclick="closeModal()" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold">Cancel</button>
@@ -83,8 +85,7 @@ onAuthStateChanged(auth, user => {
     else { window.location.href = 'index.html'; }
 });
 
-// --- PERFORMANCE FIX: Fetch once instead of constant listening ---
-
+// --- Level 1: Years ---
 async function loadYearGroups() {
     const q = query(collection(db, 'users', currentUser.uid, 'yearGroups'), orderBy('createdAt', 'asc'));
     const snap = await getDocs(q);
@@ -93,92 +94,91 @@ async function loadYearGroups() {
     snap.forEach(d => {
         const yr = {id: d.id, ...d.data()};
         const div = document.createElement('div');
-        div.className = "year-card overflow-hidden";
+        div.className = "bg-white rounded-2xl shadow-sm year-card overflow-hidden";
         div.innerHTML = `
-            <div class="p-6 flex justify-between items-center cursor-pointer" onclick="handleYearToggle('${yr.id}')">
-                <h2 class="text-3xl font-black text-indigo-900 uppercase italic">${yr.name}</h2>
-                <i id="icon-year-${yr.id}" class="fa-solid fa-chevron-down text-indigo-300"></i>
-            </div>
-            <div id="year-${yr.id}" class="collapsible-content">
-                <div class="p-6 bg-gray-50 border-t">
-                    <div class="flex justify-between mb-4">
-                        <span class="text-xs font-bold text-gray-400 uppercase">Classes</span>
-                        <button onclick="openModal('class', '${yr.id}')" class="text-indigo-600 text-xs font-bold">+ Add Class</button>
-                    </div>
-                    <div id="classes-for-${yr.id}" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div class="p-6 flex justify-between items-center cursor-pointer hover:bg-gray-50" onclick="toggleYear('${yr.id}')">
+                <h2 class="text-2xl font-black text-indigo-900 uppercase">${yr.name}</h2>
+                <div class="flex gap-4 items-center">
+                    <button onclick="event.stopPropagation(); openModal('class', '${yr.id}')" class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-lg text-xs font-bold">+ Class</button>
+                    <i id="icon-year-${yr.id}" class="fa-solid fa-chevron-down text-indigo-300"></i>
                 </div>
+            </div>
+            <div id="year-${yr.id}" class="collapsible-content bg-gray-50 border-t">
+                <div id="classes-for-${yr.id}" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>`;
         container.appendChild(div);
     });
 }
 
-window.handleYearToggle = async (id) => {
+window.toggleYear = async (id) => {
     const el = document.getElementById(`year-${id}`);
     const isOpen = el.classList.toggle('open');
     document.getElementById(`icon-year-${id}`).classList.toggle('rotate-icon');
-    if(isOpen) {
+    if(isOpen && document.getElementById(`classes-for-${id}`).innerHTML === '') {
         const q = query(collection(db, 'users', currentUser.uid, 'yearGroups', id, 'classes'), orderBy('createdAt', 'asc'));
         const snap = await getDocs(q);
         const list = document.getElementById(`classes-for-${id}`);
-        list.innerHTML = '';
         snap.forEach(d => {
             const cls = {id: d.id, ...d.data()};
             const cDiv = document.createElement('div');
             cDiv.className = "bg-white p-4 rounded-xl shadow-sm class-card";
             cDiv.innerHTML = `
-                <div class="flex justify-between items-center cursor-pointer" onclick="handleClassToggle('${id}', '${cls.id}')">
+                <div class="flex justify-between items-center cursor-pointer" onclick="toggleClass('${id}', '${cls.id}')">
                     <span class="font-bold text-emerald-800">${cls.name}</span>
                     <button onclick="event.stopPropagation(); openModal('topic', '${id}', '${cls.id}')" class="text-emerald-500 text-[10px] font-bold">+ Topic</button>
                 </div>
-                <div id="class-${cls.id}" class="collapsible-content mt-2 space-y-2"></div>`;
+                <div id="class-${cls.id}" class="collapsible-content mt-3 space-y-3"></div>`;
             list.appendChild(cDiv);
         });
     }
 };
 
-window.handleClassToggle = async (yrId, clsId) => {
+window.toggleClass = async (yrId, clsId) => {
     const el = document.getElementById(`class-${clsId}`);
     const isOpen = el.classList.toggle('open');
-    if(isOpen) {
+    if(isOpen && el.innerHTML === '') {
         const q = query(collection(db, 'users', currentUser.uid, 'yearGroups', yrId, 'classes', clsId, 'topics'), orderBy('createdAt', 'asc'));
         const snap = await getDocs(q);
-        el.innerHTML = '';
         snap.forEach(d => {
             const top = {id: d.id, ...d.data()};
             const tDiv = document.createElement('div');
-            tDiv.className = "p-2 bg-gray-50 rounded-lg border";
+            tDiv.className = "p-3 bg-gray-50 rounded-lg border";
             tDiv.innerHTML = `
-                <div class="flex justify-between items-center cursor-pointer" onclick="handleTopicToggle('${yrId}', '${clsId}', '${top.id}')">
-                    <span class="text-xs font-bold text-gray-600">${top.name}</span>
-                    <button onclick="event.stopPropagation(); openModal('lesson', '${yrId}', '${clsId}', '${top.id}')" class="text-indigo-400 text-[10px]">+ Lesson</button>
+                <div class="flex justify-between items-center cursor-pointer" onclick="toggleTopic('${yrId}', '${clsId}', '${top.id}')">
+                    <span class="text-xs font-bold text-gray-700">${top.name}</span>
+                    <button onclick="event.stopPropagation(); openModal('lesson', '${yrId}', '${clsId}', '${top.id}')" class="text-indigo-500 text-[10px]">+ Lesson</button>
                 </div>
-                <div id="topic-${top.id}" class="collapsible-content space-y-1 mt-2"></div>`;
+                <div id="topic-${top.id}" class="collapsible-content space-y-2 mt-2"></div>`;
             el.appendChild(tDiv);
         });
     }
 };
 
-window.handleTopicToggle = async (yrId, clsId, topId) => {
+window.toggleTopic = async (yrId, clsId, topId) => {
     const el = document.getElementById(`topic-${topId}`);
     const isOpen = el.classList.toggle('open');
-    if(isOpen) {
+    if(isOpen && el.innerHTML === '') {
         const q = query(collection(db, 'users', currentUser.uid, 'yearGroups', yrId, 'classes', clsId, 'topics', topId, 'lessons'), orderBy('createdAt', 'asc'));
         const snap = await getDocs(q);
-        el.innerHTML = '';
         snap.forEach(d => {
             const les = d.data();
             const lDiv = document.createElement('div');
-            lDiv.className = "text-[10px] p-2 bg-white rounded border flex justify-between";
-            lDiv.innerHTML = `<span>${les.title}</span> ${les.fileUrl ? `<a href="${les.fileUrl}" target="_blank" class="text-indigo-600 font-bold">File</a>` : ''}`;
+            lDiv.className = "text-[11px] p-2 bg-white rounded border border-indigo-100 flex justify-between items-center";
+            lDiv.innerHTML = `
+                <span class="font-medium text-gray-800">${les.title}</span>
+                <div class="flex gap-2">
+                    ${les.fileUrl ? `<a href="${les.fileUrl}" target="_blank" class="text-indigo-600"><i class="fa-solid fa-file-arrow-down"></i></a>` : ''}
+                    <button onclick="deleteDoc(doc(db, 'users', '${currentUser.uid}', 'lessons', '${d.id}'))" class="text-red-300"><i class="fa-solid fa-xmark"></i></button>
+                </div>`;
             el.appendChild(lDiv);
         });
     }
 };
 
-// --- Modal & Form (Sync Optimized) ---
-
+// --- Modal Logic ---
 window.openModal = (mode, yr=null, cls=null, top=null) => {
     modalMode = mode; activeYearId = yr; activeClassId = cls; activeTopicId = top;
+    document.getElementById('modalTitle').innerText = "Add " + mode.replace(/([A-Z])/g, ' $1');
     document.getElementById('lessonExtras').classList.toggle('hidden', mode !== 'lesson');
     document.getElementById('universalModal').classList.remove('hidden');
 };
@@ -189,15 +189,15 @@ document.getElementById('universalForm').onsubmit = async (e) => {
     btn.disabled = true; btn.innerText = "Syncing...";
     
     let path;
-    const data = { createdAt: serverTimestamp(), name: document.getElementById('mainInput').value };
+    const name = document.getElementById('mainInput').value;
+    const data = { createdAt: serverTimestamp() };
 
-    if(modalMode === 'yearGroup') path = collection(db, 'users', currentUser.uid, 'yearGroups');
-    else if(modalMode === 'class') path = collection(db, 'users', currentUser.uid, 'yearGroups', activeYearId, 'classes');
-    else if(modalMode === 'topic') path = collection(db, 'users', currentUser.uid, 'yearGroups', activeYearId, 'classes', activeClassId, 'topics');
+    if(modalMode === 'yearGroup') { path = collection(db, 'users', currentUser.uid, 'yearGroups'); data.name = name; }
+    else if(modalMode === 'class') { path = collection(db, 'users', currentUser.uid, 'yearGroups', activeYearId, 'classes'); data.name = name; }
+    else if(modalMode === 'topic') { path = collection(db, 'users', currentUser.uid, 'yearGroups', activeYearId, 'classes', activeClassId, 'topics'); data.name = name; }
     else if(modalMode === 'lesson') {
         path = collection(db, 'users', currentUser.uid, 'yearGroups', activeYearId, 'classes', activeClassId, 'topics', activeTopicId, 'lessons');
-        data.title = data.name; delete data.name;
-        data.content = document.getElementById('subInput').value;
+        data.title = name; data.content = document.getElementById('subInput').value;
         const file = document.getElementById('fileInput').files[0];
         if(file) {
             const sRef = ref(storage, `curriculum/${currentUser.uid}/${Date.now()}`);
@@ -209,11 +209,12 @@ document.getElementById('universalForm').onsubmit = async (e) => {
     await addDoc(path, data);
     closeModal();
     btn.disabled = false; btn.innerText = "Save";
-    loadYearGroups(); // Refresh after add
+    loadYearGroups(); // Soft refresh
 };
 
 window.closeModal = () => document.getElementById('universalModal').classList.add('hidden');
-document.getElementById('logoutBtn').onclick = () => signOut(auth).then(() => window.location.href = 'index.html');
+document.getElementById('logoutBtn').onclick = () => signOut(auth);
+document.getElementById('fileInput').onchange = (e) => { if(e.target.files[0]) document.getElementById('fileStatus').innerText = "Selected: " + e.target.files[0].name; };
 </script>
 </body>
 </html>
