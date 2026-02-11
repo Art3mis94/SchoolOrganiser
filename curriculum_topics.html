@@ -3,64 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Curriculum Topics | Educator Hub</title>
+  <title>Academic Hub | Educator Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    body { font-family: 'Inter', sans-serif; }
     .collapsible-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
-    .open { max-height: 3000px; transition: max-height 0.5s ease-in; }
-    .rotate-icon { transform: rotate(180deg); }
-    .year-card { border-left: 6px solid #4f46e5; }
-    .dropzone { border: 2px dashed #4f46e5; border-radius:0.5rem; padding:1rem; text-align:center; cursor:pointer; }
+    .open { max-height: 5000px; transition: max-height 0.5s ease-in; }
+    .rotate-icon { transform: rotate(180deg); transition: transform 0.3s; }
+    .year-section { border-bottom: 5px solid #4338ca; margin-bottom: 3rem; }
+    .class-card { border-left: 5px solid #10b981; transition: transform 0.2s; }
+    .class-card:hover { transform: translateX(5px); }
+    .dropzone { border: 2px dashed #4338ca; border-radius: 1rem; padding: 1.5rem; text-align: center; cursor: pointer; background: #f5f3ff; }
+    .dropzone:hover { background: #ede9fe; }
   </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-50 min-h-screen pb-24">
 
-<nav class="bg-indigo-700 p-4 shadow-2xl">
-  <div class="container max-w-5xl mx-auto flex flex-wrap justify-center gap-4">
-    <a href="dashboard.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Home 🏠</a>
-    <a href="topics.html" class="px-4 py-2 bg-white text-indigo-700 font-bold rounded-lg shadow-inner">Topics 🧠</a>
-    <a href="notes.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Notes 📝</a>
-    <a href="todo.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">To-Do ✅</a>
-    <a href="resources.html" class="px-4 py-2 text-white rounded-lg hover:bg-indigo-600 transition">Tools 🛠️</a>
-    <button id="logoutBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Sign Out</button>
-  </div>
+<nav class="bg-indigo-700 p-4 shadow-2xl mb-10">
+    <div class="container max-w-6xl mx-auto flex justify-between items-center text-white">
+        <h2 class="font-black tracking-tighter text-xl">EDUCATOR<span class="text-indigo-300">HUB</span></h2>
+        <div class="flex gap-6 font-semibold">
+            <a href="dashboard.html" class="hover:text-indigo-200 transition">Dashboard</a>
+            <a href="topics.html" class="border-b-2 border-white pb-1">Curriculum</a>
+            <a href="resources.html" class="hover:text-indigo-200 transition">Tools</a>
+        </div>
+        <button id="logoutBtn" class="bg-indigo-800 px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition">Sign Out</button>
+    </div>
 </nav>
 
-<div class="container max-w-5xl mx-auto p-6 mt-6">
-  <h1 class="text-3xl font-bold text-indigo-700 mb-6">Curriculum by Year Group</h1>
+<div class="container max-w-5xl mx-auto px-4">
+  <div class="flex justify-between items-end mb-10">
+      <div>
+          <h1 class="text-5xl font-black text-gray-900 uppercase">Curriculum</h1>
+          <p class="text-gray-500 font-medium">Manage Year Groups, Classes, and Lessons</p>
+      </div>
+      <button onclick="openModal('yearGroup')" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition">
+          <i class="fa-solid fa-plus mr-2"></i> New Year Group
+      </button>
+  </div>
   
-  <div id="yearGroupContainer" class="space-y-6">
+  <div id="yearGroupContainer" class="space-y-16">
     </div>
 </div>
 
-<div id="topicModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-    <h3 id="topicModalTitle" class="text-2xl font-bold text-indigo-700 border-b pb-3 mb-4">Add Topic</h3>
-    <form id="topicForm" class="space-y-4">
-      <input type="text" id="topicName" placeholder="Topic Name (e.g. Algebra)" class="w-full p-2 border rounded-md" required>
-      <div class="flex gap-2">
-        <button type="button" onclick="closeModal('topicModal')" class="flex-1 py-2 bg-gray-200 rounded-lg">Cancel</button>
-        <button type="submit" class="flex-1 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Topic</button>
+<div id="universalModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 overflow-hidden">
+    <div class="flex justify-between items-center mb-6">
+        <h3 id="modalTitle" class="text-2xl font-black text-gray-800 italic uppercase">Add Item</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+    </div>
+    
+    <form id="universalForm" class="space-y-5">
+      <div>
+          <label id="inputLabel" class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Name</label>
+          <input type="text" id="mainInput" class="w-full p-4 border-2 border-gray-100 rounded-2xl focus:border-indigo-500 outline-none transition" required>
       </div>
-    </form>
-  </div>
-</div>
+      
+      <div id="lessonExtras" class="hidden space-y-5">
+          <textarea id="subInput" class="w-full p-4 border-2 border-gray-100 rounded-2xl focus:border-indigo-500 outline-none transition" placeholder="Learning objectives or notes..."></textarea>
+          <div class="dropzone" onclick="document.getElementById('fileInput').click()">
+              <i class="fa-solid fa-cloud-arrow-up text-indigo-500 text-2xl mb-2"></i>
+              <p id="fileStatus" class="text-sm font-bold text-indigo-900">Click to upload lesson materials</p>
+              <input type="file" id="fileInput" class="hidden">
+          </div>
+      </div>
 
-<div id="lessonModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
-    <h3 class="text-2xl font-bold text-green-700 border-b pb-3 mb-4">Add Lesson</h3>
-    <form id="lessonForm" class="space-y-4">
-      <input type="text" id="lessonTitle" placeholder="Lesson Title" class="w-full p-2 border rounded-md" required>
-      <textarea id="lessonContent" rows="3" placeholder="Learning outcomes..." class="w-full p-2 border rounded-md"></textarea>
-      <div id="lessonDropzone" class="dropzone" onclick="document.getElementById('lessonFile').click()">
-        <span id="fileLabel">Drag & Drop File or Click</span>
-        <input type="file" id="lessonFile" class="hidden">
-      </div>
-      <input type="url" id="lessonLink" placeholder="External Link (URL)" class="w-full p-2 border rounded-md">
-      <div class="flex gap-2">
-        <button type="button" onclick="closeModal('lessonModal')" class="flex-1 py-2 bg-gray-200 rounded-lg">Cancel</button>
-        <button type="submit" id="saveLessonBtn" class="flex-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Save Lesson</button>
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="closeModal()" class="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-black uppercase tracking-widest hover:bg-gray-200 transition">Cancel</button>
+        <button type="submit" id="saveBtn" class="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 shadow-lg transition">Save</button>
       </div>
     </form>
   </div>
@@ -68,7 +79,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, onSnapshot, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
@@ -86,161 +97,188 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-let currentUser = null;
-let currentYear = null;
-let currentTopicId = null;
-let editingTopicId = null;
+let currentUser, activeYearId, activeClassId, activeTopicId, modalMode;
 
-onAuthStateChanged(auth, user => {
-  if (user) {
-    currentUser = user;
-    renderYearGroups();
-  } else {
-    window.location.href = 'index.html';
-  }
+// Auth Observer
+onAuthStateChanged(auth, user => { 
+    if(user){ 
+        currentUser = user; 
+        loadYearGroups(); 
+    } else {
+        window.location.href = 'index.html';
+    }
 });
 
-// --- UI Logic ---
-function renderYearGroups() {
-  const container = document.getElementById('yearGroupContainer');
-  container.innerHTML = '';
-  [7, 8, 9, 10, 11].forEach(year => {
-    const div = document.createElement('div');
-    div.className = "bg-white rounded-xl shadow-md year-card overflow-hidden mb-4";
-    div.innerHTML = `
-      <div class="flex justify-between items-center p-5 bg-indigo-50 cursor-pointer" onclick="toggleSection('year-${year}')">
-        <h2 class="text-2xl font-bold text-indigo-800">Year ${year}</h2>
-        <div class="flex items-center gap-3">
-          <button onclick="event.stopPropagation(); openTopicModal('${year}')" class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-indigo-700">+ Add Topic</button>
-          <i id="icon-year-${year}" class="fa-solid fa-chevron-down text-indigo-400 transition-transform"></i>
-        </div>
-      </div>
-      <div id="year-${year}" class="collapsible-content">
-        <div id="topics-list-${year}" class="p-4 space-y-4 bg-gray-50"></div>
-      </div>
-    `;
-    container.appendChild(div);
-    loadTopics(year);
-  });
-}
+document.getElementById('logoutBtn').onclick = () => signOut(auth).then(() => window.location.href = 'index.html');
 
-function loadTopics(year) {
-  const q = query(collection(db, 'users', currentUser.uid, 'years', year.toString(), 'topics'), orderBy('createdAt', 'asc'));
-  onSnapshot(q, snapshot => {
-    const list = document.getElementById(`topics-list-${year}`);
-    list.innerHTML = '';
-    snapshot.forEach(docSnap => {
-      const topic = { id: docSnap.id, ...docSnap.data() };
-      const topicDiv = document.createElement('div');
-      topicDiv.className = "bg-white border rounded-lg shadow-sm";
-      topicDiv.innerHTML = `
-        <div class="flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50" onclick="toggleSection('topic-${topic.id}')">
-          <span class="font-bold text-gray-700">${topic.name}</span>
-          <div class="flex items-center gap-3">
-            <button onclick="event.stopPropagation(); openLessonModal('${year}', '${topic.id}')" class="text-green-600"><i class="fa-solid fa-plus-circle"></i></button>
-            <button onclick="event.stopPropagation(); deleteTopic('${year}', '${topic.id}')" class="text-red-400"><i class="fa-solid fa-trash"></i></button>
-            <i id="icon-topic-${topic.id}" class="fa-solid fa-caret-down text-gray-400 transition-transform"></i>
-          </div>
-        </div>
-        <div id="topic-${topic.id}" class="collapsible-content border-t bg-white">
-          <div id="lessons-list-${topic.id}" class="p-4 space-y-2"></div>
-        </div>
-      `;
-      list.appendChild(topicDiv);
-      loadLessons(year, topic.id);
+// 1. Load Year Groups (The Big Sections)
+function loadYearGroups() {
+    const q = query(collection(db, 'users', currentUser.uid, 'yearGroups'), orderBy('createdAt', 'asc'));
+    onSnapshot(q, snap => {
+        const container = document.getElementById('yearGroupContainer');
+        container.innerHTML = '';
+        if(snap.empty) {
+            container.innerHTML = `<div class="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-200">
+                <p class="text-gray-400 font-bold">No Year Groups created yet. Start by adding one above!</p>
+            </div>`;
+        }
+        snap.forEach(d => {
+            const yr = {id: d.id, ...d.data()};
+            const div = document.createElement('div');
+            div.className = "year-section";
+            div.innerHTML = `
+                <div class="flex justify-between items-baseline mb-6">
+                    <h2 class="text-6xl font-black text-indigo-900 italic tracking-tighter uppercase">${yr.name}</h2>
+                    <div class="flex gap-4">
+                        <button onclick="openModal('class', '${yr.id}')" class="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl font-bold hover:bg-emerald-200">+ Add Class</button>
+                        <button onclick="deleteItem('yearGroups', '${yr.id}')" class="text-red-300 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+                <div id="classes-for-${yr.id}" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10"></div>
+            `;
+            container.appendChild(div);
+            loadClasses(yr.id);
+        });
     });
-  });
 }
 
-function loadLessons(year, topicId) {
-  const q = query(collection(db, 'users', currentUser.uid, 'years', year.toString(), 'topics', topicId, 'lessons'), orderBy('createdAt', 'asc'));
-  onSnapshot(q, snapshot => {
-    const list = document.getElementById(`lessons-list-${topicId}`);
-    list.innerHTML = snapshot.empty ? '<p class="text-gray-400 text-sm italic">No lessons added yet.</p>' : '';
-    snapshot.forEach(lDoc => {
-      const lesson = { id: lDoc.id, ...lDoc.data() };
-      const item = document.createElement('div');
-      item.className = "p-3 bg-indigo-50 border rounded-lg flex justify-between items-center";
-      item.innerHTML = `
-        <div>
-          <h4 class="font-semibold text-gray-800">${lesson.title}</h4>
-          <div class="flex gap-3 mt-1 text-sm">
-            ${lesson.fileUrl ? `<a href="${lesson.fileUrl}" target="_blank" class="text-purple-600"><i class="fa-solid fa-file-pdf"></i> File</a>` : ''}
-            ${lesson.link ? `<a href="${lesson.link}" target="_blank" class="text-blue-600"><i class="fa-solid fa-link"></i> Link</a>` : ''}
-          </div>
-        </div>
-        <button onclick="deleteLesson('${year}', '${topicId}', '${lesson.id}')" class="text-red-300 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
-      `;
-      list.appendChild(item);
+// 2. Load Classes inside a Year
+function loadClasses(yearId) {
+    const q = query(collection(db, 'users', currentUser.uid, 'yearGroups', yearId, 'classes'), orderBy('createdAt', 'asc'));
+    onSnapshot(q, snap => {
+        const list = document.getElementById(`classes-for-${yearId}`);
+        list.innerHTML = '';
+        snap.forEach(d => {
+            const cls = {id: d.id, ...d.data()};
+            const div = document.createElement('div');
+            div.className = "bg-white rounded-2xl shadow-sm border border-gray-100 class-card overflow-hidden";
+            div.innerHTML = `
+                <div class="p-5 flex justify-between items-center cursor-pointer bg-emerald-50/50" onclick="toggle('class-${cls.id}')">
+                    <h3 class="text-xl font-black text-emerald-900 uppercase tracking-tight">${cls.name}</h3>
+                    <div class="flex gap-4 items-center">
+                        <button onclick="event.stopPropagation(); openModal('topic', '${yearId}', '${cls.id}')" class="text-emerald-600 font-bold text-sm">+ Topic</button>
+                        <i id="icon-class-${cls.id}" class="fa-solid fa-chevron-down text-emerald-300 transition-transform"></i>
+                    </div>
+                </div>
+                <div id="class-${cls.id}" class="collapsible-content">
+                    <div id="topics-for-${cls.id}" class="p-4 space-y-4 bg-gray-50/50"></div>
+                </div>
+            `;
+            list.appendChild(div);
+            loadTopics(yearId, cls.id);
+        });
     });
-  });
 }
 
-// --- Sync Logic ---
-document.getElementById('topicForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const name = document.getElementById('topicName').value;
-  await addDoc(collection(db, 'users', currentUser.uid, 'years', currentYear, 'topics'), { name, createdAt: new Date() });
-  closeModal('topicModal');
+// 3. Load Topics inside a Class
+function loadTopics(yearId, classId) {
+    const q = query(collection(db, 'users', currentUser.uid, 'yearGroups', yearId, 'classes', classId, 'topics'), orderBy('createdAt', 'asc'));
+    onSnapshot(q, snap => {
+        const list = document.getElementById(`topics-for-${classId}`);
+        list.innerHTML = '';
+        snap.forEach(d => {
+            const top = {id: d.id, ...d.data()};
+            const div = document.createElement('div');
+            div.className = "bg-white border-2 border-gray-100 rounded-xl overflow-hidden";
+            div.innerHTML = `
+                <div class="p-3 flex justify-between items-center cursor-pointer hover:bg-gray-50" onclick="toggle('topic-${top.id}')">
+                    <span class="font-bold text-gray-700 uppercase text-sm">${top.name}</span>
+                    <div class="flex gap-3 items-center">
+                        <button onclick="event.stopPropagation(); openModal('lesson', '${yearId}', '${classId}', '${top.id}')" class="text-indigo-500 font-bold text-xs">+ Lesson</button>
+                        <i id="icon-topic-${top.id}" class="fa-solid fa-caret-down text-gray-300 transition-transform"></i>
+                    </div>
+                </div>
+                <div id="topic-${top.id}" class="collapsible-content border-t-2 border-gray-50 bg-white">
+                    <div id="lessons-for-${top.id}" class="p-4 space-y-3"></div>
+                </div>
+            `;
+            list.appendChild(div);
+            loadLessons(yearId, classId, top.id);
+        });
+    });
+}
+
+// 4. Load Lessons inside a Topic
+function loadLessons(yrId, clsId, topId) {
+    const q = query(collection(db, 'users', currentUser.uid, 'yearGroups', yrId, 'classes', clsId, 'topics', topId, 'lessons'), orderBy('createdAt', 'asc'));
+    onSnapshot(q, snap => {
+        const list = document.getElementById(`lessons-for-${topId}`);
+        list.innerHTML = snap.empty ? '<p class="text-gray-300 text-xs italic">No lessons yet.</p>' : '';
+        snap.forEach(d => {
+            const les = d.data();
+            const div = document.createElement('div');
+            div.className = "flex justify-between items-center p-3 bg-indigo-50 rounded-xl border border-indigo-100";
+            div.innerHTML = `
+                <div>
+                    <p class="font-bold text-indigo-900 text-sm">${les.title}</p>
+                    <p class="text-xs text-indigo-400 mt-1">${les.content || ''}</p>
+                </div>
+                ${les.fileUrl ? `<a href="${les.fileUrl}" target="_blank" class="bg-indigo-600 text-white p-2 rounded-lg text-xs font-bold hover:bg-indigo-700 transition">Open File</a>` : ''}
+            `;
+            list.appendChild(div);
+        });
+    });
+}
+
+// Interaction & Sync Logic
+window.openModal = (mode, yr = null, cls = null, top = null) => {
+    modalMode = mode; activeYearId = yr; activeClassId = cls; activeTopicId = top;
+    document.getElementById('universalForm').reset();
+    document.getElementById('modalTitle').innerText = `New ${mode}`;
+    document.getElementById('lessonExtras').classList.toggle('hidden', mode !== 'lesson');
+    document.getElementById('fileStatus').innerText = "Click to upload lesson materials";
+    document.getElementById('universalModal').classList.remove('hidden');
 };
 
-document.getElementById('lessonForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('saveLessonBtn');
-  btn.disabled = true; btn.innerText = "Uploading...";
+document.getElementById('universalForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true; btn.innerText = "Syncing...";
 
-  let fileUrl = null;
-  const file = document.getElementById('lessonFile').files[0];
-  if (file) {
-    const storageRef = ref(storage, `users/${currentUser.uid}/curriculum/${Date.now()}_${file.name}`);
-    const snapshot = await uploadBytes(storageRef, file);
-    fileUrl = await getDownloadURL(snapshot.ref);
-  }
+    let path;
+    const name = document.getElementById('mainInput').value;
+    const data = { createdAt: new Date() };
 
-  const data = {
-    title: document.getElementById('lessonTitle').value,
-    content: document.getElementById('lessonContent').value,
-    link: document.getElementById('lessonLink').value || null,
-    fileUrl: fileUrl,
-    createdAt: new Date()
-  };
+    if(modalMode === 'yearGroup') {
+        path = collection(db, 'users', currentUser.uid, 'yearGroups');
+        data.name = name;
+    } else if (modalMode === 'class') {
+        path = collection(db, 'users', currentUser.uid, 'yearGroups', activeYearId, 'classes');
+        data.name = name;
+    } else if (modalMode === 'topic') {
+        path = collection(db, 'users', currentUser.uid, 'yearGroups', activeYearId, 'classes', activeClassId, 'topics');
+        data.name = name;
+    } else if (modalMode === 'lesson') {
+        path = collection(db, 'users', currentUser.uid, 'yearGroups', activeYearId, 'classes', activeClassId, 'topics', activeTopicId, 'lessons');
+        data.title = name;
+        data.content = document.getElementById('subInput').value;
+        const file = document.getElementById('fileInput').files[0];
+        if(file) {
+            const sRef = ref(storage, `curriculum/${currentUser.uid}/${Date.now()}_${file.name}`);
+            await uploadBytes(sRef, file);
+            data.fileUrl = await getDownloadURL(sRef);
+        }
+    }
 
-  await addDoc(collection(db, 'users', currentUser.uid, 'years', currentYear, 'topics', currentTopicId, 'lessons'), data);
-  btn.disabled = false; btn.innerText = "Save Lesson";
-  closeModal('lessonModal');
+    await addDoc(path, data);
+    closeModal();
+    btn.disabled = false; btn.innerText = "Save";
 };
 
-// --- Helpers ---
-window.toggleSection = (id) => {
-  const content = document.getElementById(id);
-  const icon = document.getElementById('icon-' + id);
-  content.classList.toggle('open');
-  if (icon) icon.classList.toggle('rotate-icon');
+window.toggle = (id) => {
+    document.getElementById(id).classList.toggle('open');
+    const icon = document.getElementById('icon-' + id);
+    if(icon) icon.classList.toggle('rotate-icon');
 };
 
-window.openTopicModal = (year) => {
-  currentYear = year;
-  document.getElementById('topicForm').reset();
-  document.getElementById('topicModal').classList.remove('hidden');
+window.deleteItem = async (col, id) => {
+    if(confirm("Delete this? This cannot be undone.")) {
+        await deleteDoc(doc(db, 'users', currentUser.uid, col, id));
+    }
 };
 
-window.openLessonModal = (year, topicId) => {
-  currentYear = year;
-  currentTopicId = topicId;
-  document.getElementById('lessonForm').reset();
-  document.getElementById('fileLabel').innerText = "Drag & Drop File or Click";
-  document.getElementById('lessonModal').classList.remove('hidden');
-};
-
-window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
-
-window.deleteTopic = async (year, id) => { if (confirm("Delete this topic?")) await deleteDoc(doc(db, 'users', currentUser.uid, 'years', year, 'topics', id)); };
-
-window.deleteLesson = async (year, tId, lId) => { if (confirm("Delete this lesson?")) await deleteDoc(doc(db, 'users', currentUser.uid, 'years', year, 'topics', tId, 'lessons', lId)); };
-
-document.getElementById('logoutBtn').onclick = () => signOut(auth);
-
-document.getElementById('lessonFile').onchange = (e) => { if (e.target.files[0]) document.getElementById('fileLabel').innerText = "Selected: " + e.target.files[0].name; };
+window.closeModal = () => document.getElementById('universalModal').classList.add('hidden');
+document.getElementById('fileInput').onchange = (e) => { if(e.target.files[0]) document.getElementById('fileStatus').innerText = "Selected: " + e.target.files[0].name; };
 </script>
 </body>
 </html>
